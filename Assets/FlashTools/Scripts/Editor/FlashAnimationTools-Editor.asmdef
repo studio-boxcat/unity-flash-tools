@@ -1,0 +1,12 @@
+{
+    "name": "FlashAnimationTools-Editor",
+    "references": [
+        "FlashAnimationTools"
+    ],
+    "optionalUnityReferences": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false
+}
