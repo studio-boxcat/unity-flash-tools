@@ -30,77 +30,8 @@ namespace FTEditor.Editors {
 
 		static int GetFrameCount(SwfClipAsset clip) {
 			return clip != null ? clip.Sequences.Aggregate(0, (acc, seq) => {
-				return seq.Frames.Count + acc;
+				return seq.Frames.Length + acc;
 			}) : 0;
-		}
-
-		//
-		//
-		//
-
-		static GameObject CreateClipGO(SwfClipAsset clip) {
-			if ( clip ) {
-				var clip_go = new GameObject(clip.name);
-				clip_go.AddComponent<MeshFilter>();
-				clip_go.AddComponent<MeshRenderer>();
-				clip_go.AddComponent<SortingGroup>();
-				clip_go.AddComponent<SwfClip>().clip = clip;
-				clip_go.AddComponent<SwfClipController>();
-				return clip_go;
-			}
-			return null;
-		}
-
-		static GameObject CreateClipPrefab(SwfClipAsset clip) {
-			GameObject result = null;
-			var clip_go = CreateClipGO(clip);
-			if ( clip_go ) {
-				var prefab_path = GetPrefabPath(clip);
-				if ( !string.IsNullOrEmpty(prefab_path) ) {
-					prefab_path = AssetDatabase.GenerateUniqueAssetPath(prefab_path);
-				#if UNITY_2018_3_OR_NEWER
-					result = PrefabUtility.SaveAsPrefabAsset(clip_go, prefab_path);
-				#else
-					result = PrefabUtility.CreatePrefab(prefab_path, clip_go);
-				#endif
-				}
-				GameObject.DestroyImmediate(clip_go, true);
-			}
-			return result;
-		}
-
-		static GameObject CreateClipOnScene(SwfClipAsset clip) {
-			var clip_go = CreateClipGO(clip);
-			if ( clip_go ) {
-				Undo.RegisterCreatedObjectUndo(clip_go, "Instance SwfClip");
-			}
-			return clip_go;
-		}
-
-		//
-		//
-		//
-
-		void CreateAllClipsPrefabs() {
-			var objects = _clips
-				.Select (p => CreateClipPrefab(p))
-				.Where  (p => !!p)
-				.ToArray();
-			Selection.objects = objects;
-			foreach ( var obj in objects ) {
-				EditorGUIUtility.PingObject(obj);
-			}
-		}
-
-		void CreateAllClipsOnScene() {
-			var objects = _clips
-				.Select (p => CreateClipOnScene(p))
-				.Where  (p => !!p)
-				.ToArray();
-			Selection.objects = objects;
-			foreach ( var obj in objects ) {
-				EditorGUIUtility.PingObject(obj);
-			}
 		}
 
 		//
@@ -142,17 +73,6 @@ namespace FTEditor.Editors {
 						EditorGUILayout.ObjectField(
 							"Source Asset", source_asset, typeof(SwfAsset), false);
 					});
-			});
-		}
-
-		void DrawGUIControls() {
-			SwfEditorUtils.DoHorizontalGUI(() => {
-				if ( GUILayout.Button("Create prefab") ) {
-					CreateAllClipsPrefabs();
-				}
-				if ( GUILayout.Button("Instance to scene") ) {
-					CreateAllClipsOnScene();
-				}
 			});
 		}
 
@@ -206,7 +126,6 @@ namespace FTEditor.Editors {
 			DrawGUIFrameCount();
 			DrawGUISequences();
 			DrawGUISourceAsset();
-			DrawGUIControls();
 			DrawGUINotes();
 			if ( GUI.changed ) {
 				serializedObject.ApplyModifiedProperties();

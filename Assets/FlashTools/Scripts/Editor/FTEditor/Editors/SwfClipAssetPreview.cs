@@ -1,8 +1,5 @@
 ﻿using UnityEngine;
 using UnityEditor;
-
-using System.Linq;
-
 using FTRuntime;
 
 namespace FTEditor.Editors {
@@ -11,24 +8,10 @@ namespace FTEditor.Editors {
 		MaterialPropertyBlock _matPropBlock = null;
 		PreviewRenderUtility  _previewUtils = null;
 
-		Sprite targetSprite {
-			get {
-				var clip = target as SwfClipAsset;
-				return clip ? clip.Sprite : null;
-			}
-		}
-
 		Texture2D targetAtlas {
 			get {
-				var sprite = targetSprite;
-				return sprite ? sprite.texture : null;
-			}
-		}
-
-		Texture2D targetAtlasA {
-			get {
-				var sprite = targetSprite;
-				return sprite ? sprite.associatedAlphaSplitTexture : null;
+				var clip = target as SwfClipAsset;
+				return clip.Atlas;
 			}
 		}
 
@@ -42,50 +25,28 @@ namespace FTEditor.Editors {
 		SwfClipAsset.Sequence targetSequence {
 			get {
 				var clip = target as SwfClipAsset;
-				return GetSequenceForClip(clip, _sequence);
-			}
-		}
-
-		bool isTargetValidForPreview {
-			get {
-				var atlas    = targetAtlas;
-				var frame    = targetFrame;
-				var sequence = targetSequence;
-				return
-					atlas &&
-					frame != null &&
-					sequence != null &&
-					frame.CachedMesh && frame.CachedMesh.vertexCount > 0;
+				return clip.Sequences[_sequence];
 			}
 		}
 
 		static SwfClipAsset.Frame GetFrameForClip(SwfClipAsset clip, int sequence_index) {
-			var sequence = GetSequenceForClip(clip, sequence_index);
-			var frames = sequence != null && sequence.Frames != null && sequence.Frames.Count > 0
-				? sequence.Frames
-				: null;
+			var sequence = clip.Sequences[sequence_index];
+			var frames = sequence.Frames;
 			var frame_time = (float)(EditorApplication.timeSinceStartup * clip.FrameRate);
-			return frames != null
-				? frames[Mathf.FloorToInt(frame_time) % frames.Count]
-				: null;
+			var frame_index = Mathf.FloorToInt(frame_time) % frames.Length;
+			return frames[frame_index];
 		}
 
-		static SwfClipAsset.Sequence GetSequenceForClip(SwfClipAsset clip, int sequence_index) {
-			return clip && clip.Sequences != null && clip.Sequences.Count > 0
-				? clip.Sequences[Mathf.Abs(sequence_index) % clip.Sequences.Count]
-				: null;
-		}
+		static Bounds CalculateBoundsForSequence(SwfClipAsset.Sequence sequence)
+		{
+			var frames = sequence.Frames;
+			if (frames.Length == 0)
+				return new Bounds();
 
-		static Bounds CalculateBoundsForSequence(SwfClipAsset.Sequence sequence) {
-			var bounds = sequence != null && sequence.Frames != null && sequence.Frames.Count > 0
-				? sequence.Frames
-					.Where (p => !!p.CachedMesh)
-					.Select(p => p.CachedMesh.bounds)
-				: new Bounds[0];
-			var result = bounds.Any() ? bounds.First() : new Bounds();
-			foreach ( var bound in bounds ) {
-				result.Encapsulate(bound);
-			}
+			var result = frames[0].Mesh.bounds;
+			for (var i = 1; i < frames.Length; i++)
+				result.Encapsulate(frames[i].Mesh.bounds);
+
 			return result;
 		}
 
@@ -126,10 +87,18 @@ namespace FTEditor.Editors {
 		// ---------------------------------------------------------------------
 
 		public void SetSequence(string sequence_name) {
+			_sequence = -1;
+
 			var clip = target as SwfClipAsset;
-			_sequence = clip && clip.Sequences != null
-				? Mathf.Max(0, clip.Sequences.FindIndex(p => p.Name == sequence_name))
-				: 0;
+			var sequences = clip.Sequences;
+			for (var i = 0; i < sequences.Length; i++)
+			{
+				if (sequences[i].Name == sequence_name)
+					_sequence = i;
+			}
+
+			if (_sequence == -1)
+				_sequence = 0;
 		}
 
 		public void Shutdown() {
@@ -169,24 +138,24 @@ namespace FTEditor.Editors {
 				return;
 			}
 
-			if ( clip.Sequences.Count > 1 ) {
+			if ( clip.Sequences.Length > 1 ) {
 				if ( GUILayout.Button("<", EditorStyles.miniButton) ) {
 					--_sequence;
 					if ( _sequence < 0 ) {
-						_sequence = clip.Sequences.Count - 1;
+						_sequence = clip.Sequences.Length - 1;
 					}
 				}
 			}
 
-			var sequence = GetSequenceForClip(clip, _sequence);
-			if ( sequence != null && !string.IsNullOrEmpty(sequence.Name) ) {
+			var sequence = clip.Sequences[_sequence];
+			if ( !string.IsNullOrEmpty(sequence.Name) ) {
 				GUILayout.Label(sequence.Name, EditorStyles.whiteLabel);
 			}
 
-			if ( clip.Sequences.Count > 1 ) {
+			if ( clip.Sequences.Length > 1 ) {
 				if ( GUILayout.Button(">", EditorStyles.miniButton) ) {
 					++_sequence;
-					if ( _sequence >= clip.Sequences.Count ) {
+					if ( _sequence >= clip.Sequences.Length ) {
 						_sequence = 0;
 					}
 				}
@@ -195,36 +164,30 @@ namespace FTEditor.Editors {
 
 		public override void OnPreviewGUI(Rect r, GUIStyle background) {
 			if ( Event.current.type == EventType.Repaint ) {
-				if ( isTargetValidForPreview ) {
-					_previewUtils.BeginPreview(r, background);
-					{
-						_matPropBlock.SetTexture(
-							"_MainTex",
-							targetAtlas ? targetAtlas : Texture2D.whiteTexture);
-						if ( targetAtlasA ) {
-							_matPropBlock.SetTexture("_AlphaTex", targetAtlasA);
-							_matPropBlock.SetFloat("_ExternalAlpha", 1.0f);
-						} else {
-							_matPropBlock.SetTexture("_AlphaTex", Texture2D.whiteTexture);
-							_matPropBlock.SetFloat("_ExternalAlpha", 0.0f);
+				_previewUtils.BeginPreview(r, background);
+				{
+					_matPropBlock.SetTexture(
+						"_MainTex",
+						targetAtlas ? targetAtlas : Texture2D.whiteTexture);
+					var camera = GetCameraFromPreviewUtils(_previewUtils);
+					if ( camera ) {
+						ConfigureCameraForSequence(camera, targetSequence);
+
+						var clip = target as SwfClipAsset;
+						var frame = targetFrame;
+						var materials = clip.MaterialGroups[frame.MaterialGroupIndex].Materials;
+						for ( var i = 0; i < materials.Length; ++i ) {
+							_previewUtils.DrawMesh(
+								frame.Mesh,
+								Matrix4x4.identity,
+								materials[i],
+								i,
+								_matPropBlock);
 						}
-						var camera = GetCameraFromPreviewUtils(_previewUtils);
-						if ( camera ) {
-							ConfigureCameraForSequence(camera, targetSequence);
-							var frame = targetFrame;
-							for ( var i = 0; i < frame.Materials.Length; ++i ) {
-								_previewUtils.DrawMesh(
-									frame.CachedMesh,
-									Matrix4x4.identity,
-									frame.Materials[i],
-									i,
-									_matPropBlock);
-							}
-							camera.Render();
-						}
+						camera.Render();
 					}
-					_previewUtils.EndAndDrawPreview(r);
 				}
+				_previewUtils.EndAndDrawPreview(r);
 			}
 		}
 	}

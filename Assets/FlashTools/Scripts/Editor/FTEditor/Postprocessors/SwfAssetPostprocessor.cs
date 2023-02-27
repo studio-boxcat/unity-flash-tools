@@ -7,6 +7,7 @@ using System.Linq;
 using System.Collections.Generic;
 
 using FTRuntime;
+using UnityEngine.Assertions;
 
 namespace FTEditor.Postprocessors {
 	class SwfAssetPostprocessor : AssetPostprocessor {
@@ -54,6 +55,7 @@ namespace FTEditor.Postprocessors {
 					});
 				}
 			} catch ( Exception e ) {
+				Debug.LogException(e);
 				Debug.LogErrorFormat(
 					asset,
 					"<b>[FlashTools]</b> Postprocess swf asset error: {0}\nPath: {1}",
@@ -166,6 +168,7 @@ namespace FTEditor.Postprocessors {
 			Texture2D[] textures, SwfSettingsData settings)
 		{
 			var atlas_padding  = Mathf.Max(0,  settings.AtlasPadding);
+			/*
 			var max_atlas_size = Mathf.Max(32, settings.AtlasPowerOfTwo
 				? Mathf.ClosestPowerOfTwo(settings.MaxAtlasSize)
 				: settings.MaxAtlasSize);
@@ -175,6 +178,8 @@ namespace FTEditor.Postprocessors {
 				max_atlas_size = Mathf.NextPowerOfTwo(max_atlas_size + 1);
 				rects = atlas.PackTextures(textures, atlas_padding, max_atlas_size);
 			}
+			*/
+			var (atlas, rects) = TexturePack.PackTextures(textures, atlas_padding);
 			return settings.AtlasForceSquare && atlas.width != atlas.height
 				? BitmapsAtlasToSquare(atlas, rects)
 				: new BitmapsAtlasInfo{Atlas = atlas, Rects = rects};
@@ -292,10 +297,16 @@ namespace FTEditor.Postprocessors {
 		// ---------------------------------------------------------------------
 
 		static SwfAssetData ConfigureClips(SwfAsset asset, SwfAssetData data) {
-			for ( var i = 0; i < data.Symbols.Count; ++i ) {
+			for ( var i = 0; i < data.Symbols.Count; ++i )
+			{
 				_progressBar.UpdateProgress(
 					"configure clips",
 					(float)(i + 1) / data.Symbols.Count);
+
+				// XXX: 잘 모르겠지만 swf 안에 _Stage_ 라는 이름의 심볼이 자동으로 포함되는 것 같음.
+				if (data.Symbols[i].Name == "_Stage_")
+					continue;
+
 				ConfigureClip(asset, data, data.Symbols[i]);
 			}
 			return data;
@@ -322,42 +333,77 @@ namespace FTEditor.Postprocessors {
 		static void ConfigureClipAsset(
 			SwfClipAsset clip_asset, SwfAsset asset, SwfAssetData data, SwfSymbolData symbol)
 		{
-			var asset_guid       = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(asset));
-			var asset_atlas      = AssetDatabase.LoadAssetAtPath<Sprite>(AssetDatabase.GetAssetPath(asset.Atlas));
+			var context = new ConvertContext();
+
+			var asset_guid     = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(asset));
+			var asset_atlas      = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GetAssetPath(asset.Atlas));
 			clip_asset.Name      = symbol.Name;
-			clip_asset.Sprite    = asset_atlas;
+			clip_asset.Atlas     = asset_atlas;
 			clip_asset.FrameRate = data.FrameRate;
 			clip_asset.AssetGUID = asset_guid;
-			clip_asset.Sequences = LoadClipSequences(asset, data, symbol);
+			clip_asset.Sequences = LoadClipSequences(asset, data, symbol, context).ToArray();
+			clip_asset.MaterialGroups = context.MaterialMemory.Bake();
 			EditorUtility.SetDirty(clip_asset);
+
+			EditorApplication.delayCall += () =>
+			{
+				if (clip_asset == null)
+					return;
+
+				AssetDatabase.SaveAssets();
+
+				var clip_asset_path = AssetDatabase.GetAssetPath(clip_asset);
+				foreach (var sub_asset in AssetDatabase.LoadAllAssetsAtPath(clip_asset_path).Where(x => x is Mesh))
+					UnityEngine.Object.DestroyImmediate(sub_asset, true);
+
+				foreach (var mesh in context.MeshMemory)
+					AssetDatabase.AddObjectToAsset(mesh, clip_asset);
+
+				AssetDatabase.ImportAsset(clip_asset_path);
+			};
 		}
 
 		static List<SwfClipAsset.Sequence> LoadClipSequences(
-			SwfAsset asset, SwfAssetData data, SwfSymbolData symbol)
+			SwfAsset asset, SwfAssetData data, SwfSymbolData symbol, ConvertContext context)
 		{
 			var sequences = new List<SwfClipAsset.Sequence>();
-			if ( IsValidAssetsForFrame(asset, symbol) ) {
-				foreach ( var frame in symbol.Frames ) {
-					var baked_frame = BakeClipFrame(asset, data, frame);
-					if ( !string.IsNullOrEmpty(frame.Anchor) &&
-						(sequences.Count < 1 || sequences.Last().Name != frame.Anchor) )
-					{
-						sequences.Add(new SwfClipAsset.Sequence{Name = frame.Anchor});
-					} else if ( sequences.Count < 1 ) {
-						sequences.Add(new SwfClipAsset.Sequence{Name = "Default"});
-					}
-					sequences.Last().Frames.Add(baked_frame);
+
+			string curSequenceName = null;
+			List<SwfClipAsset.Frame> curFrames = null;
+			List<SwfClipAsset.Label> curLabels = null;
+
+			foreach ( var frame in symbol.Frames ) {
+				if (!string.IsNullOrEmpty(frame.Anchor) && curSequenceName != frame.Anchor)
+				{
+					// 시퀀스가 변경되었다면 시퀀스를 추가해줌.
+					if (curSequenceName != null)
+						sequences.Add(new SwfClipAsset.Sequence(
+							curSequenceName, curFrames.ToArray(), curLabels.ToArray()));
+
+					curSequenceName = frame.Anchor;
+					curFrames = new List<SwfClipAsset.Frame>();
+					curLabels = new List<SwfClipAsset.Label>();
+				}
+
+				// 프레임 삽입.
+				var frameIndex = (ushort) curFrames.Count;
+				curFrames.Add(BakeClipFrame(asset, data, frame, context));
+
+				// 레이블 삽입.
+				foreach (var label in frame.Labels)
+				{
+					var hash = SwfHash.Hash(label);
+					curLabels.Add(new SwfClipAsset.Label(hash, frameIndex));
 				}
 			}
-			return sequences;
-		}
 
-		static bool IsValidAssetsForFrame(
-			SwfAsset asset, SwfSymbolData symbol)
-		{
-			return
-				asset && asset.Atlas && asset.Data != null &&
-				symbol != null && symbol.Frames != null;
+			if (curFrames is {Count: > 0})
+			{
+				sequences.Add(new SwfClipAsset.Sequence(
+					curSequenceName, curFrames.ToArray(), curLabels.ToArray()));
+			}
+
+			return sequences;
 		}
 
 		class BakedGroup {
@@ -366,18 +412,16 @@ namespace FTEditor.Postprocessors {
 			public int                    ClipDepth;
 			public int                    StartVertex;
 			public int                    TriangleCount;
-			public Material               Material;
 		}
 
 		static SwfClipAsset.Frame BakeClipFrame(
-			SwfAsset asset, SwfAssetData data, SwfFrameData frame)
+			SwfAsset asset, SwfAssetData data, SwfFrameData frame, ConvertContext context)
 		{
-			List<uint>       baked_uvs       = new List<uint>();
-			List<uint>       baked_mulcolors = new List<uint>();
-			List<uint>       baked_addcolors = new List<uint>();
+			List<SwfRectData> baked_rects     = new List<SwfRectData>();
+			List<SwfVec4Data> baked_mulcolors = new List<SwfVec4Data>();
+			List<SwfVec4Data> baked_addcolors = new List<SwfVec4Data>();
 			List<Vector2>    baked_vertices  = new List<Vector2>();
 			List<BakedGroup> baked_groups    = new List<BakedGroup>();
-			List<Material>   baked_materials = new List<Material>();
 
 			foreach ( var inst in frame.Instances ) {
 				var bitmap = inst != null
@@ -406,28 +450,16 @@ namespace FTEditor.Postprocessors {
 					baked_vertices.Add(matrix.MultiplyPoint3x4(v2));
 					baked_vertices.Add(matrix.MultiplyPoint3x4(v3));
 
-					var source_rect = bitmap.SourceRect;
-					baked_uvs.Add(SwfEditorUtils.PackUV(source_rect.xMin, source_rect.yMin));
-					baked_uvs.Add(SwfEditorUtils.PackUV(source_rect.xMax, source_rect.yMax));
+					baked_rects.Add(bitmap.SourceRect);
 
-					uint mul_pack0, mul_pack1;
-					SwfEditorUtils.PackFColorToUInts(
-						inst.ColorTrans.mulColor.ToUVector4(),
-						out mul_pack0, out mul_pack1);
-					baked_mulcolors.Add(mul_pack0);
-					baked_mulcolors.Add(mul_pack1);
+					baked_mulcolors.Add(inst.ColorTrans.mulColor);
 
-					uint add_pack0, add_pack1;
-					SwfEditorUtils.PackFColorToUInts(
-						inst.ColorTrans.addColor.ToUVector4(),
-						out add_pack0, out add_pack1);
-					baked_addcolors.Add(add_pack0);
-					baked_addcolors.Add(add_pack1);
+					baked_addcolors.Add(inst.ColorTrans.addColor);
 
 					if ( baked_groups.Count == 0 ||
-						baked_groups[baked_groups.Count - 1].Type      != inst.Type           ||
-						baked_groups[baked_groups.Count - 1].BlendMode != inst.BlendMode.type ||
-						baked_groups[baked_groups.Count - 1].ClipDepth != inst.ClipDepth )
+						baked_groups[^1].Type      != inst.Type           ||
+						baked_groups[^1].BlendMode != inst.BlendMode.type ||
+						baked_groups[^1].ClipDepth != inst.ClipDepth )
 					{
 						baked_groups.Add(new BakedGroup{
 							Type          = inst.Type,
@@ -435,7 +467,6 @@ namespace FTEditor.Postprocessors {
 							ClipDepth     = inst.ClipDepth,
 							StartVertex   = baked_vertices.Count - 4,
 							TriangleCount = 0,
-							Material      = null
 						});
 					}
 
@@ -443,50 +474,37 @@ namespace FTEditor.Postprocessors {
 				}
 			}
 
-			for ( var i = 0; i < baked_groups.Count; ++i ) {
-				var group = baked_groups[i];
-				switch ( group.Type ) {
-				case SwfInstanceData.Types.Mask:
-					group.Material = SwfMaterialCache.GetIncrMaskMaterial();
-					break;
-				case SwfInstanceData.Types.Group:
-					group.Material = SwfMaterialCache.GetSimpleMaterial(group.BlendMode);
-					break;
-				case SwfInstanceData.Types.Masked:
-					group.Material = SwfMaterialCache.GetMaskedMaterial(group.BlendMode, group.ClipDepth);
-					break;
-				case SwfInstanceData.Types.MaskReset:
-					group.Material = SwfMaterialCache.GetDecrMaskMaterial();
-					break;
-				default:
-					throw new UnityException(string.Format(
-						"SwfAssetPostprocessor. Incorrect instance type: {0}",
-						group.Type));
-				}
-				if ( group.Material ) {
-					baked_materials.Add(group.Material);
-				} else {
-					throw new UnityException(string.Format(
-						"SwfAssetPostprocessor. Material for baked group ({0}) not found",
-						group.Type));
-				}
+			var materials = new Material[baked_groups.Count];
+			for (var index = 0; index < baked_groups.Count; index++)
+			{
+				var group = baked_groups[index];
+				var material = group.Type switch
+				{
+					SwfInstanceData.Types.Mask => SwfMaterialCache.GetIncrMaskMaterial(),
+					SwfInstanceData.Types.Group => SwfMaterialCache.GetSimpleMaterial(group.BlendMode),
+					SwfInstanceData.Types.Masked => SwfMaterialCache.GetMaskedMaterial(group.BlendMode, group.ClipDepth),
+					SwfInstanceData.Types.MaskReset => SwfMaterialCache.GetDecrMaskMaterial(),
+					_ => throw new UnityException($"SwfAssetPostprocessor. Incorrect instance type: {group.Type}")
+				};
+
+				Assert.IsNotNull(material);
+				materials[index] = material;
 			}
 
-			var mesh_data = new SwfClipAsset.MeshData{
+			var mesh_data = new MeshData{
 				SubMeshes = baked_groups
-					.Select(p => new SwfClipAsset.SubMeshData{
+					.Select(p => new SubMeshData{
 						StartVertex = p.StartVertex,
 						IndexCount  = p.TriangleCount})
 					.ToArray(),
 				Vertices  = baked_vertices .ToArray(),
-				UVs       = baked_uvs      .ToArray(),
+				Rects     = baked_rects    .ToArray(),
 				AddColors = baked_addcolors.ToArray(),
 				MulColors = baked_mulcolors.ToArray()};
 
 			return new SwfClipAsset.Frame(
-				frame.Labels.ToArray(),
-				mesh_data,
-				baked_materials.ToArray());
+				context.MeshMemory.GetOrAdd(mesh_data.GetHashCode(), () => MeshBuilder.Build(mesh_data)),
+				context.MaterialMemory.ResolveMaterialGroupIndex(materials));
 		}
 
 		static SwfBitmapData FindBitmapFromAssetData(SwfAssetData data, int bitmap_id) {

@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using FTRuntime.Internal;
+using UnityEngine.Assertions;
 
 namespace FTRuntime {
 	[AddComponentMenu("FlashTools/SwfClipController")]
@@ -7,6 +8,7 @@ namespace FTRuntime {
 	[RequireComponent(typeof(SwfClip))]
 	public class SwfClipController : MonoBehaviour {
 
+		[SerializeField]
 		SwfClip _clip      = null;
 		bool    _isPlaying = false;
 		float   _tickTimer = 0.0f;
@@ -46,9 +48,6 @@ namespace FTRuntime {
 
 		[SerializeField, SwfFloatRange(0.0f, float.MaxValue)]
 		float _rateScale = 1.0f;
-
-		[SerializeField]
-		string _groupName = string.Empty;
 
 		[SerializeField]
 		PlayModes _playMode = PlayModes.Forward;
@@ -118,15 +117,6 @@ namespace FTRuntime {
 		}
 
 		/// <summary>
-		/// Gets or sets the controller group name
-		/// </summary>
-		/// <value>The group name</value>
-		public string groupName {
-			get { return _groupName; }
-			set { _groupName = value; }
-		}
-
-		/// <summary>
 		/// Gets or sets the controller play mode
 		/// </summary>
 		/// <value>The play mode</value>
@@ -148,9 +138,7 @@ namespace FTRuntime {
 		/// Gets the controller clip
 		/// </summary>
 		/// <value>The clip</value>
-		public SwfClip clip {
-			get { return _clip; }
-		}
+		public SwfClip clip => _clip;
 
 		/// <summary>
 		/// Gets a value indicating whether controller is playing
@@ -179,9 +167,8 @@ namespace FTRuntime {
 		/// </summary>
 		/// <param name="frame">The new current frame</param>
 		public void GotoAndStop(int frame) {
-			if ( clip ) {
-				clip.currentFrame = frame;
-			}
+			Assert.IsNotNull(clip);
+			clip.SetFrame(frame);
 			Stop(false);
 		}
 
@@ -191,9 +178,8 @@ namespace FTRuntime {
 		/// <param name="sequence">The new sequence</param>
 		/// <param name="frame">The new current frame</param>
 		public void GotoAndStop(string sequence, int frame) {
-			if ( clip ) {
-				clip.sequence = sequence;
-			}
+			Assert.IsNotNull(clip);
+			clip.SetSequence(sequence, frame);
 			GotoAndStop(frame);
 		}
 
@@ -202,9 +188,8 @@ namespace FTRuntime {
 		/// </summary>
 		/// <param name="frame">The new current frame</param>
 		public void GotoAndPlay(int frame) {
-			if ( clip ) {
-				clip.currentFrame = frame;
-			}
+			Assert.IsNotNull(clip);
+			clip.SetFrame(frame);
 			Play(false);
 		}
 
@@ -214,9 +199,8 @@ namespace FTRuntime {
 		/// <param name="sequence">The new sequence</param>
 		/// <param name="frame">The new current frame</param>
 		public void GotoAndPlay(string sequence, int frame) {
-			if ( clip ) {
-				clip.sequence = sequence;
-			}
+			Assert.IsNotNull(clip);
+			clip.SetSequence(sequence, frame);
 			GotoAndPlay(frame);
 		}
 
@@ -243,9 +227,8 @@ namespace FTRuntime {
 		/// </summary>
 		/// <param name="sequence">The new sequence</param>
 		public void Stop(string sequence) {
-			if ( clip ) {
-				clip.sequence = sequence;
-			}
+			Assert.IsNotNull(clip);
+			clip.SetSequence(sequence, 0);
 			Stop(true);
 		}
 
@@ -272,9 +255,8 @@ namespace FTRuntime {
 		/// </summary>
 		/// <param name="sequence">The new sequence</param>
 		public void Play(string sequence) {
-			if ( clip ) {
-				clip.sequence = sequence;
-			}
+			Assert.IsNotNull(clip);
+			clip.SetSequence(sequence, 0);
 			Play(true);
 		}
 
@@ -350,9 +332,9 @@ namespace FTRuntime {
 		bool NextClipFrame() {
 			switch ( playMode ) {
 			case PlayModes.Forward:
-				return clip ? clip.ToNextFrame() : false;
+				return clip.ToNextFrame();
 			case PlayModes.Backward:
-				return clip ? clip.ToPrevFrame() : false;
+				return clip.ToPrevFrame();
 			default:
 				throw new UnityException(string.Format(
 					"SwfClipController. Incorrect play mode: {0}",
@@ -365,10 +347,6 @@ namespace FTRuntime {
 		// Messages
 		//
 		// ---------------------------------------------------------------------
-
-		void Awake() {
-			_clip = GetComponent<SwfClip>();
-		}
 
 		void OnEnable() {
 			var swf_manager = SwfManager.GetInstance(true);

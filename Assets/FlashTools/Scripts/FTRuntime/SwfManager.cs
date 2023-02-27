@@ -13,9 +13,6 @@ namespace FTRuntime {
 		bool                            _isPaused        = false;
 		bool                            _useUnscaledDt   = false;
 		float                           _rateScale       = 1.0f;
-		HashSet<string>                 _groupPauses     = new HashSet<string>();
-		HashSet<string>                 _groupUnscales   = new HashSet<string>();
-		Dictionary<string, float>       _groupRateScales = new Dictionary<string, float>();
 
 		// ---------------------------------------------------------------------
 		//
@@ -34,8 +31,8 @@ namespace FTRuntime {
 			if ( !_instance ) {
 				_instance = FindObjectOfType<SwfManager>();
 				if ( allow_create && !_instance ) {
-					var go = new GameObject("[SwfManager]");
-					_instance = go.AddComponent<SwfManager>();
+					var go = new GameObject("[SwfManager]", typeof(SwfManager));
+					_instance = go.GetComponent<SwfManager>();
 				}
 			}
 			return _instance;
@@ -119,92 +116,6 @@ namespace FTRuntime {
 			isPlaying = true;
 		}
 
-		/// <summary>
-		/// Pause the group of animations by name
-		/// </summary>
-		/// <param name="group_name">Group name</param>
-		public void PauseGroup(string group_name) {
-			if ( !string.IsNullOrEmpty(group_name) ) {
-				_groupPauses.Add(group_name);
-			}
-		}
-
-		/// <summary>
-		/// Resume the group of animations by name
-		/// </summary>
-		/// <param name="group_name">Group name</param>
-		public void ResumeGroup(string group_name) {
-			if ( !string.IsNullOrEmpty(group_name) ) {
-				_groupPauses.Remove(group_name);
-			}
-		}
-
-		/// <summary>
-		/// Determines whether group of animations is paused
-		/// </summary>
-		/// <returns><c>true</c> if group is paused; otherwise, <c>false</c></returns>
-		/// <param name="group_name">Group name</param>
-		public bool IsGroupPaused(string group_name) {
-			return _groupPauses.Contains(group_name);
-		}
-
-
-		/// <summary>
-		/// Determines whether group of animations is playing
-		/// </summary>
-		/// <returns><c>true</c> if group is playing; otherwise, <c>false</c></returns>
-		/// <param name="group_name">Group name</param>
-		public bool IsGroupPlaying(string group_name) {
-			return !IsGroupPaused(group_name);
-		}
-
-		/// <summary>
-		/// Set the group of animations use unscaled delta time
-		/// </summary>
-		/// <param name="group_name">Group name</param>
-		/// <param name="yesno"><c>true</c> if group will use unscaled delta time; otherwise, <c>false</c></param>
-		public void SetGroupUseUnscaledDt(string group_name, bool yesno) {
-			if ( !string.IsNullOrEmpty(group_name) ) {
-				if ( yesno ) {
-					_groupUnscales.Add(group_name);
-				} else {
-					_groupUnscales.Remove(group_name);
-				}
-			}
-		}
-
-		/// <summary>
-		/// Determines whether group of animations uses unscaled delta time
-		/// </summary>
-		/// <returns><c>true</c> if group uses unscaled delta time; otherwise, <c>false</c></returns>
-		/// <param name="group_name">Group name</param>
-		public bool IsGroupUseUnscaledDt(string group_name) {
-			return _groupUnscales.Contains(group_name);
-		}
-
-		/// <summary>
-		/// Set the group of animations rate scale
-		/// </summary>
-		/// <param name="group_name">Group name</param>
-		/// <param name="rate_scale">Rate scale</param>
-		public void SetGroupRateScale(string group_name, float rate_scale) {
-			if ( !string.IsNullOrEmpty(group_name) ) {
-				_groupRateScales[group_name] = Mathf.Clamp(rate_scale, 0.0f, float.MaxValue);
-			}
-		}
-
-		/// <summary>
-		/// Get the group of animations rate scale
-		/// </summary>
-		/// <returns>The group rate scale</returns>
-		/// <param name="group_name">Group name</param>
-		public float GetGroupRateScale(string group_name) {
-			float rate_scale;
-			return _groupRateScales.TryGetValue(group_name, out rate_scale)
-				? rate_scale
-				: 1.0f;
-		}
-
 		// ---------------------------------------------------------------------
 		//
 		// Internal
@@ -265,29 +176,12 @@ namespace FTRuntime {
 			_controllers.Clear();
 		}
 
-		void LateUpdateClips() {
-			for ( int i = 0, e = _clips.Count; i < e; ++i ) {
-				var clip = _clips[i];
-				if ( clip ) {
-					clip.Internal_UpdateMesh();
-				}
-			}
-		}
-
 		void LateUpdateControllers(float scaled_dt, float unscaled_dt) {
 			_controllers.AssignTo(_safeUpdates);
 			for ( int i = 0, e = _safeUpdates.Count; i < e; ++i ) {
 				var ctrl = _safeUpdates[i];
 				if ( ctrl ) {
-					var group_name  = ctrl.groupName;
-					if ( string.IsNullOrEmpty(group_name) ) {
-						ctrl.Internal_Update(scaled_dt, unscaled_dt);
-					} else if ( IsGroupPlaying(group_name) ) {
-						var group_rate_scale = GetGroupRateScale(group_name);
-						ctrl.Internal_Update(
-							group_rate_scale * (IsGroupUseUnscaledDt(group_name) ? unscaled_dt : scaled_dt),
-							group_rate_scale * unscaled_dt);
-					}
+					ctrl.Internal_Update(scaled_dt, unscaled_dt);
 				}
 			}
 			_safeUpdates.Clear();
@@ -316,7 +210,6 @@ namespace FTRuntime {
 					rateScale * (useUnscaledDt ? Time.unscaledDeltaTime : Time.deltaTime),
 					rateScale * Time.unscaledDeltaTime);
 			}
-			LateUpdateClips();
 		}
 	}
 }

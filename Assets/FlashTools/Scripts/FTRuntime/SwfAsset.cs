@@ -1,9 +1,7 @@
 ﻿using UnityEngine;
 using FTRuntime.Internal;
-using System.Collections.Generic;
 
 namespace FTRuntime {
-	[PreferBinarySerialization]
 	public class SwfAsset : ScriptableObject {
 		[HideInInspector]
 		public byte[]          Data;

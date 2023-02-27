@@ -1,79 +1,104 @@
-﻿using UnityEngine;
-using FTRuntime.Internal;
+﻿using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace FTRuntime {
-	[PreferBinarySerialization]
 	public class SwfClipAsset : ScriptableObject {
-		[System.Serializable]
-		public class SubMeshData {
-			public int StartVertex;
-			public int IndexCount;
+		[Serializable]
+		public struct Frame {
+			public Mesh       Mesh;
+			public byte       MaterialGroupIndex;
+
+			public Frame(Mesh mesh, byte materialGroupIndex) {
+				Mesh  = mesh;
+				MaterialGroupIndex = materialGroupIndex;
+			}
 		}
 
-		[System.Serializable]
-		public class MeshData {
-			public SubMeshData[] SubMeshes = new SubMeshData[0];
-			public Vector2[]     Vertices  = new Vector2[0];
-			public uint[]        UVs       = new uint[0];
-			public uint[]        AddColors = new uint[0];
-			public uint[]        MulColors = new uint[0];
-		}
+		[Serializable]
+		public struct Sequence {
+			public string  Name;
+			public Frame[] Frames;
+			public Label[] Labels;
 
-		[System.Serializable]
-		public class Frame {
-			public string[]   Labels    = new string[0];
-			public MeshData   MeshData  = new MeshData();
-			public Material[] Materials = new Material[0];
-
-			public Frame() {
-				Labels    = new string[0];
-				MeshData  = new MeshData();
-				Materials = new Material[0];
+			public Sequence(string name, Frame[] frames, Label[] labels)
+			{
+				Name = name;
+				Frames = frames;
+				Labels = labels;
 			}
 
-			public Frame(string[] labels, MeshData mesh_data, Material[] materials) {
-				Labels    = labels;
-				MeshData  = mesh_data;
+			public bool IsValid => Frames != null;
+			public bool IsInvalid => Frames == null;
+		}
+
+		[Serializable]
+		public struct MaterialGroup
+		{
+			public Material[] Materials;
+
+			public MaterialGroup(Material[] materials)
+			{
 				Materials = materials;
 			}
+		}
 
-			Mesh _cachedMesh = null;
-			public Mesh CachedMesh {
-				get {
-					if ( !_cachedMesh ) {
-						_cachedMesh = new Mesh();
-						_cachedMesh.hideFlags = HideFlags.DontSaveInBuild | HideFlags.DontSaveInEditor;
-						SwfUtils.FillGeneratedMesh(_cachedMesh, MeshData);
-					}
-					return _cachedMesh;
-				}
+		[Serializable]
+		public struct Label
+		{
+			public uint   NameHash;
+			public ushort FrameIndex;
+
+			public Label(uint nameHash, ushort frameIndex)
+			{
+				NameHash = nameHash;
+				FrameIndex = frameIndex;
 			}
 		}
 
-		[System.Serializable]
-		public class Sequence {
-			public string      Name   = string.Empty;
-			public List<Frame> Frames = new List<Frame>();
+		public string          Name;
+		public Texture2D       Atlas;
+		public float           FrameRate;
+		public string          AssetGUID;
+		public Sequence[]      Sequences;
+		public MaterialGroup[] MaterialGroups;
+
+		public bool TryGetSequence(string name, out Sequence sequence)
+		{
+			foreach (var curSequence in Sequences)
+			{
+				if (curSequence.Name == name)
+				{
+					sequence = curSequence;
+					return true;
+				}
+			}
+
+			sequence = default;
+			return false;
 		}
 
-		[SwfReadOnly]
-		public string          Name;
-		[SwfReadOnly]
-		public Sprite          Sprite;
-		[SwfReadOnly]
-		public float           FrameRate;
-		[HideInInspector]
-		public string          AssetGUID;
-		[HideInInspector]
-		public List<Sequence>  Sequences;
+		public Sequence GetSequence(string name)
+		{
+			return TryGetSequence(name, out var sequence)
+				? sequence
+				: throw new KeyNotFoundException(name);
+		}
 
+		public Material[] GetMaterials(int materialGroupIndex)
+		{
+			return MaterialGroups[materialGroupIndex].Materials;
+		}
+
+#if UNITY_EDITOR
 		void Reset() {
 			Name      = string.Empty;
-			Sprite    = null;
+			Atlas     = null;
 			FrameRate = 1.0f;
 			AssetGUID = string.Empty;
-			Sequences = new List<Sequence>();
-		}
+			Sequences = Array.Empty<Sequence>();
+			MaterialGroups = Array.Empty<MaterialGroup>();
+	}
+#endif
 	}
 }

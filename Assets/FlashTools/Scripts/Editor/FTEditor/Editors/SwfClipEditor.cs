@@ -50,7 +50,7 @@ namespace FTEditor.Editors {
 		List<string> GetAllSequences(bool include_empty) {
 			var result       = new List<string>();
 			var result_clips = _clips
-				.Where (p => p.clip && p.clip.Sequences.Count > 0)
+				.Where (p => p.clip && p.clip.Sequences.Length > 0)
 				.Select(p => p.clip.Sequences)
 				.Where (p => p.All(s => !string.IsNullOrEmpty(s.Name)))
 				.ToList();
