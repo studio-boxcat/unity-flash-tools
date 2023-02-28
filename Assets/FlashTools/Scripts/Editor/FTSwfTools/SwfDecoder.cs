@@ -34,7 +34,7 @@ namespace FTSwfTools {
 					FileLength = OriginalHeader.FileLength};
 				var uncompressed_stream = new MemoryStream();
 				SwfShortHeader.Write(new_short_header, uncompressed_stream);
-				rest_stream.WriteTo(uncompressed_stream);
+				rest_stream.CopyTo(uncompressed_stream);
 				uncompressed_stream.Position = 0;
 				return uncompressed_stream;
 			default:

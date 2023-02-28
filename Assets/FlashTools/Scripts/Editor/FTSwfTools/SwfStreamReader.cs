@@ -1,8 +1,7 @@
 ﻿using System.IO;
 using System.Text;
 using System.Collections.Generic;
-
-using Ionic.Zlib;
+using System.IO.Compression;
 
 namespace FTSwfTools {
 	public class SwfStreamReader {
@@ -194,12 +193,10 @@ namespace FTSwfTools {
 			return val;
 		}
 
-		static public MemoryStream DecompressZBytes(byte[] compressed_bytes) {
-			var target     = new MemoryStream();
-			var zip_stream = new ZlibStream(target, CompressionMode.Decompress);
-			zip_stream.Write(compressed_bytes, 0, compressed_bytes.Length);
-			target.Position = 0;
-			return target;
+		static public Stream DecompressZBytes(byte[] compressed_bytes) {
+			var compressed_stream = new MemoryStream(compressed_bytes);
+			compressed_stream.Position = 2; // Skip magic bytes.
+			return new DeflateStream(compressed_stream, CompressionMode.Decompress);
 		}
 
 		static public SwfStreamReader DecompressZBytesToReader(byte[] compressd_bytes) {

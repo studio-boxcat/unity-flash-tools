@@ -4,11 +4,11 @@ using UnityEditor;
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Runtime.Serialization.Formatters.Binary;
 
-using Ionic.Zlib;
-using IZ = Ionic.Zlib;
+using CompressionLevel = System.IO.Compression.CompressionLevel;
 
 using FTRuntime;
 
@@ -161,7 +161,7 @@ namespace FTEditor {
 
 		static byte[] CompressBuffer(byte[] bytes, System.Action<float> progress_act) {
 			using ( var output = new MemoryStream() ) {
-				using ( var compressor = new ZlibStream(output, IZ.CompressionMode.Compress, IZ.CompressionLevel.Default) ) {
+				using ( var compressor = new DeflateStream(output, CompressionLevel.Optimal) ) {
 					var n = 0;
 					while ( n < bytes.Length ) {
 						var count = Mathf.Min(4 * 1024, bytes.Length - n);
@@ -178,14 +178,15 @@ namespace FTEditor {
 
 		static byte[] DecompressBuffer(byte[] compressed_bytes, System.Action<float> progress_act) {
 			using ( var input = new MemoryStream(compressed_bytes) ) {
-				using ( var decompressor = new ZlibStream(input, CompressionMode.Decompress) ) {
+				using ( var decompressor = new DeflateStream(input, CompressionMode.Decompress) ) {
 					using ( var output = new MemoryStream() ) {
 						int n;
 						var buffer = new byte[4 * 1024];
 						while ( (n = decompressor.Read(buffer, 0, buffer.Length)) != 0 ) {
 							output.Write(buffer, 0, n);
 							if ( progress_act != null ) {
-								progress_act((float)decompressor.Position / input.Length);
+								var pseudo_progress = output.Position / 5f; // Assume 5x compression.
+								progress_act(pseudo_progress / input.Length);
 							}
 						}
 						return output.ToArray();
