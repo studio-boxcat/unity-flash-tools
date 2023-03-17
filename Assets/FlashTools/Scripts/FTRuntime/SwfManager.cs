@@ -29,7 +29,7 @@ namespace FTRuntime {
 		/// <param name="allow_create">If set to <c>true</c> allow create</param>
 		public static SwfManager GetInstance(bool allow_create) {
 			if ( !_instance ) {
-				_instance = FindObjectOfType<SwfManager>();
+				_instance = FindAnyObjectByType<SwfManager>();
 				if ( allow_create && !_instance ) {
 					var go = new GameObject("[SwfManager]", typeof(SwfManager));
 					_instance = go.GetComponent<SwfManager>();
@@ -149,7 +149,7 @@ namespace FTRuntime {
 		}
 
 		void GrabEnabledClips() {
-			var clips = FindObjectsOfType<SwfClip>();
+			var clips = FindObjectsByType<SwfClip>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 			for ( int i = 0, e = clips.Length; i < e; ++i ) {
 				var clip = clips[i];
 				if ( clip.enabled ) {
@@ -159,7 +159,7 @@ namespace FTRuntime {
 		}
 
 		void GrabEnabledControllers() {
-			var controllers = FindObjectsOfType<SwfClipController>();
+			var controllers = FindObjectsByType<SwfClipController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 			for ( int i = 0, e = controllers.Length; i < e; ++i ) {
 				var controller = controllers[i];
 				if ( controller.enabled ) {
