@@ -474,20 +474,10 @@ namespace FTEditor.Postprocessors {
 				return new SwfBlendModeData(SwfBlendModeData.Types.Screen);
 			case SwfBlendMode.Mode.Lighten:
 				return new SwfBlendModeData(SwfBlendModeData.Types.Lighten);
-			case SwfBlendMode.Mode.Darken:
-				return new SwfBlendModeData(SwfBlendModeData.Types.Darken);
-			case SwfBlendMode.Mode.Difference:
-				return new SwfBlendModeData(SwfBlendModeData.Types.Difference);
 			case SwfBlendMode.Mode.Add:
 				return new SwfBlendModeData(SwfBlendModeData.Types.Add);
 			case SwfBlendMode.Mode.Subtract:
 				return new SwfBlendModeData(SwfBlendModeData.Types.Subtract);
-			case SwfBlendMode.Mode.Invert:
-				return new SwfBlendModeData(SwfBlendModeData.Types.Invert);
-			case SwfBlendMode.Mode.Overlay:
-				return new SwfBlendModeData(SwfBlendModeData.Types.Overlay);
-			case SwfBlendMode.Mode.Hardlight:
-				return new SwfBlendModeData(SwfBlendModeData.Types.Hardlight);
 			default:
 				if ( warning_log != null ) {
 					warning_log(string.Format(

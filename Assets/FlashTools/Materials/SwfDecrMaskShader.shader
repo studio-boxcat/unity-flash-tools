@@ -28,7 +28,6 @@ Shader "FlashTools/SwfDecrMask" {
 		CGPROGRAM
 			fixed4    _Tint;
 			sampler2D _MainTex;
-			sampler2D _GrabTexture;
 
 			#include "UnityCG.cginc"
 			#include "SwfBaseCG.cginc"

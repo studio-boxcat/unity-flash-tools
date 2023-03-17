@@ -12,8 +12,6 @@ namespace FTEditor {
 
 		const string SwfSimpleShaderName     = "SwfSimpleShader";
 		const string SwfMaskedShaderName     = "SwfMaskedShader";
-		const string SwfSimpleGrabShaderName = "SwfSimpleGrabShader";
-		const string SwfMaskedGrabShaderName = "SwfMaskedGrabShader";
 		const string SwfIncrMaskShaderName   = "SwfIncrMaskShader";
 		const string SwfDecrMaskShaderName   = "SwfDecrMaskShader";
 
@@ -156,12 +154,6 @@ namespace FTEditor {
 			case SwfBlendModeData.Types.Add:
 			case SwfBlendModeData.Types.Subtract:
 				return GetShaderByName(masked ? SwfMaskedShaderName : SwfSimpleShaderName);
-			case SwfBlendModeData.Types.Darken:
-			case SwfBlendModeData.Types.Difference:
-			case SwfBlendModeData.Types.Invert:
-			case SwfBlendModeData.Types.Overlay:
-			case SwfBlendModeData.Types.Hardlight:
-				return GetShaderByName(masked ? SwfMaskedGrabShaderName : SwfSimpleGrabShaderName);
 			default:
 				throw new UnityException(string.Format(
 					"SwfMaterialCache. Incorrect blend mode: {0}",
@@ -200,18 +192,6 @@ namespace FTEditor {
 				material.SetInt("_SrcBlend", (int)BlendMode.One);
 				material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
 				break;
-			case SwfBlendModeData.Types.Darken:
-				material.SetInt("_BlendOp" , (int)BlendOp.Add);
-				material.SetInt("_SrcBlend", (int)BlendMode.One);
-				material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-				material.EnableKeyword("SWF_DARKEN_BLEND");
-				break;
-			case SwfBlendModeData.Types.Difference:
-				material.SetInt("_BlendOp" , (int)BlendOp.Add);
-				material.SetInt("_SrcBlend", (int)BlendMode.One);
-				material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-				material.EnableKeyword("SWF_DIFFERENCE_BLEND");
-				break;
 			case SwfBlendModeData.Types.Add:
 				material.SetInt("_BlendOp" , (int)BlendOp.Add);
 				material.SetInt("_SrcBlend", (int)BlendMode.One);
@@ -221,24 +201,6 @@ namespace FTEditor {
 				material.SetInt("_BlendOp" , (int)BlendOp.ReverseSubtract);
 				material.SetInt("_SrcBlend", (int)BlendMode.One);
 				material.SetInt("_DstBlend", (int)BlendMode.One);
-				break;
-			case SwfBlendModeData.Types.Invert:
-				material.SetInt("_BlendOp" , (int)BlendOp.Add);
-				material.SetInt("_SrcBlend", (int)BlendMode.One);
-				material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-				material.EnableKeyword("SWF_INVERT_BLEND");
-				break;
-			case SwfBlendModeData.Types.Overlay:
-				material.SetInt("_BlendOp" , (int)BlendOp.Add);
-				material.SetInt("_SrcBlend", (int)BlendMode.One);
-				material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-				material.EnableKeyword("SWF_OVERLAY_BLEND");
-				break;
-			case SwfBlendModeData.Types.Hardlight:
-				material.SetInt("_BlendOp" , (int)BlendOp.Add);
-				material.SetInt("_SrcBlend", (int)BlendMode.One);
-				material.SetInt("_DstBlend", (int)BlendMode.OneMinusSrcAlpha);
-				material.EnableKeyword("SWF_HARDLIGHT_BLEND");
 				break;
 			default:
 				throw new UnityException(string.Format(

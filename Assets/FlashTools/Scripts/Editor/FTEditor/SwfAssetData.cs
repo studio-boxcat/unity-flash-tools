@@ -195,13 +195,8 @@ namespace FTEditor {
 			Multiply,
 			Screen,
 			Lighten,
-			Darken,     // GrabPass
-			Difference, // GrabPass
 			Add,
 			Subtract,
-			Invert,     // GrabPass
-			Overlay,    // GrabPass
-			Hardlight   // GrabPass
 		}
 		public Types type;
 
