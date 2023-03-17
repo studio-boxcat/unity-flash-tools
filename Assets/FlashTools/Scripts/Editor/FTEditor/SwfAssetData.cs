@@ -223,13 +223,7 @@ namespace FTEditor {
 		public SwfVec4Data mulColor;
 		public SwfVec4Data addColor;
 
-		public static SwfColorTransData identity {
-			get {
-				return new SwfColorTransData{
-					mulColor = SwfVec4Data.one,
-					addColor = SwfVec4Data.zero};
-			}
-		}
+		public static readonly SwfColorTransData identity = new() { mulColor = SwfVec4Data.one, addColor = SwfVec4Data.zero };
 
 		public static SwfColorTransData operator*(
 			SwfColorTransData a, SwfColorTransData b)
@@ -284,8 +278,8 @@ namespace FTEditor {
 		public ushort                Redirect    = 0;
 		public int                   RealWidth   = 0;
 		public int                   RealHeight  = 0;
-		public SwfRectData           SourceRect  = SwfRectData.identity;
-		public SwfRectIntData        TrimmedRect = SwfRectIntData.identity;
+		public SwfRectIntData        SourceRect  = default;
+		public SwfRectIntData        TrimmedRect = default;
 	}
 
 	[System.Serializable]

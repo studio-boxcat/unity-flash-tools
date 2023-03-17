@@ -1,8 +1,11 @@
 ﻿using UnityEngine;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Unity.Collections;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine.Assertions;
+using UnityEngine.Rendering;
 
 namespace FTEditor.Postprocessors
 {
@@ -16,7 +19,7 @@ namespace FTEditor.Postprocessors
     {
         public SubMeshData[] SubMeshes;
         public Vector2[] Vertices;
-        public SwfRectData[] Rects;
+        public SwfRectIntData[] Rects;
         public SwfVec4Data[] AddColors;
         public SwfVec4Data[] MulColors;
 
@@ -58,71 +61,91 @@ namespace FTEditor.Postprocessors
 
             mesh.subMeshCount = mesh_data.SubMeshes.Length;
 
-            var verts = GeneratedMeshCache.AllocateVertices(mesh_data.Vertices);
-            mesh.SetVertices(verts);
+            var vertexCount = mesh_data.Vertices.Length;
+
+            mesh.SetVertexBufferParams(
+                vertexCount,
+                new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float16, 2),
+                // X: 12 bits, Y: 12 bits, A: 8 bits.
+                new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.UInt32, 1));
+
+            var verts = new NativeArray<VertexData>(vertexCount, Allocator.Temp);
+            SetVertices(mesh_data.Vertices, verts);
+            SetUVs(mesh_data.Rects, mesh_data.MulColors, verts);
+            mesh.SetVertexBufferData(verts, 0, 0, vertexCount);
             verts.Dispose();
 
             for (var i = 0; i < mesh_data.SubMeshes.Length; ++i)
             {
-                var indices = GeneratedMeshCache.AllocateTriangles(
+                var indices = AllocateTriangles(
                     mesh_data.SubMeshes[i].StartVertex,
                     mesh_data.SubMeshes[i].IndexCount);
                 mesh.SetTriangles(indices.ToArray(), i);
                 indices.Dispose();
             }
-
-            var uvs = GeneratedMeshCache.AllocateUVs(mesh_data.Rects, mesh_data.MulColors);
-            mesh.SetUVs(0, uvs);
-            uvs.Dispose();
         }
 
-        static class GeneratedMeshCache
+        [StructLayout(LayoutKind.Sequential)]
+        struct VertexData
         {
-            public static NativeArray<Vector3> AllocateVertices(Vector2[] vertices)
+            public half2 Position;
+            // X: 12 bits, Y: 12 bits, A: 8 bits.
+            public uint UVA;
+        }
+
+        static void SetVertices(Vector2[] vertices, NativeArray<VertexData> verts)
+        {
+            for (var i = 0; i < vertices.Length; ++i)
             {
-                var arr = new NativeArray<Vector3>(vertices.Length, Allocator.Temp);
-                for (var i = 0; i < vertices.Length; ++i)
-                    arr[i] = vertices[i];
-                return arr;
+                var vert = verts[i];
+                vert.Position = new half2(vertices[i].x, vertices[i].y);
+                verts[i] = vert;
+            }
+        }
+
+        static void SetUVs(SwfRectIntData[] rects, SwfVec4Data[] mulcolors, NativeArray<VertexData> verts)
+        {
+            for (var i = 0; i < rects.Length; ++i)
+            {
+                var rect = rects[i];
+                Assert.IsTrue(mulcolors[i].w is >= 0 and <= 1);
+                var a = (byte) Mathf.RoundToInt(mulcolors[i].w * byte.MaxValue);
+
+                SetUV(i * 4, rect.xMin, rect.yMin, a);
+                SetUV(i * 4 + 1, rect.xMax, rect.yMin, a);
+                SetUV(i * 4 + 2, rect.xMax, rect.yMax, a);
+                SetUV(i * 4 + 3, rect.xMin, rect.yMax, a);
             }
 
-            public static NativeArray<int> AllocateTriangles(int start_vertex, int index_count)
+            void SetUV(int i, int x, int y, byte a)
             {
-                Assert.AreEqual(0, index_count % 6);
+                Assert.IsTrue(x is >= 0 and <= 4095); // 12 bits.
+                Assert.IsTrue(y is >= 0 and <= 4095); // 12 bits.
 
-                var arr = new NativeArray<int>(index_count, Allocator.Temp);
+                var vert = verts[i];
+                vert.UVA = (uint) (x | (y << 12) | (a << 24));
+                verts[i] = vert;
+            }
+        }
 
-                for (var i = 0; i < index_count / 6; i++)
-                {
-                    arr[i * 6] = start_vertex + 2;
-                    arr[i * 6 + 1] = start_vertex + 1;
-                    arr[i * 6 + 2] = start_vertex + 0;
-                    arr[i * 6 + 3] = start_vertex + 0;
-                    arr[i * 6 + 4] = start_vertex + 3;
-                    arr[i * 6 + 5] = start_vertex + 2;
-                    start_vertex += 4;
-                }
+        static NativeArray<ushort> AllocateTriangles(int start_vertex, int index_count)
+        {
+            Assert.AreEqual(0, index_count % 6);
 
-                return arr;
+            var arr = new NativeArray<ushort>(index_count, Allocator.Temp);
+
+            for (var i = 0; i < index_count / 6; i++)
+            {
+                arr[i * 6] = (ushort) (start_vertex + 2);
+                arr[i * 6 + 1] = (ushort) (start_vertex + 1);
+                arr[i * 6 + 2] = (ushort) (start_vertex + 0);
+                arr[i * 6 + 3] = (ushort) (start_vertex + 0);
+                arr[i * 6 + 4] = (ushort) (start_vertex + 3);
+                arr[i * 6 + 5] = (ushort) (start_vertex + 2);
+                start_vertex += 4;
             }
 
-            public static NativeArray<Vector3> AllocateUVs(SwfRectData[] rects, SwfVec4Data[] mulcolors)
-            {
-                var arr = new NativeArray<Vector3>(rects.Length * 4, Allocator.Temp);
-
-                for (var i = 0; i < rects.Length; ++i)
-                {
-                    var rect = rects[i];
-                    var a = mulcolors[i].w;
-
-                    arr[i * 4] = new Vector3(rect.xMin, rect.yMin, a);
-                    arr[i * 4 + 1] = new Vector3(rect.xMax, rect.yMin, a);
-                    arr[i * 4 + 2] = new Vector3(rect.xMax, rect.yMax, a);
-                    arr[i * 4 + 3] = new Vector3(rect.xMin, rect.yMax, a);
-                }
-
-                return arr;
-            }
+            return arr;
         }
     }
 }

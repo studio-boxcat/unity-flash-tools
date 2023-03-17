@@ -109,7 +109,7 @@ namespace FTEditor.Postprocessors {
 			for ( var i = 0; i < data.Bitmaps.Count; ++i ) {
 				var bitmap        = data.Bitmaps[i];
 				var texture_key   = bitmap.Redirect > 0 ? bitmap.Redirect : bitmap.Id;
-				bitmap.SourceRect = SwfRectData.FromURect(
+				bitmap.SourceRect = SwfRectIntData.FromURect(
 					rects[textures.FindIndex(p => p.Key == texture_key)]);
 			}
 			return data;
@@ -147,10 +147,10 @@ namespace FTEditor.Postprocessors {
 
 		struct BitmapsAtlasInfo {
 			public Texture2D Atlas;
-			public Rect[]    Rects;
+			public RectInt[]    Rects;
 		}
 
-		static Rect[] PackAndSaveBitmapsAtlas(
+		static RectInt[] PackAndSaveBitmapsAtlas(
 			string atlas_path, Texture2D[] textures, SwfSettingsData settings)
 		{
 			_progressBar.UpdateProgress("pack bitmaps", 0.25f);
@@ -168,45 +168,8 @@ namespace FTEditor.Postprocessors {
 			Texture2D[] textures, SwfSettingsData settings)
 		{
 			var atlas_padding  = Mathf.Max(0,  settings.AtlasPadding);
-			/*
-			var max_atlas_size = Mathf.Max(32, settings.AtlasPowerOfTwo
-				? Mathf.ClosestPowerOfTwo(settings.MaxAtlasSize)
-				: settings.MaxAtlasSize);
-			var atlas = new Texture2D(0, 0);
-			var rects = atlas.PackTextures(textures, atlas_padding, max_atlas_size);
-			while ( rects == null ) {
-				max_atlas_size = Mathf.NextPowerOfTwo(max_atlas_size + 1);
-				rects = atlas.PackTextures(textures, atlas_padding, max_atlas_size);
-			}
-			*/
 			var (atlas, rects) = TexturePack.PackTextures(textures, atlas_padding);
-			return settings.AtlasForceSquare && atlas.width != atlas.height
-				? BitmapsAtlasToSquare(atlas, rects)
-				: new BitmapsAtlasInfo{Atlas = atlas, Rects = rects};
-		}
-
-		static BitmapsAtlasInfo BitmapsAtlasToSquare(Texture2D atlas, Rect[] rects) {
-			var atlas_size  = Mathf.Max(atlas.width, atlas.height);
-			var atlas_scale = new Vector2(atlas.width, atlas.height) / atlas_size;
-			var new_atlas   = new Texture2D(atlas_size, atlas_size, TextureFormat.ARGB32, false);
-			for ( var i = 0; i < rects.Length; ++i ) {
-				var new_position = rects[i].position;
-				new_position.Scale(atlas_scale);
-				var new_size = rects[i].size;
-				new_size.Scale(atlas_scale);
-				rects[i] = new Rect(new_position, new_size);
-			}
-			var fill_pixels = new Color32[atlas_size * atlas_size];
-			for ( var i = 0; i < atlas_size * atlas_size; ++i ) {
-				fill_pixels[i] = new Color(1,1,1,0);
-			}
-			new_atlas.SetPixels32(fill_pixels);
-			new_atlas.SetPixels32(0, 0, atlas.width, atlas.height, atlas.GetPixels32());
-			new_atlas.Apply();
-			GameObject.DestroyImmediate(atlas, true);
-			return new BitmapsAtlasInfo{
-				Atlas = new_atlas,
-				Rects = rects};
+			return new BitmapsAtlasInfo{Atlas = atlas, Rects = rects};
 		}
 
 		static void RevertTexturePremultipliedAlpha(Texture2D texture) {
@@ -235,9 +198,7 @@ namespace FTEditor.Postprocessors {
 			atlas_importer.textureType         = TextureImporterType.Sprite;
 			atlas_importer.spriteImportMode    = SpriteImportMode.Single;
 			atlas_importer.spritePixelsPerUnit = asset.Settings.PixelsPerUnit;
-			atlas_importer.mipmapEnabled       = asset.Settings.GenerateMipMaps;
-			atlas_importer.filterMode          = SwfAtlasFilterToImporterFilter(asset.Settings.AtlasTextureFilter);
-			atlas_importer.textureCompression  = SwfAtlasFormatToImporterCompression(asset.Settings.AtlasTextureFormat);
+			atlas_importer.filterMode          = FilterMode.Bilinear;
 
 			var atlas_settings = new TextureImporterSettings();
 			atlas_importer.ReadTextureSettings(atlas_settings);
@@ -256,38 +217,6 @@ namespace FTEditor.Postprocessors {
 					atlas_path));
 			}
 			return atlas_importer;
-		}
-
-		static FilterMode SwfAtlasFilterToImporterFilter(
-			SwfSettingsData.AtlasFilter filter)
-		{
-			switch ( filter ) {
-			case SwfSettingsData.AtlasFilter.Point:
-				return FilterMode.Point;
-			case SwfSettingsData.AtlasFilter.Bilinear:
-				return FilterMode.Bilinear;
-			case SwfSettingsData.AtlasFilter.Trilinear:
-				return FilterMode.Trilinear;
-			default:
-				throw new UnityException(string.Format(
-					"incorrect swf atlas filter ({0})",
-					filter));
-			}
-		}
-
-		static TextureImporterCompression SwfAtlasFormatToImporterCompression(
-			SwfSettingsData.AtlasFormat format)
-		{
-			switch ( format ) {
-			case SwfSettingsData.AtlasFormat.AutomaticCompressed:
-				return TextureImporterCompression.Compressed;
-			case SwfSettingsData.AtlasFormat.AutomaticTruecolor:
-				return TextureImporterCompression.Uncompressed;
-			default:
-				throw new UnityException(string.Format(
-					"incorrect swf atlas format ({0})",
-					format));
-			}
 		}
 
 		// ---------------------------------------------------------------------
@@ -417,7 +346,7 @@ namespace FTEditor.Postprocessors {
 		static SwfClipAsset.Frame BakeClipFrame(
 			SwfAsset asset, SwfAssetData data, SwfFrameData frame, ConvertContext context)
 		{
-			List<SwfRectData> baked_rects     = new List<SwfRectData>();
+			List<SwfRectIntData> baked_rects  = new List<SwfRectIntData>();
 			List<SwfVec4Data> baked_mulcolors = new List<SwfVec4Data>();
 			List<SwfVec4Data> baked_addcolors = new List<SwfVec4Data>();
 			List<Vector2>    baked_vertices  = new List<Vector2>();

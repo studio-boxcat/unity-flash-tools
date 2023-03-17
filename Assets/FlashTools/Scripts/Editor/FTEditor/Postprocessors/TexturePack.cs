@@ -6,7 +6,7 @@ using UnityEngine.Assertions;
 
 public class TexturePack
 {
-    public static (Texture2D, Rect[]) PackTextures(Texture2D[] textures, int atlasPadding)
+    public static (Texture2D, RectInt[]) PackTextures(Texture2D[] textures, int atlasPadding)
     {
         var srcRects = textures.Select(
             x => new RectInt(0, 0, x.width + atlasPadding * 2, x.height + atlasPadding * 2)).ToList();
@@ -32,14 +32,7 @@ public class TexturePack
                 atlas, 0, 0, dstRects[i].x, dstRects[i].y);
         }
 
-        var uvRects = new Rect[dstRects.Length];
-        for (var i = 0; i < dstRects.Length; i++)
-        {
-            var rect = dstRects[i];
-            uvRects[i] = new Rect((Vector2) rect.min / size, (Vector2) rect.size / size);
-        }
-
-        return (atlas, uvRects);
+        return (atlas, dstRects);
     }
 
     static (int, RectInt[]) BinPack(List<RectInt> srcRects)
