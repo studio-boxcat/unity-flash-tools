@@ -83,6 +83,8 @@ namespace FTEditor.Postprocessors
                 mesh.SetTriangles(indices.ToArray(), i);
                 indices.Dispose();
             }
+
+            SetBounds(mesh_data.Vertices, mesh);
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -126,6 +128,14 @@ namespace FTEditor.Postprocessors
                 vert.UVA = (uint) (x | (y << 12) | (a << 24));
                 verts[i] = vert;
             }
+        }
+
+        static void SetBounds(Vector2[] vertices, Mesh mesh)
+        {
+            var b = new Bounds();
+            foreach (var vert in vertices)
+                b.Encapsulate(vert);
+            mesh.bounds = b;
         }
 
         static NativeArray<ushort> AllocateTriangles(int start_vertex, int index_count)
