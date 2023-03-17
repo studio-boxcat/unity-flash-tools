@@ -278,7 +278,7 @@ namespace FTEditor {
 		public ushort                Redirect    = 0;
 		public int                   RealWidth   = 0;
 		public int                   RealHeight  = 0;
-		public SwfRectIntData        SourceRect  = default;
+		public SwfRectData           SourceRect  = default;
 		public SwfRectIntData        TrimmedRect = default;
 	}
 

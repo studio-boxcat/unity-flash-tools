@@ -35,14 +35,12 @@ struct swf_mask_v2f_t {
 // vert functions
 //
 
-float2    _MainTex_TexelSize;
-
 inline swf_v2f_t swf_vert(swf_appdata_t IN) {
 	swf_v2f_t OUT;
 	OUT.vertex    = UnityObjectToClipPos(IN.vertex);
 	// Unpack uva into u (12 bits), v (12 bits), and a (8 bits).
-	OUT.uv.x      = (IN.uva & 0x00000FFF) * _MainTex_TexelSize.x;
-	OUT.uv.y      = ((IN.uva & 0x00FFF000) >> 12) * _MainTex_TexelSize.y;
+	OUT.uv.x      = (IN.uva & 0x00000FFF) / 4096.0;
+	OUT.uv.y      = ((IN.uva & 0x00FFF000) >> 12) / 4096.0;
 	OUT.a         = ((IN.uva & 0xFF000000) >> 24) / 255.0;
 	return OUT;
 }
@@ -51,8 +49,8 @@ inline swf_mask_v2f_t swf_mask_vert(swf_mask_appdata_t IN) {
 	swf_mask_v2f_t OUT;
 	OUT.vertex    = UnityObjectToClipPos(IN.vertex);
 	// Unpack uva into u (12 bits), v (12 bits), and a (8 bits).
-	OUT.uv.x      = (IN.uva & 0x00000FFF) * _MainTex_TexelSize.x;
-	OUT.uv.y      = ((IN.uva & 0x00FFF000) >> 12) * _MainTex_TexelSize.y;
+	OUT.uv.x      = (IN.uva & 0x00000FFF) / 4096.0;
+	OUT.uv.y      = ((IN.uva & 0x00FFF000) >> 12) / 4096.0;
 	return OUT;
 }
 

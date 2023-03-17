@@ -19,7 +19,7 @@ namespace FTEditor.Postprocessors
     {
         public SubMeshData[] SubMeshes;
         public Vector2[] Vertices;
-        public SwfRectIntData[] Rects;
+        public SwfRectData[] Rects;
         public SwfVec4Data[] AddColors;
         public SwfVec4Data[] MulColors;
 
@@ -105,7 +105,7 @@ namespace FTEditor.Postprocessors
             }
         }
 
-        static void SetUVs(SwfRectIntData[] rects, SwfVec4Data[] mulcolors, NativeArray<VertexData> verts)
+        static void SetUVs(SwfRectData[] rects, SwfVec4Data[] mulcolors, NativeArray<VertexData> verts)
         {
             for (var i = 0; i < rects.Length; ++i)
             {
@@ -119,13 +119,18 @@ namespace FTEditor.Postprocessors
                 SetUV(i * 4 + 3, rect.xMin, rect.yMax, a);
             }
 
-            void SetUV(int i, int x, int y, byte a)
+            void SetUV(int i, float x, float y, byte a)
             {
-                Assert.IsTrue(x is >= 0 and <= 4095); // 12 bits.
-                Assert.IsTrue(y is >= 0 and <= 4095); // 12 bits.
+                Assert.IsTrue(x is >= 0 and < 1);
+                Assert.IsTrue(y is >= 0 and < 1);
+
+                var xInt = Mathf.RoundToInt(x * 4096);
+                var yInt = Mathf.RoundToInt(y * 4096);
+                Assert.AreNotEqual(xInt, 4096);
+                Assert.AreNotEqual(yInt, 4096);
 
                 var vert = verts[i];
-                vert.UVA = (uint) (x | (y << 12) | (a << 24));
+                vert.UVA = (uint) (xInt | (yInt << 12) | (a << 24));
                 verts[i] = vert;
             }
         }

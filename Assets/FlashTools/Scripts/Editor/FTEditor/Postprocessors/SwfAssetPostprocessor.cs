@@ -109,7 +109,7 @@ namespace FTEditor.Postprocessors {
 			for ( var i = 0; i < data.Bitmaps.Count; ++i ) {
 				var bitmap        = data.Bitmaps[i];
 				var texture_key   = bitmap.Redirect > 0 ? bitmap.Redirect : bitmap.Id;
-				bitmap.SourceRect = SwfRectIntData.FromURect(
+				bitmap.SourceRect = SwfRectData.FromURect(
 					rects[textures.FindIndex(p => p.Key == texture_key)]);
 			}
 			return data;
@@ -147,10 +147,10 @@ namespace FTEditor.Postprocessors {
 
 		struct BitmapsAtlasInfo {
 			public Texture2D Atlas;
-			public RectInt[]    Rects;
+			public Rect[]    Rects;
 		}
 
-		static RectInt[] PackAndSaveBitmapsAtlas(
+		static Rect[] PackAndSaveBitmapsAtlas(
 			string atlas_path, Texture2D[] textures, SwfSettingsData settings)
 		{
 			_progressBar.UpdateProgress("pack bitmaps", 0.25f);
@@ -346,7 +346,7 @@ namespace FTEditor.Postprocessors {
 		static SwfClipAsset.Frame BakeClipFrame(
 			SwfAsset asset, SwfAssetData data, SwfFrameData frame, ConvertContext context)
 		{
-			List<SwfRectIntData> baked_rects  = new List<SwfRectIntData>();
+			List<SwfRectData> baked_rects  = new List<SwfRectData>();
 			List<SwfVec4Data> baked_mulcolors = new List<SwfVec4Data>();
 			List<SwfVec4Data> baked_addcolors = new List<SwfVec4Data>();
 			List<Vector2>    baked_vertices  = new List<Vector2>();
