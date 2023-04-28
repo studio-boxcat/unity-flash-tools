@@ -66,8 +66,9 @@ namespace FTEditor.Postprocessors
             mesh.SetVertexBufferParams(
                 vertexCount,
                 new VertexAttributeDescriptor(VertexAttribute.Position, VertexAttributeFormat.Float16, 2),
-                // X: 12 bits, Y: 12 bits, A: 8 bits.
-                new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.UInt32, 1));
+                // Use 4 half to assign 4 bytes.
+                // X: U, Y: V, Z: A, W: Unused.
+                new VertexAttributeDescriptor(VertexAttribute.TexCoord0, VertexAttributeFormat.Float16, 4));
 
             var verts = new NativeArray<VertexData>(vertexCount, Allocator.Temp);
             SetVertices(mesh_data.Vertices, verts);
@@ -91,8 +92,7 @@ namespace FTEditor.Postprocessors
         struct VertexData
         {
             public half2 Position;
-            // X: 12 bits, Y: 12 bits, A: 8 bits.
-            public uint UVA;
+            public half4 UVA;
         }
 
         static void SetVertices(Vector2[] vertices, NativeArray<VertexData> verts)
@@ -111,7 +111,7 @@ namespace FTEditor.Postprocessors
             {
                 var rect = rects[i];
                 Assert.IsTrue(mulcolors[i].w is >= 0 and <= 1);
-                var a = (byte) Mathf.RoundToInt(mulcolors[i].w * byte.MaxValue);
+                var a = mulcolors[i].w;
 
                 SetUV(i * 4, rect.xMin, rect.yMin, a);
                 SetUV(i * 4 + 1, rect.xMax, rect.yMin, a);
@@ -119,18 +119,13 @@ namespace FTEditor.Postprocessors
                 SetUV(i * 4 + 3, rect.xMin, rect.yMax, a);
             }
 
-            void SetUV(int i, float x, float y, byte a)
+            void SetUV(int i, float x, float y, float a)
             {
                 Assert.IsTrue(x is >= 0 and < 1);
                 Assert.IsTrue(y is >= 0 and < 1);
 
-                var xInt = Mathf.RoundToInt(x * 4096);
-                var yInt = Mathf.RoundToInt(y * 4096);
-                Assert.AreNotEqual(xInt, 4096);
-                Assert.AreNotEqual(yInt, 4096);
-
                 var vert = verts[i];
-                vert.UVA = (uint) (xInt | (yInt << 12) | (a << 24));
+                vert.UVA = new half4(x, y, a, 0);
                 verts[i] = vert;
             }
         }

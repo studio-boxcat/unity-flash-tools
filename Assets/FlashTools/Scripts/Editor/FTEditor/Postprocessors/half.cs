@@ -62,4 +62,20 @@ namespace Unity.Mathematics
             this.y = new half(y);
         }
     }
+
+    struct half4
+    {
+        public half x;
+        public half y;
+        public half z;
+        public half w;
+
+        public half4(float x, float y, float z, float w)
+        {
+            this.x = new half(x);
+            this.y = new half(y);
+            this.z = new half(z);
+            this.w = new half(w);
+        }
+    }
 }

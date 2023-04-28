@@ -7,28 +7,23 @@
 
 struct swf_appdata_t {
 	float4 vertex    : POSITION;
-	uint uva         : TEXCOORD0;
-};
-
-struct swf_grab_appdata_t {
-	float4 vertex    : POSITION;
-	uint uva         : TEXCOORD0;
+	half3 uva        : TEXCOORD0;
 };
 
 struct swf_mask_appdata_t {
 	float4 vertex    : POSITION;
-	uint uva         : TEXCOORD0;
+	half3 uva        : TEXCOORD0;
 };
 
 struct swf_v2f_t {
 	float4 vertex    : SV_POSITION;
-	float2 uv        : TEXCOORD0;
+	half2 uv         : TEXCOORD0;
 	fixed a          : TEXCOORD1;
 };
 
 struct swf_mask_v2f_t {
 	float4 vertex    : SV_POSITION;
-	float2 uv        : TEXCOORD0;
+	half2 uv         : TEXCOORD0;
 };
 
 //
@@ -38,19 +33,17 @@ struct swf_mask_v2f_t {
 inline swf_v2f_t swf_vert(swf_appdata_t IN) {
 	swf_v2f_t OUT;
 	OUT.vertex    = UnityObjectToClipPos(IN.vertex);
-	// Unpack uva into u (12 bits), v (12 bits), and a (8 bits).
-	OUT.uv.x      = (IN.uva & 0x00000FFF) / 4096.0;
-	OUT.uv.y      = ((IN.uva & 0x00FFF000) >> 12) / 4096.0;
-	OUT.a         = ((IN.uva & 0xFF000000) >> 24) / 255.0;
+	OUT.uv.x      = IN.uva.x;
+	OUT.uv.y      = IN.uva.y;
+	OUT.a         = IN.uva.z;
 	return OUT;
 }
 
 inline swf_mask_v2f_t swf_mask_vert(swf_mask_appdata_t IN) {
 	swf_mask_v2f_t OUT;
 	OUT.vertex    = UnityObjectToClipPos(IN.vertex);
-	// Unpack uva into u (12 bits), v (12 bits), and a (8 bits).
-	OUT.uv.x      = (IN.uva & 0x00000FFF) / 4096.0;
-	OUT.uv.y      = ((IN.uva & 0x00FFF000) >> 12) / 4096.0;
+	OUT.uv.x      = IN.uva.x;
+	OUT.uv.y      = IN.uva.y;
 	return OUT;
 }
 
