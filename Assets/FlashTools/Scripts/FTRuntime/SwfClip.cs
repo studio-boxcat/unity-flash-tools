@@ -5,7 +5,7 @@ using UnityEngine.Assertions;
 
 namespace FTRuntime {
 	[AddComponentMenu("FlashTools/SwfClip")]
-	[ExecuteInEditMode, DisallowMultipleComponent]
+	[ExecuteAlways, DisallowMultipleComponent]
 	[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(SortingGroup))]
 	public class SwfClip : MonoBehaviour {
 
@@ -47,7 +47,7 @@ namespace FTRuntime {
 		/// </summary>
 		/// <value>The tint color</value>
 		public Color tint {
-			get { return _tint; }
+			get => _tint;
 			set {
 				_tint = value;
 				UpdatePropTint(value);
@@ -157,27 +157,47 @@ namespace FTRuntime {
 		/// Rewind current sequence to previous frame
 		/// </summary>
 		/// <returns><c>true</c>, if animation was rewound, <c>false</c> otherwise</returns>
-		public bool ToPrevFrame()
-		{
-			if (_currentFrame == 0)
-				return false;
-
-			--_currentFrame;
-			UpdateMeshAndMaterial();
-			return true;
-		}
+		public bool ToPrevFrame() => UpdateFrame_Clamp(-1);
 
 		/// <summary>
 		/// Rewind current sequence to next frame
 		/// </summary>
 		/// <returns><c>true</c>, if animation was rewound, <c>false</c> otherwise</returns>
-		public bool ToNextFrame() {
-			if (_currentFrame >= frameCount - 1)
-				return false;
+		public bool ToNextFrame() => UpdateFrame_Clamp(1);
 
-			++_currentFrame;
+		public void UpdateFrame_Loop(int frameDelta)
+		{
+			var newFrame = (_currentFrame + frameDelta) % frameCount;
+			if (newFrame < 0) newFrame += frameCount;
+			if (_currentFrame == newFrame) return;
+			_currentFrame = newFrame;
 			UpdateMeshAndMaterial();
-			return true;
+		}
+
+		public bool UpdateFrame_Clamp(int frameDelta)
+		{
+			// Calculate new frame.
+			var newFrame = _currentFrame + frameDelta;
+			var outOfRange = false;
+			if (newFrame < 0)
+			{
+				newFrame = 0;
+				outOfRange = true;
+			}
+			else if (newFrame >= frameCount)
+			{
+				newFrame = frameCount - 1;
+				outOfRange = true;
+			}
+
+			// Update mesh and material if frame changed.
+			if (_currentFrame != newFrame)
+			{
+				_currentFrame = newFrame;
+				UpdateMeshAndMaterial();
+			}
+
+			return !outOfRange;
 		}
 
 		// ---------------------------------------------------------------------
@@ -268,20 +288,6 @@ namespace FTRuntime {
 
 		void Awake() {
 			Internal_UpdateAllProperties();
-		}
-
-		void OnEnable() {
-			var swf_manager = SwfManager.GetInstance(true);
-			if ( swf_manager ) {
-				swf_manager.AddClip(this);
-			}
-		}
-
-		void OnDisable() {
-			var swf_manager = SwfManager.GetInstance(false);
-			if ( swf_manager ) {
-				swf_manager.RemoveClip(this);
-			}
 		}
 
 #if UNITY_EDITOR

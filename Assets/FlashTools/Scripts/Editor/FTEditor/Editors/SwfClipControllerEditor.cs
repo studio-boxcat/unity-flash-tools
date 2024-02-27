@@ -7,11 +7,11 @@ using System.Collections.Generic;
 using FTRuntime;
 
 namespace FTEditor.Editors {
-	[CustomEditor(typeof(SwfClipController)), CanEditMultipleObjects]
+	[CustomEditor(typeof(SwfClipPhasor)), CanEditMultipleObjects]
 	class SwfClipControllerEditor : Editor {
-		List<SwfClipController> _controllers = new List<SwfClipController>();
+		List<SwfClipPhasor> _controllers = new List<SwfClipPhasor>();
 
-		void AllControllersForeach(System.Action<SwfClipController> act) {
+		void AllControllersForeach(System.Action<SwfClipPhasor> act) {
 			foreach ( var controller in _controllers ) {
 				act(controller);
 			}
@@ -42,7 +42,7 @@ namespace FTEditor.Editors {
 		// ---------------------------------------------------------------------
 
 		void OnEnable() {
-			_controllers = targets.OfType<SwfClipController>().ToList();
+			_controllers = targets.OfType<SwfClipPhasor>().ToList();
 		}
 
 		public override void OnInspectorGUI() {

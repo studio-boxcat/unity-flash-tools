@@ -21,18 +21,6 @@ namespace FTRuntime.Internal {
 			}
 		}
 
-		//
-		// GetComponent<T>
-		//
-
-		public static T GetComponent<T>(GameObject obj, bool allow_create) where T : Component {
-			var comp = obj.GetComponent<T>();
-			if ( allow_create && !comp ) {
-				comp = obj.AddComponent<T>();
-			}
-			return comp;
-		}
-
 		// ShaderPropsCache
 
 		static class ShaderPropsCache {

@@ -2,13 +2,13 @@
 
 namespace FTRuntime.Yields {
 	public class SwfWaitStopPlaying : CustomYieldInstruction {
-		SwfClipController _waitCtrl;
+		SwfClipPhasor _waitCtrl;
 
-		public SwfWaitStopPlaying(SwfClipController ctrl) {
+		public SwfWaitStopPlaying(SwfClipPhasor ctrl) {
 			Subscribe(ctrl);
 		}
 
-		public SwfWaitStopPlaying Reuse(SwfClipController ctrl) {
+		public SwfWaitStopPlaying Reuse(SwfClipPhasor ctrl) {
 			return Subscribe(ctrl);
 		}
 
@@ -24,7 +24,7 @@ namespace FTRuntime.Yields {
 		//
 		// ---------------------------------------------------------------------
 
-		SwfWaitStopPlaying Subscribe(SwfClipController ctrl) {
+		SwfWaitStopPlaying Subscribe(SwfClipPhasor ctrl) {
 			Unsubscribe();
 			if ( ctrl ) {
 				_waitCtrl = ctrl;
@@ -40,7 +40,7 @@ namespace FTRuntime.Yields {
 			}
 		}
 
-		void OnStopPlaying(SwfClipController ctrl) {
+		void OnStopPlaying(SwfClipPhasor ctrl) {
 			Unsubscribe();
 		}
 	}
