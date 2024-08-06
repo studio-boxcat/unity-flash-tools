@@ -1,12 +1,11 @@
 ﻿using UnityEngine;
-using UnityEngine.Rendering;
 using FTRuntime.Internal;
 using UnityEngine.Assertions;
 
 namespace FTRuntime {
 	[AddComponentMenu("FlashTools/SwfClip")]
 	[ExecuteAlways, DisallowMultipleComponent]
-	[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(SortingGroup))]
+	[RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 	public class SwfClip : MonoBehaviour {
 
 		[SerializeField]
