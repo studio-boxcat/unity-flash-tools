@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.Rendering;
 using UnityEditor;
 
 using System.IO;
@@ -12,21 +11,8 @@ namespace FTEditor.Editors {
 	[CustomEditor(typeof(SwfClipAsset)), CanEditMultipleObjects]
 	class SwfClipAssetEditor : Editor {
 		bool                _outdated = false;
-		List<SwfClipAsset>  _clips    = new List<SwfClipAsset>();
+		List<SwfClipAsset>  _clips    = new();
 		SwfClipAssetPreview _preview  = null;
-
-		static string GetClipPath(SwfClipAsset clip) {
-			return clip
-				? AssetDatabase.GetAssetPath(clip)
-				: string.Empty;
-		}
-
-		static string GetPrefabPath(SwfClipAsset clip) {
-			var clip_path = GetClipPath(clip);
-			return string.IsNullOrEmpty(clip_path)
-				? string.Empty
-				: Path.ChangeExtension(clip_path, ".prefab");
-		}
 
 		static int GetFrameCount(SwfClipAsset clip) {
 			return clip != null ? clip.Sequences.Aggregate(0, (acc, seq) => {

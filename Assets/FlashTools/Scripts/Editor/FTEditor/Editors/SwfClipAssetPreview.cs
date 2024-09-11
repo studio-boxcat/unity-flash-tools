@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using FTRuntime;
+using UnityEngine.Rendering;
 
 namespace FTEditor.Editors {
 	class SwfClipAssetPreview : ObjectPreview {
@@ -35,49 +36,6 @@ namespace FTEditor.Editors {
 			var frame_time = (float)(EditorApplication.timeSinceStartup * clip.FrameRate);
 			var frame_index = Mathf.FloorToInt(frame_time) % frames.Length;
 			return frames[frame_index];
-		}
-
-		static Bounds CalculateBoundsForSequence(SwfClipAsset.Sequence sequence)
-		{
-			var frames = sequence.Frames;
-			if (frames.Length == 0)
-				return new Bounds();
-
-			var result = frames[0].Mesh.bounds;
-			for (var i = 1; i < frames.Length; i++)
-				result.Encapsulate(frames[i].Mesh.bounds);
-
-			return result;
-		}
-
-		static void ConfigureCameraForSequence(Camera camera, SwfClipAsset.Sequence sequence) {
-			var bounds              = CalculateBoundsForSequence(sequence);
-			camera.orthographic     = true;
-			camera.orthographicSize = Mathf.Max(
-				Mathf.Abs(bounds.extents.x),
-				Mathf.Abs(bounds.extents.y));
-			camera.transform.position = new Vector3(
-				bounds.center.x,
-				bounds.center.y,
-				-10.0f);
-		}
-
-		static Camera GetCameraFromPreviewUtils(PreviewRenderUtility previewUtils) {
-			var cameraField = previewUtils.GetType().GetField("m_Camera");
-			var cameraFieldValue = cameraField != null
-				? cameraField.GetValue(previewUtils) as Camera
-				: null;
-			if ( cameraFieldValue ) {
-				return cameraFieldValue;
-			}
-			var cameraProperty = previewUtils.GetType().GetProperty("camera");
-			var cameraPropertyValue = cameraProperty != null
-				? cameraProperty.GetValue(previewUtils, null) as Camera
-				: null;
-			if ( cameraPropertyValue ) {
-				return cameraPropertyValue;
-			}
-			return null;
 		}
 
 		// ---------------------------------------------------------------------
@@ -162,32 +120,61 @@ namespace FTEditor.Editors {
 			}
 		}
 
-		public override void OnPreviewGUI(Rect r, GUIStyle background) {
-			if ( Event.current.type == EventType.Repaint ) {
-				_previewUtils.BeginPreview(r, background);
-				{
-					_matPropBlock.SetTexture(
-						"_MainTex",
-						targetAtlas ? targetAtlas : Texture2D.whiteTexture);
-					var camera = GetCameraFromPreviewUtils(_previewUtils);
-					if ( camera ) {
-						ConfigureCameraForSequence(camera, targetSequence);
+		public override void OnPreviewGUI(Rect r, GUIStyle background)
+		{
+			if (Event.current.type is not EventType.Repaint) return;
 
-						var clip = target as SwfClipAsset;
-						var frame = targetFrame;
-						var materials = clip.MaterialGroups[frame.MaterialGroupIndex].Materials;
-						for ( var i = 0; i < materials.Length; ++i ) {
-							_previewUtils.DrawMesh(
-								frame.Mesh,
-								Matrix4x4.identity,
-								materials[i],
-								i,
-								_matPropBlock);
-						}
-						camera.Render();
-					}
-				}
-				_previewUtils.EndAndDrawPreview(r);
+			if (targetAtlas == null) return;
+			var camera = _previewUtils.camera;
+			if (camera == null) return;
+
+			_previewUtils.BeginPreview(r, background);
+
+			var cmd = new CommandBuffer();
+			cmd.ClearRenderTarget(true, false, default);
+
+			var bounds = CalculateBoundsForSequence(targetSequence);
+			SetViewProjectionMatrices(cmd, camera, bounds);
+
+			var clip = (SwfClipAsset) target;
+			var frame = targetFrame;
+			var materials = clip.MaterialGroups[frame.MaterialGroupIndex].Materials;
+			_matPropBlock.SetTexture("_MainTex", targetAtlas);
+			for ( var i = 0; i < materials.Length; ++i )
+				cmd.DrawMesh(frame.Mesh, Matrix4x4.identity, materials[i], i, -1, _matPropBlock);
+
+			Graphics.ExecuteCommandBuffer(cmd);
+			_previewUtils.EndAndDrawPreview(r);
+			return;
+
+			static void SetViewProjectionMatrices(CommandBuffer cmd, Camera camera, Bounds bounds)
+			{
+				var orthoY = Mathf.Max(
+					Mathf.Abs(bounds.extents.x) + 0.2f, // 0.2 for padding
+					Mathf.Abs(bounds.extents.y) + 0.2f); // 0.2 for padding
+				var aspect = camera.aspect;
+				var orthoX = orthoY * aspect;
+
+				cmd.SetViewProjectionMatrices(
+					Matrix4x4.TRS(
+						new Vector3(-bounds.center.x, -bounds.center.y, -10.0f),
+						Quaternion.identity, Vector3.one),
+					Matrix4x4.Ortho(
+						-orthoX, orthoX,
+						-orthoY, orthoY,
+						-10, 10));
+			}
+
+			static Bounds CalculateBoundsForSequence(SwfClipAsset.Sequence sequence)
+			{
+				var frames = sequence.Frames;
+				if (frames.Length == 0)
+					return new Bounds();
+
+				var result = frames[0].Mesh.bounds;
+				for (var i = 1; i < frames.Length; i++)
+					result.Encapsulate(frames[i].Mesh.bounds);
+				return result;
 			}
 		}
 	}
