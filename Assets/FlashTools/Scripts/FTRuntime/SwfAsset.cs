@@ -1,5 +1,6 @@
-﻿using UnityEngine;
-using FTRuntime.Internal;
+﻿using System;
+using UnityEngine;
+using Sirenix.OdinInspector;
 
 namespace FTRuntime {
 	public class SwfAsset : ScriptableObject {
@@ -7,15 +8,15 @@ namespace FTRuntime {
 		public byte[]          Data;
 		[HideInInspector]
 		public string          Hash;
-		[SwfReadOnly]
+		[ReadOnly]
 		public Texture2D       Atlas;
 		[HideInInspector]
 		public SwfSettingsData Settings;
-		[SwfDisplayName("Settings")]
+		[LabelText("Settings")]
 		public SwfSettingsData Overridden;
 
 		void Reset() {
-			Data       = new byte[0];
+			Data       = Array.Empty<byte>();
 			Hash       = string.Empty;
 			Atlas      = null;
 			Settings   = SwfSettingsData.identity;

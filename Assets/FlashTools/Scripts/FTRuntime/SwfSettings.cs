@@ -1,23 +1,11 @@
 ﻿using UnityEngine;
-using FTRuntime.Internal;
 
 namespace FTRuntime {
 	[System.Serializable]
 	public struct SwfSettingsData {
-		public enum AtlasFilter {
-			Point,
-			Bilinear,
-			Trilinear
-		}
-
-		public enum AtlasFormat {
-			AutomaticCompressed = 0,
-			AutomaticTruecolor  = 2
-		}
-
-		[SwfIntRange(0, int.MaxValue)]
+		[Range(0, int.MaxValue)]
 		public int         AtlasPadding;
-		[SwfFloatRange(float.Epsilon, float.MaxValue)]
+		[Range(float.Epsilon, 500)]
 		public float       PixelsPerUnit;
 		public bool        BitmapTrimming;
 
