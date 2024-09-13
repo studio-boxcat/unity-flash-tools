@@ -46,7 +46,8 @@ namespace FTEditor.Importer
         {
             var mesh = new Mesh();
             SetupMesh(mesh, mesh_data);
-            MeshUtility.Optimize(mesh);
+            // XXX: Somehow this breaks the mesh.
+            // MeshUtility.Optimize(mesh);
             mesh.UploadMeshData(true);
             return mesh;
         }

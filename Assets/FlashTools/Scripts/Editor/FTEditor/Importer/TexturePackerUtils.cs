@@ -17,7 +17,7 @@ namespace FTEditor.Importer
                 "--algorithm Polygon " +
                 "--trim-mode Polygon " +
                 "--trim-margin 0 " +
-                "--tracer-tolerance 50 " +
+                "--tracer-tolerance 80 " +
                 "--pack-mode Best " +
                 "--enable-rotation " +
                 spriteFolder;
