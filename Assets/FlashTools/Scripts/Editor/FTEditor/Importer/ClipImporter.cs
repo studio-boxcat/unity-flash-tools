@@ -23,13 +23,24 @@ namespace FTEditor.Importer
         [ButtonGroup, Button(ButtonSizes.Medium)]
         void BuildAtlas()
         {
-            // Export bitmaps
+            L.I($"Building atlas for {SwfFile.name}...");
+
+            // Parse swf
             var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
-            _ = SwfParser.LoadSymbols(fileData.Tags, out var library);
+            var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
+
+            // Find used bitmaps
+            var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
+            var usedBitmaps = symbol.Frames.SelectMany(x => x.Instances).Select(x => x.Bitmap).Distinct().ToHashSet();
+            var bitmaps = library.GetBitmaps()
+                .Where(x => usedBitmaps.Contains(x.Key))
+                .ToDictionary(x => x.Key, x => x.Value);
+
+            // Export bitmaps
             var swfPath = AssetDatabase.GetAssetPath(SwfFile);
             Assert.IsTrue(swfPath.EndsWith(".swf"));
             var exportDir = swfPath.Replace(".swf", "_Sprites~");
-            BitmapExporter.ExportBitmaps(library.GetBitmaps(), exportDir);
+            BitmapExporter.ExportBitmaps(bitmaps, exportDir);
 
             // Pack atlas
             var sheetPath = swfPath.Replace(".swf", ".png");
@@ -37,6 +48,8 @@ namespace FTEditor.Importer
             TexturePackerUtils.Pack(sheetPath, dataPath, exportDir);
             AssetDatabase.ImportAsset(sheetPath);
             Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
+
+            L.I($"Atlas has been successfully built: {sheetPath}", Atlas);
         }
 
         [ButtonGroup, Button(ButtonSizes.Medium), EnableIf("Atlas")]
