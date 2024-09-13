@@ -10,10 +10,8 @@ namespace FTEditor.Importer
         public static void ExportBitmaps(Dictionary<ushort, IBitmapData> bitmaps, string dir)
         {
             if (Directory.Exists(dir))
-            {
                 Directory.Delete(dir, true);
-                Directory.CreateDirectory(dir);
-            }
+            Directory.CreateDirectory(dir);
 
             foreach (var (bitmapId, bitmapData) in bitmaps)
             {

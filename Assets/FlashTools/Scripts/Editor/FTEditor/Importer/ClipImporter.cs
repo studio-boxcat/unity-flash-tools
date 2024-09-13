@@ -11,13 +11,19 @@ namespace FTEditor.Importer
 {
     class ClipImporter : ScriptableObject, ISelfValidator
     {
+        [BoxGroup("Objects")]
         [SerializeField, Required, AssetsOnly]
         public Object SwfFile;
+        [BoxGroup("Objects")]
         [SerializeField, Required, ChildGameObjectsOnly]
         public Texture2D Atlas;
-        [SerializeField, Required, AssetsOnly, InlineEditor]
-        [PropertySpace(0, 8)]
+        [BoxGroup("Objects")]
+        [SerializeField, Required, AssetsOnly]
         public SwfClipAsset ClipAsset;
+
+        [BoxGroup("Pack Options")]
+        [SerializeField]
+        public int AtlasMaxSize = 1024;
 
 
         [ButtonGroup, Button(ButtonSizes.Medium)]
@@ -45,7 +51,7 @@ namespace FTEditor.Importer
             // Pack atlas
             var sheetPath = swfPath.Replace(".swf", ".png");
             var dataPath = swfPath.Replace(".swf", ".tpsheet");
-            TexturePackerUtils.Pack(sheetPath, dataPath, exportDir);
+            TexturePackerUtils.Pack(sheetPath, dataPath, exportDir, AtlasMaxSize);
             AssetDatabase.ImportAsset(sheetPath);
             Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
 

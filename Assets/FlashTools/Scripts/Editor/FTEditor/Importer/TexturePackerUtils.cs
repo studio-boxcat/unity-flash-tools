@@ -1,15 +1,17 @@
+using System.Diagnostics;
+
 namespace FTEditor.Importer
 {
     static class TexturePackerUtils
     {
-        public static void Pack(string sheet, string data, string spriteFolder)
+        public static void Pack(string sheet, string data, string spriteFolder, int maxSize)
         {
             const string texturePacker = "/Applications/TexturePacker.app/Contents/MacOS/TexturePacker";
 
-            var proc = System.Diagnostics.Process.Start(texturePacker,
+            var arguments =
                 $"--format unity-texture2d --sheet {sheet} --data {data} " +
                 "--alpha-handling ReduceBorderArtifacts " +
-                "--max-size 800 " +
+                $"--max-size {maxSize} " +
                 "--size-constraints AnySize " +
                 "--extrude 4 " +
                 "--algorithm Polygon " +
@@ -18,9 +20,24 @@ namespace FTEditor.Importer
                 "--tracer-tolerance 50 " +
                 "--pack-mode Best " +
                 "--enable-rotation " +
-                spriteFolder);
+                spriteFolder;
 
+            L.I($"Running TexturePacker: {texturePacker} {arguments}");
+
+            var procInfo = new ProcessStartInfo(texturePacker, arguments)
+            {
+                UseShellExecute = false,
+                RedirectStandardError = true,
+                RedirectStandardOutput = true
+            };
+            var proc = Process.Start(procInfo);
             proc!.WaitForExit();
+
+            if (proc.ExitCode != 0)
+            {
+                var err = proc.StandardError.ReadToEnd();
+                throw new System.Exception($"TexturePacker failed with exit code {proc.ExitCode}\n{err}");
+            }
         }
     }
 }
