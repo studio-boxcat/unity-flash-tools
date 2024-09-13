@@ -21,9 +21,10 @@ namespace FTEditor.Importer
         [SerializeField, Required, AssetsOnly]
         public SwfClipAsset ClipAsset;
 
-        [BoxGroup("Pack Options")]
-        [SerializeField]
+        [BoxGroup("Pack Options"), SerializeField]
         public int AtlasMaxSize = 1024;
+        [BoxGroup("Pack Options"), SerializeField]
+        public int AtlasExtrude = 2;
 
 
         [ButtonGroup, Button(ButtonSizes.Medium)]
@@ -51,7 +52,7 @@ namespace FTEditor.Importer
             // Pack atlas
             var sheetPath = swfPath.Replace(".swf", ".png");
             var dataPath = swfPath.Replace(".swf", ".tpsheet");
-            TexturePackerUtils.Pack(sheetPath, dataPath, exportDir, AtlasMaxSize);
+            TexturePackerUtils.Pack(sheetPath, dataPath, exportDir, AtlasMaxSize, AtlasExtrude);
             AssetDatabase.ImportAsset(sheetPath);
             Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
 

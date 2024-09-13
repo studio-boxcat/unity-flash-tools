@@ -4,7 +4,7 @@ namespace FTEditor.Importer
 {
     static class TexturePackerUtils
     {
-        public static void Pack(string sheet, string data, string spriteFolder, int maxSize)
+        public static void Pack(string sheet, string data, string spriteFolder, int maxSize, int extrude)
         {
             const string texturePacker = "/Applications/TexturePacker.app/Contents/MacOS/TexturePacker";
 
@@ -13,7 +13,7 @@ namespace FTEditor.Importer
                 "--alpha-handling ReduceBorderArtifacts " +
                 $"--max-size {maxSize} " +
                 "--size-constraints AnySize " +
-                "--extrude 4 " +
+                $"--extrude {extrude} " +
                 "--algorithm Polygon " +
                 "--trim-mode Polygon " +
                 "--trim-margin 0 " +
