@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 namespace FTSwfTools.SwfTags {
-	public class DefineSceneAndFrameLabelDataTag : SwfTagBase {
+	class DefineSceneAndFrameLabelDataTag : SwfTagBase {
 		public struct SceneOffsetData {
 			public uint   Offset;
 			public string Name;
@@ -19,7 +19,7 @@ namespace FTSwfTools.SwfTags {
 			get { return SwfTagType.DefineSceneAndFrameLabelData; }
 		}
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
 		}
 

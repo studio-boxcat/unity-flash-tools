@@ -1,4 +1,4 @@
-namespace FTEditor.Postprocessors
+namespace FTEditor.Importer
 {
     public class ConvertContext
     {

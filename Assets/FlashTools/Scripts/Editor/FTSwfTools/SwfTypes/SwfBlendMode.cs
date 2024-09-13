@@ -1,4 +1,6 @@
-﻿namespace FTSwfTools.SwfTypes {
+﻿using FTEditor;
+
+namespace FTSwfTools.SwfTypes {
 	public struct SwfBlendMode {
 		public enum Mode {
 			Normal,
@@ -18,48 +20,35 @@
 		}
 		public Mode Value;
 
-		public static SwfBlendMode identity {
-			get {
-				return new SwfBlendMode{
-					Value = Mode.Normal};
-			}
-		}
+		public static SwfBlendMode identity => new() {Value = Mode.Normal};
 
 		public static SwfBlendMode Read(SwfStreamReader reader) {
 			var mode_id = reader.ReadByte();
-			return new SwfBlendMode{
-				Value = ModeFromByte(mode_id)};
+			return new SwfBlendMode{Value = ModeFromByte(mode_id)};
 		}
 
-		public override string ToString() {
-			return string.Format(
-				"SwfBlendMode. " +
-				"Mode: {0}",
-				Value);
-		}
+		public override string ToString() => $"SwfBlendMode. Mode: {Value}";
 
-		static Mode ModeFromByte(byte mode_id) {
-			switch ( mode_id ) {
-			case  0: // Mode.Normal too
-			case  1: return Mode.Normal;
-			case  2: return Mode.Layer;
-			case  3: return Mode.Multiply;
-			case  4: return Mode.Screen;
-			case  5: return Mode.Lighten;
-			case  6: return Mode.Darken;
-			case  7: return Mode.Difference;
-			case  8: return Mode.Add;
-			case  9: return Mode.Subtract;
-			case 10: return Mode.Invert;
-			case 11: return Mode.Alpha;
-			case 12: return Mode.Erase;
-			case 13: return Mode.Overlay;
-			case 14: return Mode.Hardlight;
-			default:
-				throw new System.Exception(string.Format(
-					"Incorrect blend mode id: {0}",
-					mode_id));
-			}
+		static Mode ModeFromByte(byte mode_id)
+		{
+			return mode_id switch
+			{
+				0 or 1 => Mode.Normal,
+				2 => Mode.Layer,
+				3 => Mode.Multiply,
+				4 => Mode.Screen,
+				5 => Mode.Lighten,
+				6 => Mode.Darken,
+				7 => Mode.Difference,
+				8 => Mode.Add,
+				9 => Mode.Subtract,
+				10 => Mode.Invert,
+				11 => Mode.Alpha,
+				12 => Mode.Erase,
+				13 => Mode.Overlay,
+				14 => Mode.Hardlight,
+				_ => throw new System.Exception($"Incorrect blend mode id: {mode_id}")
+			};
 		}
 	}
 }

@@ -1,5 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;
+using UnityEngine;
 
 namespace FTSwfTools {
 
@@ -21,47 +25,47 @@ namespace FTSwfTools {
 		public abstract SwfLibraryDefineType Type { get; }
 	}
 
-	public class SwfLibraryShapeDefine : SwfLibraryDefine {
-		public ushort[]    Bitmaps  = new ushort[0];
-		public SwfMatrix[] Matrices = new SwfMatrix[0];
+	class SwfLibraryShapeDefine : SwfLibraryDefine {
+		public ushort[]    Bitmaps  = Array.Empty<ushort>();
+		public Matrix4x4[] Matrices = Array.Empty<Matrix4x4>();
 
-		public override SwfLibraryDefineType Type {
-			get { return SwfLibraryDefineType.Shape; }
-		}
+		public override SwfLibraryDefineType Type => SwfLibraryDefineType.Shape;
 	}
 
-	public class SwfLibraryBitmapDefine : SwfLibraryDefine {
-		public int    Width    = 0;
-		public int    Height   = 0;
-		public byte[] ARGB32   = new byte[0];
-		public ushort Redirect = 0;
+	class SwfLibraryBitmapDefine : SwfLibraryDefine {
+		public IBitmapData Data;
 
-		public override SwfLibraryDefineType Type {
-			get { return SwfLibraryDefineType.Bitmap; }
-		}
+		public SwfLibraryBitmapDefine(IBitmapData data) => Data = data;
+
+		public override SwfLibraryDefineType Type => SwfLibraryDefineType.Bitmap;
 	}
 
-	public class SwfLibrarySpriteDefine : SwfLibraryDefine {
+	class SwfLibrarySpriteDefine : SwfLibraryDefine {
 		public SwfControlTags ControlTags = SwfControlTags.identity;
 
-		public override SwfLibraryDefineType Type {
-			get { return SwfLibraryDefineType.Sprite; }
-		}
+		public override SwfLibraryDefineType Type => SwfLibraryDefineType.Sprite;
 	}
 
-	public class SwfLibrary {
-		public LibraryDefines Defines = new LibraryDefines();
+	class SwfLibrary {
+		public readonly LibraryDefines Defines = new();
 
 		public bool HasDefine<T>(ushort define_id) where T : SwfLibraryDefine {
 			return FindDefine<T>(define_id) != null;
 		}
 
-		public T FindDefine<T>(ushort define_id) where T : SwfLibraryDefine {
-			SwfLibraryDefine def;
-			if ( Defines.TryGetValue(define_id, out def) ) {
-				return def as T;
-			}
-			return null;
+		public T FindDefine<T>(ushort define_id) where T : SwfLibraryDefine
+		{
+			return Defines.TryGetValue(define_id, out var def)
+				? def as T : null;
+		}
+
+		public Dictionary<ushort, IBitmapData> GetBitmaps()
+		{
+			return Defines
+				.Where(p => p.Value.Type is SwfLibraryDefineType.Bitmap)
+				.ToDictionary(
+					p => p.Key,
+					p => ((SwfLibraryBitmapDefine) p.Value).Data);
 		}
 	}
 
@@ -75,38 +79,32 @@ namespace FTSwfTools {
 		Sprite
 	}
 
-	public abstract class SwfDisplayInstance {
+	abstract class SwfDisplayInstance {
 		public abstract SwfDisplayInstanceType Type { get; }
 
 		public ushort            Id;
 		public ushort            Depth;
 		public ushort            ClipDepth;
 		public bool              Visible;
-		public SwfMatrix         Matrix;
+		public Matrix4x4         Matrix;
 		public SwfBlendMode      BlendMode;
 		public SwfSurfaceFilters FilterList;
 		public SwfColorTransform ColorTransform;
 	}
 
-	public class SwfDisplayShapeInstance : SwfDisplayInstance {
-		public override SwfDisplayInstanceType Type {
-			get { return SwfDisplayInstanceType.Shape; }
-		}
+	class SwfDisplayShapeInstance : SwfDisplayInstance {
+		public override SwfDisplayInstanceType Type => SwfDisplayInstanceType.Shape;
 	}
 
-	public class SwfDisplayBitmapInstance : SwfDisplayInstance {
-		public override SwfDisplayInstanceType Type {
-			get { return SwfDisplayInstanceType.Bitmap; }
-		}
+	class SwfDisplayBitmapInstance : SwfDisplayInstance {
+		public override SwfDisplayInstanceType Type => SwfDisplayInstanceType.Bitmap;
 	}
 
-	public class SwfDisplaySpriteInstance : SwfDisplayInstance {
+	class SwfDisplaySpriteInstance : SwfDisplayInstance {
 		public int            CurrentTag  = 0;
 		public SwfDisplayList DisplayList = new SwfDisplayList();
 
-		public override SwfDisplayInstanceType Type {
-			get { return SwfDisplayInstanceType.Sprite; }
-		}
+		public override SwfDisplayInstanceType Type => SwfDisplayInstanceType.Sprite;
 
 		public void Reset() {
 			CurrentTag  = 0;
@@ -114,7 +112,7 @@ namespace FTSwfTools {
 		}
 	}
 
-	public class SwfDisplayList {
+	class SwfDisplayList {
 		public DisplayInstances Instances    = new DisplayInstances();
 		public List<string>     FrameLabels  = new List<string>();
 		public List<string>     FrameAnchors = new List<string>();

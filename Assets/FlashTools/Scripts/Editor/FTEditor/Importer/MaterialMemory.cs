@@ -4,7 +4,7 @@ using FTRuntime;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace FTEditor.Postprocessors
+namespace FTEditor.Importer
 {
     public class MaterialMemory
     {

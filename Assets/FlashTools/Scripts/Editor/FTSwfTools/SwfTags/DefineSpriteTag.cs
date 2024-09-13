@@ -1,32 +1,25 @@
 ﻿using FTSwfTools.SwfTypes;
 
 namespace FTSwfTools.SwfTags {
-	public class DefineSpriteTag : SwfTagBase {
+	class DefineSpriteTag : SwfTagBase {
 		public ushort         SpriteId;
 		public ushort         FrameCount;
 		public SwfControlTags ControlTags;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.DefineSprite; }
-		}
+		public override SwfTagType TagType => SwfTagType.DefineSprite;
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) => visitor.Visit(this, arg);
 
-		public override string ToString() {
-			return string.Format(
-				"DefineSpriteTag. " +
-				"SpriteId: {0}, FrameCount: {1}, ControlTags: {2}",
-				SpriteId, FrameCount, ControlTags.Tags.Count);
-		}
+		public override string ToString() =>
+            $"DefineSpriteTag. SpriteId: {SpriteId}, FrameCount: {FrameCount}, ControlTags: {ControlTags.Tags.Length}";
 
 		public static DefineSpriteTag Create(SwfStreamReader reader) {
-			var tag         = new DefineSpriteTag();
-			tag.SpriteId    = reader.ReadUInt16();
-			tag.FrameCount  = reader.ReadUInt16();
-			tag.ControlTags = SwfControlTags.Read(reader);
-			return tag;
+			return new DefineSpriteTag
+			{
+				SpriteId = reader.ReadUInt16(),
+				FrameCount = reader.ReadUInt16(),
+				ControlTags = SwfControlTags.Read(reader)
+			};
 		}
 	}
 }

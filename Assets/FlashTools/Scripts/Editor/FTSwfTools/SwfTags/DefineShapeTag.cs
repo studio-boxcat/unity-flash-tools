@@ -1,16 +1,17 @@
 ﻿using FTSwfTools.SwfTypes;
+using UnityEngine;
 
 namespace FTSwfTools.SwfTags {
-	public class DefineShapeTag : SwfTagBase {
+	class DefineShapeTag : SwfTagBase {
 		public ushort             ShapeId;
-		public SwfRect            ShapeBounds;
+		public Rect               ShapeBounds;
 		public SwfShapesWithStyle Shapes;
 
 		public override SwfTagType TagType {
 			get { return SwfTagType.DefineShape; }
 		}
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
 		}
 
@@ -22,11 +23,12 @@ namespace FTSwfTools.SwfTags {
 		}
 
 		public static DefineShapeTag Create(SwfStreamReader reader) {
-			var tag         = new DefineShapeTag();
-			tag.ShapeId     = reader.ReadUInt16();
-			tag.ShapeBounds = SwfRect.Read(reader);
-			tag.Shapes      = SwfShapesWithStyle.Read(reader, SwfShapesWithStyle.ShapeStyleType.Shape);
-			return tag;
+			return new DefineShapeTag
+			{
+				ShapeId = reader.ReadUInt16(),
+				ShapeBounds = SwfRect.Read(reader),
+				Shapes = SwfShapesWithStyle.Read(reader, SwfShapesWithStyle.ShapeStyleType.Shape)
+			};
 		}
 	}
 }

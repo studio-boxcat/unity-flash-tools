@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
+using UnityEngine;
 
-namespace Unity.Mathematics
+namespace FTEditor.Importer
 {
     struct half
     {
@@ -61,6 +62,11 @@ namespace Unity.Mathematics
             this.x = new half(x);
             this.y = new half(y);
         }
+
+        public static explicit operator half2(Vector2 v)
+        {
+            return new half2(v.x, v.y);
+        }
     }
 
     struct half4
@@ -76,6 +82,11 @@ namespace Unity.Mathematics
             this.y = new half(y);
             this.z = new half(z);
             this.w = new half(w);
+        }
+
+        public static explicit operator half4(Vector3 v)
+        {
+            return new half4(v.x, v.y, v.z, 0);
         }
     }
 }

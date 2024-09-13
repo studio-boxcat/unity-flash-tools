@@ -9,7 +9,6 @@ using FTRuntime;
 namespace FTEditor.Editors {
 	[CustomEditor(typeof(SwfClip)), CanEditMultipleObjects]
 	class SwfClipEditor : Editor {
-		bool                                     _outdated = false;
 		List<SwfClip>                            _clips    = new List<SwfClip>();
 		Dictionary<SwfClip, SwfClipAssetPreview> _previews = new Dictionary<SwfClip, SwfClipAssetPreview>();
 
@@ -70,12 +69,6 @@ namespace FTEditor.Editors {
 				}
 			}
 			return result;
-		}
-
-		void DrawGUINotes() {
-			if ( _outdated ) {
-				SwfEditorUtils.DrawOutdatedGUINotes("SwfClip", _clips);
-			}
 		}
 
 		void DrawSequence() {
@@ -164,7 +157,6 @@ namespace FTEditor.Editors {
 
 		void OnEnable() {
 			_clips = targets.OfType<SwfClip>().ToList();
-			_outdated = SwfEditorUtils.CheckForOutdatedAsset(_clips);
 			SetupPreviews();
 		}
 
@@ -175,7 +167,6 @@ namespace FTEditor.Editors {
 
 		public override void OnInspectorGUI() {
 			serializedObject.Update();
-			DrawGUINotes();
 			DrawDefaultInspector();
 			DrawSequence();
 			DrawCurrentFrame();

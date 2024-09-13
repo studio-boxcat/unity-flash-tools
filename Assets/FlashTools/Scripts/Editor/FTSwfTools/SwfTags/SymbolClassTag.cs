@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 namespace FTSwfTools.SwfTags {
-	public class SymbolClassTag : SwfTagBase {
+	class SymbolClassTag : SwfTagBase {
 		public struct SymbolTagData {
 			public ushort Tag;
 			public string Name;
@@ -9,20 +9,13 @@ namespace FTSwfTools.SwfTags {
 
 		public List<SymbolTagData> SymbolTags;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.SymbolClass; }
-		}
+		public override SwfTagType TagType => SwfTagType.SymbolClass;
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
 		}
 
-		public override string ToString() {
-			return string.Format(
-				"SymbolClassTag. " +
-				"SymbolTags: {0}",
-				SymbolTags.Count);
-		}
+		public override string ToString() => $"SymbolClassTag. SymbolTags: {SymbolTags.Count}";
 
 		public static SymbolClassTag Create(SwfStreamReader reader) {
 			var symbol_tag_count = reader.ReadUInt16();

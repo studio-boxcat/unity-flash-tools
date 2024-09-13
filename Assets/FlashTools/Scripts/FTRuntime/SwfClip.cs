@@ -83,19 +83,6 @@ namespace FTRuntime {
 		/// <value>The frame rate</value>
 		public float frameRate { get; private set; }
 
-		/// <summary>
-		/// Gets the current frame mesh bounding volume in world space
-		/// (Since 1.3.8)
-		/// </summary>
-		/// <value>The bounding volume in world space</value>
-		public Bounds currentWorldBounds {
-			get {
-				return _meshRenderer
-					? _meshRenderer.bounds
-					: new Bounds();
-			}
-		}
-
 		// ---------------------------------------------------------------------
 		//
 		// Functions

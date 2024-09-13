@@ -1,27 +1,26 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-
+using FTEditor;
 using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;
+using UnityEngine;
 
 namespace FTSwfTools {
-	public class SwfContextExecuter : SwfTagVisitor<SwfDisplayList, SwfDisplayList> {
+	class SwfContextExecuter : SwfTagVisitor<SwfDisplayList, SwfDisplayList> {
 		public SwfLibrary            Library    = null;
 		public int                   CurrentTag = 0;
-		public System.Action<string> WarningLog = null;
 
-		public SwfContextExecuter(SwfLibrary library, int current_tag, System.Action<string> warning_log) {
+		public SwfContextExecuter(SwfLibrary library, int current_tag) {
 			Library    = library;
 			CurrentTag = current_tag;
-			WarningLog = warning_log;
 		}
 
-		public bool NextFrame(List<SwfTagBase> tags, SwfDisplayList dl) {
+		public bool NextFrame(SwfTagBase[] tags, SwfDisplayList dl) {
 			dl.FrameLabels.Clear();
 			dl.FrameAnchors.Clear();
-			while ( CurrentTag < tags.Count ) {
+			while ( CurrentTag < tags.Length ) {
 				var tag = tags[CurrentTag++];
-				tag.AcceptVistor(this, dl);
+				tag.AcceptVisitor(this, dl);
 				if ( tag.TagType == SwfTagType.ShowFrame ) {
 					ChildrenNextFrameLooped(dl);
 					return true;
@@ -32,17 +31,17 @@ namespace FTSwfTools {
 		}
 
 		public SwfDisplayList Visit(PlaceObjectTag tag, SwfDisplayList dl) {
-			var is_shape  = Library.HasDefine<SwfLibraryShapeDefine >(tag.CharacterId);
-			var is_bitmap = Library.HasDefine<SwfLibraryBitmapDefine>(tag.CharacterId);
-			var is_sprite = Library.HasDefine<SwfLibrarySpriteDefine>(tag.CharacterId);
-			SwfDisplayInstance new_inst = null;
-			if ( is_shape ) {
-				new_inst = new SwfDisplayShapeInstance();
-			} else if ( is_bitmap ) {
-				new_inst = new SwfDisplayBitmapInstance();
-			} else if ( is_sprite ) {
-				new_inst = new SwfDisplaySpriteInstance();
-			}
+			if (Library.Defines.TryGetValue(tag.CharacterId, out var define) is false)
+				return dl;
+
+			SwfDisplayInstance new_inst = define switch
+			{
+				SwfLibraryShapeDefine => new SwfDisplayShapeInstance(),
+				SwfLibraryBitmapDefine => new SwfDisplayBitmapInstance(),
+				SwfLibrarySpriteDefine => new SwfDisplaySpriteInstance(),
+				_ => null
+			};
+
 			if ( new_inst != null ) {
 				new_inst.Id             = tag.CharacterId;
 				new_inst.Depth          = tag.Depth;
@@ -64,9 +63,7 @@ namespace FTSwfTools {
 			if ( tag.HasCharacter ) {
 				SwfDisplayInstance old_inst = null;
 				if ( tag.Move ) { // replace character
-					if ( dl.Instances.TryGetValue(tag.Depth, out old_inst) ) {
-						dl.Instances.Remove(tag.Depth);
-					}
+					dl.Instances.Remove(tag.Depth, out old_inst);
 				}
 				// new character
 				SwfDisplayInstance new_inst = null;
@@ -80,26 +77,19 @@ namespace FTSwfTools {
 				if ( new_inst != null ) {
 					new_inst.Id             = tag.CharacterId;
 					new_inst.Depth          = tag.Depth;
-					new_inst.ClipDepth      = tag.HasClipDepth      ? tag.ClipDepth      : (old_inst != null ? old_inst.ClipDepth      : (ushort)0);
+					new_inst.ClipDepth      = tag.HasClipDepth      ? tag.ClipDepth      : (old_inst?.ClipDepth ?? 0);
 					new_inst.Visible        = true;
-					new_inst.Matrix         = tag.HasMatrix         ? tag.Matrix         : (old_inst != null ? old_inst.Matrix         : SwfMatrix.identity);
+					new_inst.Matrix         = tag.HasMatrix         ? tag.Matrix         : (old_inst?.Matrix ?? Matrix4x4.identity);
 					new_inst.BlendMode      = SwfBlendMode.identity;
 					new_inst.FilterList     = SwfSurfaceFilters.identity;
-					new_inst.ColorTransform = tag.HasColorTransform ? tag.ColorTransform : (old_inst != null ? old_inst.ColorTransform : SwfColorTransform.identity);
+					new_inst.ColorTransform = tag.HasColorTransform ? tag.ColorTransform : (old_inst?.ColorTransform ?? default);
 					dl.Instances.Add(new_inst.Depth, new_inst);
 				}
 			} else if ( tag.Move ) { // move character
-				SwfDisplayInstance inst;
-				if ( dl.Instances.TryGetValue(tag.Depth, out inst) ) {
-					if ( tag.HasClipDepth ) {
-						inst.ClipDepth = tag.ClipDepth;
-					}
-					if ( tag.HasMatrix ) {
-						inst.Matrix = tag.Matrix;
-					}
-					if ( tag.HasColorTransform ) {
-						inst.ColorTransform = tag.ColorTransform;
-					}
+				if ( dl.Instances.TryGetValue(tag.Depth, out var inst) ) {
+					if ( tag.HasClipDepth ) inst.ClipDepth = tag.ClipDepth;
+					if ( tag.HasMatrix ) inst.Matrix = tag.Matrix;
+					if ( tag.HasColorTransform ) inst.ColorTransform = tag.ColorTransform;
 				}
 			}
 			return dl;
@@ -112,9 +102,7 @@ namespace FTSwfTools {
 			if ( tag.HasCharacter ) {
 				SwfDisplayInstance old_inst = null;
 				if ( tag.Move ) { // replace character
-					if ( dl.Instances.TryGetValue(tag.Depth, out old_inst) ) {
-						dl.Instances.Remove(tag.Depth);
-					}
+					dl.Instances.Remove(tag.Depth, out old_inst);
 				}
 				// new character
 				SwfDisplayInstance new_inst = null;
@@ -130,33 +118,20 @@ namespace FTSwfTools {
 					new_inst.Depth          = tag.Depth;
 					new_inst.ClipDepth      = tag.HasClipDepth      ? tag.ClipDepth      : (old_inst != null ? old_inst.ClipDepth      : (ushort)0);
 					new_inst.Visible        = tag.HasVisible        ? tag.Visible        : (old_inst != null ? old_inst.Visible        : true);
-					new_inst.Matrix         = tag.HasMatrix         ? tag.Matrix         : (old_inst != null ? old_inst.Matrix         : SwfMatrix.identity);
+					new_inst.Matrix         = tag.HasMatrix         ? tag.Matrix         : (old_inst != null ? old_inst.Matrix         : Matrix4x4.identity);
 					new_inst.BlendMode      = tag.HasBlendMode      ? tag.BlendMode      : (old_inst != null ? old_inst.BlendMode      : SwfBlendMode.identity);
 					new_inst.FilterList     = tag.HasFilterList     ? tag.SurfaceFilters : (old_inst != null ? old_inst.FilterList     : SwfSurfaceFilters.identity);
-					new_inst.ColorTransform = tag.HasColorTransform ? tag.ColorTransform : (old_inst != null ? old_inst.ColorTransform : SwfColorTransform.identity);
+					new_inst.ColorTransform = tag.HasColorTransform ? tag.ColorTransform : (old_inst != null ? old_inst.ColorTransform : default);
 					dl.Instances.Add(new_inst.Depth, new_inst);
 				}
 			} else if ( tag.Move ) { // move character
-				SwfDisplayInstance inst;
-				if ( dl.Instances.TryGetValue(tag.Depth, out inst) ) {
-					if ( tag.HasClipDepth ) {
-						inst.ClipDepth = tag.ClipDepth;
-					}
-					if ( tag.HasVisible ) {
-						inst.Visible = tag.Visible;
-					}
-					if ( tag.HasMatrix ) {
-						inst.Matrix = tag.Matrix;
-					}
-					if ( tag.HasBlendMode ) {
-						inst.BlendMode = tag.BlendMode;
-					}
-					if ( tag.HasFilterList ) {
-						inst.FilterList = tag.SurfaceFilters;
-					}
-					if ( tag.HasColorTransform ) {
-						inst.ColorTransform = tag.ColorTransform;
-					}
+				if ( dl.Instances.TryGetValue(tag.Depth, out var inst) ) {
+					if ( tag.HasClipDepth ) inst.ClipDepth = tag.ClipDepth;
+					if ( tag.HasVisible ) inst.Visible = tag.Visible;
+					if ( tag.HasMatrix ) inst.Matrix = tag.Matrix;
+					if ( tag.HasBlendMode ) inst.BlendMode = tag.BlendMode;
+					if ( tag.HasFilterList ) inst.FilterList = tag.SurfaceFilters;
+					if ( tag.HasColorTransform ) inst.ColorTransform = tag.ColorTransform;
 				}
 			}
 			return dl;
@@ -192,13 +167,9 @@ namespace FTSwfTools {
 			return dl;
 		}
 
-		public SwfDisplayList Visit(ProtectTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(ProtectTag tag, SwfDisplayList dl) => dl;
 
-		public SwfDisplayList Visit(EndTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(EndTag tag, SwfDisplayList dl) => dl;
 
 		public SwfDisplayList Visit(ExportAssetsTag tag, SwfDisplayList dl) {
 			foreach ( var asset_tag in tag.AssetTags ) {
@@ -210,39 +181,25 @@ namespace FTSwfTools {
 			return dl;
 		}
 
-		public SwfDisplayList Visit(EnableDebuggerTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(EnableDebuggerTag tag, SwfDisplayList dl) => dl;
 
-		public SwfDisplayList Visit(EnableDebugger2Tag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(EnableDebugger2Tag tag, SwfDisplayList dl) => dl;
 
-		public SwfDisplayList Visit(ScriptLimitsTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(ScriptLimitsTag tag, SwfDisplayList dl) => dl;
 
 		public SwfDisplayList Visit(SymbolClassTag tag, SwfDisplayList dl) {
 			foreach ( var symbol_tag in tag.SymbolTags ) {
 				var define = Library.FindDefine<SwfLibraryDefine>(symbol_tag.Tag);
-				if ( define != null ) {
-					define.ExportName = symbol_tag.Name.Trim();
-				}
+				if ( define != null ) define.ExportName = symbol_tag.Name.Trim();
 			}
 			return dl;
 		}
 
-		public SwfDisplayList Visit(MetadataTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(MetadataTag tag, SwfDisplayList dl) => dl;
 
-		public SwfDisplayList Visit(DefineSceneAndFrameLabelDataTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(DefineSceneAndFrameLabelDataTag tag, SwfDisplayList dl) => dl;
 
-		public SwfDisplayList Visit(DoABCTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(DoABCTag tag, SwfDisplayList dl) => dl;
 
 		public SwfDisplayList Visit(DefineShapeTag tag, SwfDisplayList dl) {
 			AddShapesToLibrary(tag.ShapeId, tag.Shapes);
@@ -265,61 +222,39 @@ namespace FTSwfTools {
 		}
 
 		public SwfDisplayList Visit(DefineBitsLosslessTag tag, SwfDisplayList dl) {
-			AddBitmapToLibrary(
-				tag.CharacterId,
-				tag.BitmapWidth,
-				tag.BitmapHeight,
-				tag.ToARGB32());
+			AddBitmapToLibrary(tag.CharacterId, tag);
 			return dl;
 		}
 
 		public SwfDisplayList Visit(DefineBitsLossless2Tag tag, SwfDisplayList dl) {
-			AddBitmapToLibrary(
-				tag.CharacterId,
-				tag.BitmapWidth,
-				tag.BitmapHeight,
-				tag.ToARGB32());
+			AddBitmapToLibrary(tag.CharacterId, tag);
 			return dl;
 		}
 
 		public SwfDisplayList Visit(DefineSpriteTag tag, SwfDisplayList dl) {
-			AddSpriteToLibrary(
-				tag.SpriteId,
-				tag.ControlTags);
+			AddSpriteToLibrary(tag.SpriteId, tag.ControlTags);
 			return dl;
 		}
 
-		public SwfDisplayList Visit(FileAttributesTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(FileAttributesTag tag, SwfDisplayList dl) => dl;
 
-		public SwfDisplayList Visit(EnableTelemetryTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(EnableTelemetryTag tag, SwfDisplayList dl) => dl;
 
-		public SwfDisplayList Visit(DefineBinaryDataTag tag, SwfDisplayList dl) {
-			return dl;
-		}
+		public SwfDisplayList Visit(DefineBinaryDataTag tag, SwfDisplayList dl) => dl;
 
 		public SwfDisplayList Visit(UnknownTag tag, SwfDisplayList dl) {
-			TagToWarningLog(tag);
+			L.W(tag.ToString());
 			return dl;
 		}
 
 		public SwfDisplayList Visit(UnsupportedTag tag, SwfDisplayList dl) {
-			TagToWarningLog(tag);
+			L.W(tag.ToString());
 			return dl;
 		}
 
 		//
 		//
 		//
-
-		void TagToWarningLog(SwfTagBase tag) {
-			if ( WarningLog != null ) {
-				WarningLog(string.Format("{0}", tag));
-			}
-		}
 
 		void AddShapesToLibrary(ushort define_id, SwfShapesWithStyle shapes) {
 			var bitmap_styles = shapes.FillStyles.Where(p => p.Type.IsBitmapType);
@@ -330,38 +265,19 @@ namespace FTSwfTools {
 			Library.Defines.Add(define_id, define);
 		}
 
-		void AddBitmapToLibrary(ushort define_id, int width, int height, byte[] argb32) {
-			var duplicated = FindDuplicatedBitmap(argb32);
-			var define = new SwfLibraryBitmapDefine{
-				Width    = width,
-				Height   = height,
-				ARGB32   = duplicated > 0 ? new byte[0] : argb32,
-				Redirect = duplicated};
+		void AddBitmapToLibrary(ushort define_id, IBitmapData bitmapData) {
+			var define = new SwfLibraryBitmapDefine(bitmapData);
 			Library.Defines.Add(define_id, define);
 		}
 
 		void AddSpriteToLibrary(ushort define_id, SwfControlTags control_tags) {
-			var define = new SwfLibrarySpriteDefine{
-				ControlTags = control_tags
-			};
+			var define = new SwfLibrarySpriteDefine{ ControlTags = control_tags };
 			Library.Defines.Add(define_id, define);
-		}
-
-		ushort FindDuplicatedBitmap(byte[] argb32) {
-			foreach ( var define in Library.Defines ) {
-				var bitmap = define.Value as SwfLibraryBitmapDefine;
-				if ( bitmap != null && bitmap.ARGB32.Length == argb32.Length ) {
-					if ( bitmap.ARGB32.SequenceEqual(argb32) ) {
-						return define.Key;
-					}
-				}
-			}
-			return 0;
 		}
 
 		bool IsSpriteTimelineEnd(SwfDisplaySpriteInstance sprite) {
 			var sprite_def = Library.FindDefine<SwfLibrarySpriteDefine>(sprite.Id);
-			if ( sprite_def != null && sprite.CurrentTag < sprite_def.ControlTags.Tags.Count ) {
+			if ( sprite_def != null && sprite.CurrentTag < sprite_def.ControlTags.Tags.Length ) {
 				return false;
 			}
 			var children = sprite.DisplayList.Instances.Values
@@ -385,7 +301,7 @@ namespace FTSwfTools {
 					if ( IsSpriteTimelineEnd(sprite) ) {
 						sprite.Reset();
 					}
-					var sprite_executer = new SwfContextExecuter(Library, sprite.CurrentTag, WarningLog);
+					var sprite_executer = new SwfContextExecuter(Library, sprite.CurrentTag);
 					sprite_executer.NextFrame(sprite_def.ControlTags.Tags, sprite.DisplayList);
 					sprite.CurrentTag = sprite_executer.CurrentTag;
 				}

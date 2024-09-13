@@ -1,5 +1,5 @@
 ﻿namespace FTSwfTools.SwfTags {
-	public class DefineBinaryDataTag : SwfTagBase {
+	class DefineBinaryDataTag : SwfTagBase {
 		public ushort Tag;
 		public byte[] Data;
 
@@ -7,7 +7,7 @@
 			get { return SwfTagType.DefineBinaryData; }
 		}
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
 		}
 

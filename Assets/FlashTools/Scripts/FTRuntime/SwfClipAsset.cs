@@ -56,10 +56,8 @@ namespace FTRuntime {
 			}
 		}
 
-		public string          Name;
+		public float           FrameRate = 1;
 		public Texture2D       Atlas;
-		public float           FrameRate;
-		public string          AssetGUID;
 		public Sequence[]      Sequences;
 		public MaterialGroup[] MaterialGroups;
 
@@ -89,16 +87,5 @@ namespace FTRuntime {
 		{
 			return MaterialGroups[materialGroupIndex].Materials;
 		}
-
-#if UNITY_EDITOR
-		void Reset() {
-			Name      = string.Empty;
-			Atlas     = null;
-			FrameRate = 1.0f;
-			AssetGUID = string.Empty;
-			Sequences = Array.Empty<Sequence>();
-			MaterialGroups = Array.Empty<MaterialGroup>();
-	}
-#endif
 	}
 }

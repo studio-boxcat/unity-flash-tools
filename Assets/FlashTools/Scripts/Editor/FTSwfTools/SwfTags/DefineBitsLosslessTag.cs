@@ -1,7 +1,8 @@
 ﻿using FTSwfTools.SwfTypes;
+using UnityEngine;
 
 namespace FTSwfTools.SwfTags {
-	public class DefineBitsLosslessTag : SwfTagBase {
+	class DefineBitsLosslessTag : SwfTagBase, IBitmapData {
 		public ushort CharacterId;
 		public byte   BitmapFormat;
 		public ushort BitmapWidth;
@@ -9,20 +10,12 @@ namespace FTSwfTools.SwfTags {
 		public ushort BitmapColorTableSize;
 		public byte[] ZlibBitmapData;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.DefineBitsLossless; }
-		}
+		public override SwfTagType TagType => SwfTagType.DefineBitsLossless;
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) => visitor.Visit(this, arg);
 
-		public override string ToString() {
-			return string.Format(
-				"DefineBitsLosslessTag. " +
-				"CharacterId: {0}, BitmapFormat: {1}, Width: {2}, Height: {3}",
-				CharacterId, BitmapFormat, BitmapWidth, BitmapHeight);
-		}
+		public override string ToString() =>
+			$"DefineBitsLosslessTag. CharacterId: {CharacterId}, BitmapFormat: {BitmapFormat}, Width: {BitmapWidth}, Height: {BitmapHeight}";
 
 		public static DefineBitsLosslessTag Create(SwfStreamReader reader) {
 			var tag          = new DefineBitsLosslessTag();
@@ -37,7 +30,9 @@ namespace FTSwfTools.SwfTags {
 			return tag;
 		}
 
-		public byte[] ToARGB32() {
+		Vector2Int IBitmapData.Size => new(BitmapWidth, BitmapHeight);
+
+		byte[] IBitmapData.ToARGB32() {
 			var result     = new byte[BitmapWidth * BitmapHeight * 4];
 			var swf_reader = SwfStreamReader.DecompressZBytesToReader(ZlibBitmapData);
 			if ( BitmapFormat == 3 ) {

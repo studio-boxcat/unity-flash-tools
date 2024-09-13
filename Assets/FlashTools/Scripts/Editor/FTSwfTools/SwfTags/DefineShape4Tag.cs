@@ -1,27 +1,20 @@
 ﻿using FTSwfTools.SwfTypes;
+using UnityEngine;
 
 namespace FTSwfTools.SwfTags {
-	public class DefineShape4Tag : SwfTagBase {
+	class DefineShape4Tag : SwfTagBase {
 		public ushort             ShapeId;
-		public SwfRect            ShapeBounds;
-		public SwfRect            EdgeBounds;
+		public Rect               ShapeBounds;
+		public Rect               EdgeBounds;
 		public byte               Flags;
 		public SwfShapesWithStyle Shapes;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.DefineShape4; }
-		}
+		public override SwfTagType TagType => SwfTagType.DefineShape4;
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) => visitor.Visit(this, arg);
 
-		public override string ToString() {
-			return string.Format(
-				"DefineShape4Tag. " +
-				"ShapeId: {0}, ShapeBounds: {1}, EdgeBounds: {2}, Flags: {3}, Shapes: {4}",
-				ShapeId, ShapeBounds, EdgeBounds, Flags, Shapes);
-		}
+		public override string ToString() =>
+			$"DefineShape4Tag. ShapeId: {ShapeId}, ShapeBounds: {ShapeBounds}, EdgeBounds: {EdgeBounds}, Flags: {Flags}, Shapes: {Shapes}";
 
 		public static DefineShape4Tag Create(SwfStreamReader reader) {
 			var tag         = new DefineShape4Tag();

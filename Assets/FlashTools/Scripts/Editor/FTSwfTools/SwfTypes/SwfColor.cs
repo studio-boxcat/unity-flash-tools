@@ -5,26 +5,22 @@
 		public byte B;
 		public byte A;
 
-		public static SwfColor identity {
-			get {
-				return new SwfColor {
-					R = byte.MaxValue,
-					G = byte.MaxValue,
-					B = byte.MaxValue,
-					A = byte.MaxValue};
-			}
+		public SwfColor(byte r, byte g, byte b, byte a)
+		{
+			R = r;
+			G = g;
+			B = b;
+			A = a;
 		}
+
+		public static readonly SwfColor identity = new(byte.MaxValue, byte.MaxValue, byte.MaxValue, byte.MaxValue);
 
 		public static SwfColor Read(SwfStreamReader reader, bool with_alpha) {
 			var r = reader.ReadByte();
 			var g = reader.ReadByte();
 			var b = reader.ReadByte();
 			var a = with_alpha ? reader.ReadByte() : byte.MaxValue;
-			return new SwfColor{
-				R = r,
-				G = g,
-				B = b,
-				A = a};
+			return new SwfColor{ R = r, G = g, B = b, A = a};
 		}
 
 		public override string ToString() {

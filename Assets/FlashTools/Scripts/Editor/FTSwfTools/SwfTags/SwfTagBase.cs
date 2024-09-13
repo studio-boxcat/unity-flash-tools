@@ -132,14 +132,14 @@
 		Unknown
 	}
 
-	public abstract class SwfTagBase {
+	abstract class SwfTagBase {
 		struct SwfTagData {
 			public int    TagId;
 			public byte[] TagData;
 		}
 
 		public abstract SwfTagType TagType { get; }
-		public abstract TResult AcceptVistor<TArg, TResult>(
+		public abstract TResult AcceptVisitor<TArg, TResult>(
 			SwfTagVisitor<TArg, TResult> visitor, TArg arg);
 
 		public static SwfTagBase Read(SwfStreamReader reader) {
@@ -153,88 +153,90 @@
 				TagData = tag_data});
 		}
 
-		static SwfTagBase Create(SwfTagData tag_data) {
+		static SwfTagBase Create(SwfTagData tag_data)
+		{
 			var reader = new SwfStreamReader(tag_data.TagData);
-			switch ( tag_data.TagId ) {
-			// Display list
-			case (int)SwfTagType.PlaceObject:                  return PlaceObjectTag.Create(reader);
-			case (int)SwfTagType.PlaceObject2:                 return PlaceObject2Tag.Create(reader);
-			case (int)SwfTagType.PlaceObject3:                 return PlaceObject3Tag.Create(reader);
-			case (int)SwfTagType.RemoveObject:                 return RemoveObjectTag.Create(reader);
-			case (int)SwfTagType.RemoveObject2:                return RemoveObject2Tag.Create(reader);
-			case (int)SwfTagType.ShowFrame:                    return ShowFrameTag.Create(reader);
-			// Control
-			case (int)SwfTagType.SetBackgroundColor:           return SetBackgroundColorTag.Create(reader);
-			case (int)SwfTagType.FrameLabel:                   return FrameLabelTag.Create(reader);
-			case (int)SwfTagType.Protect:                      return ProtectTag.Create(reader);
-			case (int)SwfTagType.End:                          return EndTag.Create(reader);
-			case (int)SwfTagType.ExportAssets:                 return ExportAssetsTag.Create(reader);
-			case (int)SwfTagType.ImportAssets:                 return UnsupportedTag.Create(SwfTagType.ImportAssets);
-			case (int)SwfTagType.EnableDebugger:               return EnableDebuggerTag.Create(reader);
-			case (int)SwfTagType.EnableDebugger2:              return EnableDebugger2Tag.Create(reader);
-			case (int)SwfTagType.ScriptLimits:                 return ScriptLimitsTag.Create(reader);
-			case (int)SwfTagType.SetTabIndex:                  return UnsupportedTag.Create(SwfTagType.SetTabIndex);
-			case (int)SwfTagType.ImportAssets2:                return UnsupportedTag.Create(SwfTagType.ImportAssets2);
-			case (int)SwfTagType.SymbolClass:                  return SymbolClassTag.Create(reader);
-			case (int)SwfTagType.Metadata:                     return MetadataTag.Create(reader);
-			case (int)SwfTagType.DefineScalingGrid:            return UnsupportedTag.Create(SwfTagType.DefineScalingGrid);
-			case (int)SwfTagType.DefineSceneAndFrameLabelData: return DefineSceneAndFrameLabelDataTag.Create(reader);
-			// Actions
-			case (int)SwfTagType.DoAction:                     return UnsupportedTag.Create(SwfTagType.DoAction);
-			case (int)SwfTagType.DoInitAction:                 return UnsupportedTag.Create(SwfTagType.DoInitAction);
-			case (int)SwfTagType.DoABC:                        return DoABCTag.Create(reader);
-			// Shape
-			case (int)SwfTagType.DefineShape:                  return DefineShapeTag.Create(reader);
-			case (int)SwfTagType.DefineShape2:                 return DefineShape2Tag.Create(reader);
-			case (int)SwfTagType.DefineShape3:                 return DefineShape3Tag.Create(reader);
-			case (int)SwfTagType.DefineShape4:                 return DefineShape4Tag.Create(reader);
-			// Bitmaps
-			case (int)SwfTagType.DefineBits:                   return UnsupportedTag.Create(SwfTagType.DefineBits);
-			case (int)SwfTagType.JPEGTables:                   return UnsupportedTag.Create(SwfTagType.JPEGTables);
-			case (int)SwfTagType.DefineBitsJPEG2:              return UnsupportedTag.Create(SwfTagType.DefineBitsJPEG2);
-			case (int)SwfTagType.DefineBitsJPEG3:              return UnsupportedTag.Create(SwfTagType.DefineBitsJPEG3);
-			case (int)SwfTagType.DefineBitsLossless:           return DefineBitsLosslessTag.Create(reader);
-			case (int)SwfTagType.DefineBitsLossless2:          return DefineBitsLossless2Tag.Create(reader);
-			case (int)SwfTagType.DefineBitsJPEG4:              return UnsupportedTag.Create(SwfTagType.DefineBitsJPEG4);
-			// Shape Morphing
-			case (int)SwfTagType.DefineMorphShape:             return UnsupportedTag.Create(SwfTagType.DefineMorphShape);
-			case (int)SwfTagType.DefineMorphShape2:            return UnsupportedTag.Create(SwfTagType.DefineMorphShape2);
-			// Fonts and Text
-			case (int)SwfTagType.DefineFont:                   return UnsupportedTag.Create(SwfTagType.DefineFont);
-			case (int)SwfTagType.DefineFontInfo:               return UnsupportedTag.Create(SwfTagType.DefineFontInfo);
-			case (int)SwfTagType.DefineFontInfo2:              return UnsupportedTag.Create(SwfTagType.DefineFontInfo2);
-			case (int)SwfTagType.DefineFont2:                  return UnsupportedTag.Create(SwfTagType.DefineFont2);
-			case (int)SwfTagType.DefineFont3:                  return UnsupportedTag.Create(SwfTagType.DefineFont3);
-			case (int)SwfTagType.DefineFontAlignZones:         return UnsupportedTag.Create(SwfTagType.DefineFontAlignZones);
-			case (int)SwfTagType.DefineFontName:               return UnsupportedTag.Create(SwfTagType.DefineFontName);
-			case (int)SwfTagType.DefineText:                   return UnsupportedTag.Create(SwfTagType.DefineText);
-			case (int)SwfTagType.DefineText2:                  return UnsupportedTag.Create(SwfTagType.DefineText2);
-			case (int)SwfTagType.DefineEditText:               return UnsupportedTag.Create(SwfTagType.DefineEditText);
-			case (int)SwfTagType.CSMTextSettings:              return UnsupportedTag.Create(SwfTagType.CSMTextSettings);
-			case (int)SwfTagType.DefineFont4:                  return UnsupportedTag.Create(SwfTagType.DefineFont4);
-			// Sounds
-			case (int)SwfTagType.DefineSound:                  return UnsupportedTag.Create(SwfTagType.DefineSound);
-			case (int)SwfTagType.StartSound:                   return UnsupportedTag.Create(SwfTagType.StartSound);
-			case (int)SwfTagType.StartSound2:                  return UnsupportedTag.Create(SwfTagType.StartSound2);
-			case (int)SwfTagType.SoundStreamHead:              return UnsupportedTag.Create(SwfTagType.SoundStreamHead);
-			case (int)SwfTagType.SoundStreamHead2:             return UnsupportedTag.Create(SwfTagType.SoundStreamHead2);
-			case (int)SwfTagType.SoundStreamBlock:             return UnsupportedTag.Create(SwfTagType.SoundStreamBlock);
-			// Buttons
-			case (int)SwfTagType.DefineButton:                 return UnsupportedTag.Create(SwfTagType.DefineButton);
-			case (int)SwfTagType.DefineButton2:                return UnsupportedTag.Create(SwfTagType.DefineButton2);
-			case (int)SwfTagType.DefineButtonCxform:           return UnsupportedTag.Create(SwfTagType.DefineButtonCxform);
-			case (int)SwfTagType.DefineButtonSound:            return UnsupportedTag.Create(SwfTagType.DefineButtonSound);
-			// Sprites and Movie Clips
-			case (int)SwfTagType.DefineSprite:                 return DefineSpriteTag.Create(reader);
-			// Video
-			case (int)SwfTagType.DefineVideoStream:            return UnsupportedTag.Create(SwfTagType.DefineVideoStream);
-			case (int)SwfTagType.VideoFrame:                   return UnsupportedTag.Create(SwfTagType.VideoFrame);
-			// Metadata
-			case (int)SwfTagType.FileAttributes:               return FileAttributesTag.Create(reader);
-			case (int)SwfTagType.EnableTelemetry:              return EnableTelemetryTag.Create(reader);
-			case (int)SwfTagType.DefineBinaryData:             return DefineBinaryDataTag.Create(reader);
-			default:                                           return UnknownTag.Create(tag_data.TagId);
-			}
+			return (SwfTagType) tag_data.TagId switch
+			{
+				// Display list
+				SwfTagType.PlaceObject => PlaceObjectTag.Create(reader),
+				SwfTagType.PlaceObject2 => PlaceObject2Tag.Create(reader),
+				SwfTagType.PlaceObject3 => PlaceObject3Tag.Create(reader),
+				SwfTagType.RemoveObject => RemoveObjectTag.Create(reader),
+				SwfTagType.RemoveObject2 => RemoveObject2Tag.Create(reader),
+				SwfTagType.ShowFrame => ShowFrameTag.Create(reader),
+				// Control
+				SwfTagType.SetBackgroundColor => SetBackgroundColorTag.Create(reader),
+				SwfTagType.FrameLabel => FrameLabelTag.Create(reader),
+				SwfTagType.Protect => ProtectTag.Create(reader),
+				SwfTagType.End => EndTag.Create(reader),
+				SwfTagType.ExportAssets => ExportAssetsTag.Create(reader),
+				SwfTagType.ImportAssets => UnsupportedTag.Create(SwfTagType.ImportAssets),
+				SwfTagType.EnableDebugger => EnableDebuggerTag.Create(reader),
+				SwfTagType.EnableDebugger2 => EnableDebugger2Tag.Create(reader),
+				SwfTagType.ScriptLimits => ScriptLimitsTag.Create(reader),
+				SwfTagType.SetTabIndex => UnsupportedTag.Create(SwfTagType.SetTabIndex),
+				SwfTagType.ImportAssets2 => UnsupportedTag.Create(SwfTagType.ImportAssets2),
+				SwfTagType.SymbolClass => SymbolClassTag.Create(reader),
+				SwfTagType.Metadata => MetadataTag.Create(reader),
+				SwfTagType.DefineScalingGrid => UnsupportedTag.Create(SwfTagType.DefineScalingGrid),
+				SwfTagType.DefineSceneAndFrameLabelData => DefineSceneAndFrameLabelDataTag.Create(reader),
+				// Actions
+				SwfTagType.DoAction => UnsupportedTag.Create(SwfTagType.DoAction),
+				SwfTagType.DoInitAction => UnsupportedTag.Create(SwfTagType.DoInitAction),
+				SwfTagType.DoABC => DoABCTag.Create(reader),
+				// Shape
+				SwfTagType.DefineShape => DefineShapeTag.Create(reader),
+				SwfTagType.DefineShape2 => DefineShape2Tag.Create(reader),
+				SwfTagType.DefineShape3 => DefineShape3Tag.Create(reader),
+				SwfTagType.DefineShape4 => DefineShape4Tag.Create(reader),
+				// Bitmaps
+				SwfTagType.DefineBits => UnsupportedTag.Create(SwfTagType.DefineBits),
+				SwfTagType.JPEGTables => UnsupportedTag.Create(SwfTagType.JPEGTables),
+				SwfTagType.DefineBitsJPEG2 => UnsupportedTag.Create(SwfTagType.DefineBitsJPEG2),
+				SwfTagType.DefineBitsJPEG3 => UnsupportedTag.Create(SwfTagType.DefineBitsJPEG3),
+				SwfTagType.DefineBitsLossless => DefineBitsLosslessTag.Create(reader),
+				SwfTagType.DefineBitsLossless2 => DefineBitsLossless2Tag.Create(reader),
+				SwfTagType.DefineBitsJPEG4 => UnsupportedTag.Create(SwfTagType.DefineBitsJPEG4),
+				// Shape Morphing
+				SwfTagType.DefineMorphShape => UnsupportedTag.Create(SwfTagType.DefineMorphShape),
+				SwfTagType.DefineMorphShape2 => UnsupportedTag.Create(SwfTagType.DefineMorphShape2),
+				// Fonts and Text
+				SwfTagType.DefineFont => UnsupportedTag.Create(SwfTagType.DefineFont),
+				SwfTagType.DefineFontInfo => UnsupportedTag.Create(SwfTagType.DefineFontInfo),
+				SwfTagType.DefineFontInfo2 => UnsupportedTag.Create(SwfTagType.DefineFontInfo2),
+				SwfTagType.DefineFont2 => UnsupportedTag.Create(SwfTagType.DefineFont2),
+				SwfTagType.DefineFont3 => UnsupportedTag.Create(SwfTagType.DefineFont3),
+				SwfTagType.DefineFontAlignZones => UnsupportedTag.Create(SwfTagType.DefineFontAlignZones),
+				SwfTagType.DefineFontName => UnsupportedTag.Create(SwfTagType.DefineFontName),
+				SwfTagType.DefineText => UnsupportedTag.Create(SwfTagType.DefineText),
+				SwfTagType.DefineText2 => UnsupportedTag.Create(SwfTagType.DefineText2),
+				SwfTagType.DefineEditText => UnsupportedTag.Create(SwfTagType.DefineEditText),
+				SwfTagType.CSMTextSettings => UnsupportedTag.Create(SwfTagType.CSMTextSettings),
+				SwfTagType.DefineFont4 => UnsupportedTag.Create(SwfTagType.DefineFont4),
+				// Sounds
+				SwfTagType.DefineSound => UnsupportedTag.Create(SwfTagType.DefineSound),
+				SwfTagType.StartSound => UnsupportedTag.Create(SwfTagType.StartSound),
+				SwfTagType.StartSound2 => UnsupportedTag.Create(SwfTagType.StartSound2),
+				SwfTagType.SoundStreamHead => UnsupportedTag.Create(SwfTagType.SoundStreamHead),
+				SwfTagType.SoundStreamHead2 => UnsupportedTag.Create(SwfTagType.SoundStreamHead2),
+				SwfTagType.SoundStreamBlock => UnsupportedTag.Create(SwfTagType.SoundStreamBlock),
+				// Buttons
+				SwfTagType.DefineButton => UnsupportedTag.Create(SwfTagType.DefineButton),
+				SwfTagType.DefineButton2 => UnsupportedTag.Create(SwfTagType.DefineButton2),
+				SwfTagType.DefineButtonCxform => UnsupportedTag.Create(SwfTagType.DefineButtonCxform),
+				SwfTagType.DefineButtonSound => UnsupportedTag.Create(SwfTagType.DefineButtonSound),
+				// Sprites and Movie Clips
+				SwfTagType.DefineSprite => DefineSpriteTag.Create(reader),
+				// Video
+				SwfTagType.DefineVideoStream => UnsupportedTag.Create(SwfTagType.DefineVideoStream),
+				SwfTagType.VideoFrame => UnsupportedTag.Create(SwfTagType.VideoFrame),
+				// Metadata
+				SwfTagType.FileAttributes => FileAttributesTag.Create(reader),
+				SwfTagType.EnableTelemetry => EnableTelemetryTag.Create(reader),
+				SwfTagType.DefineBinaryData => DefineBinaryDataTag.Create(reader),
+				_ => UnknownTag.Create(tag_data.TagId)
+			};
 		}
 	}
 }

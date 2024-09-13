@@ -1,8 +1,9 @@
 ﻿using System.Text;
 using FTSwfTools.SwfTypes;
+using UnityEngine;
 
 namespace FTSwfTools.SwfTags {
-	public class PlaceObject3Tag : SwfTagBase {
+	class PlaceObject3Tag : SwfTagBase {
 		public bool              HasClipActions;
 		public bool              HasClipDepth;
 		public bool              HasName;
@@ -21,7 +22,7 @@ namespace FTSwfTools.SwfTags {
 		public ushort            Depth;
 		public string            ClassName;
 		public ushort            CharacterId;
-		public SwfMatrix         Matrix;
+		public Matrix4x4         Matrix;
 		public SwfColorTransform ColorTransform;
 		public ushort            Ratio;
 		public string            Name;
@@ -37,7 +38,7 @@ namespace FTSwfTools.SwfTags {
 			get { return SwfTagType.PlaceObject3; }
 		}
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
 		}
 
@@ -111,11 +112,11 @@ namespace FTSwfTools.SwfTags {
 
 			tag.Matrix            = tag.HasMatrix
 				? SwfMatrix.Read(reader)
-				: SwfMatrix.identity;
+				: Matrix4x4.identity;
 
 			tag.ColorTransform    = tag.HasColorTransform
 				? SwfColorTransform.Read(reader, true)
-				: SwfColorTransform.identity;
+				: default;
 
 			tag.Ratio             = tag.HasRatio
 				? reader.ReadUInt16()

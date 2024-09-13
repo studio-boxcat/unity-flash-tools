@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-namespace FTEditor.Postprocessors
+namespace FTEditor.Importer
 {
     public class MeshMemory
     {
@@ -18,6 +19,6 @@ namespace FTEditor.Postprocessors
             return mesh;
         }
 
-        public Dictionary<int, Mesh>.ValueCollection.Enumerator GetEnumerator() => _dict.Values.GetEnumerator();
+        public Mesh[] GetMeshes() => _dict.Values.ToArray();
     }
 }

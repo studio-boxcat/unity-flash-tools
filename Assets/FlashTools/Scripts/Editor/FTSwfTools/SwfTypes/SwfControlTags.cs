@@ -1,34 +1,25 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using FTSwfTools.SwfTags;
 
 namespace FTSwfTools.SwfTypes {
-	public struct SwfControlTags {
-		public List<SwfTagBase> Tags;
+	readonly struct SwfControlTags {
+		public readonly SwfTagBase[] Tags;
 
-		public static SwfControlTags identity {
-			get {
-				return new SwfControlTags {
-					Tags = new List<SwfTagBase>()};
-			}
-		}
+		public SwfControlTags(SwfTagBase[] tags) => Tags = tags;
+
+		public static readonly SwfControlTags identity = new(Array.Empty<SwfTagBase>());
 
 		public static SwfControlTags Read(SwfStreamReader reader) {
-			var control_tags = SwfControlTags.identity;
+			var tags = new List<SwfTagBase>();
 			while ( true ) {
 				var tag = SwfTagBase.Read(reader);
-				if ( tag.TagType == SwfTagType.End ) {
-					break;
-				}
-				control_tags.Tags.Add(tag);
+				if ( tag.TagType == SwfTagType.End ) break;
+				tags.Add(tag);
 			}
-			return control_tags;
+			return new SwfControlTags(tags.ToArray());
 		}
 
-		public override string ToString() {
-			return string.Format(
-				"SwfControlTags. " +
-				"Tags: {0}",
-				Tags.Count);
-		}
+		public override string ToString() => $"SwfControlTags. Tags: {Tags.Length}";
 	}
 }

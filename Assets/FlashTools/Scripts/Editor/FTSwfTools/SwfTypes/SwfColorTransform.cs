@@ -1,60 +1,54 @@
-﻿namespace FTSwfTools.SwfTypes {
-	public struct SwfColorTransform {
-		public short RMul;
-		public short GMul;
-		public short BMul;
-		public short AMul;
-		public bool  HasMul;
-		public short RAdd;
-		public short GAdd;
-		public short BAdd;
-		public short AAdd;
-		public bool  HasAdd;
+﻿using FTEditor;
 
-		public static SwfColorTransform identity {
-			get {
-				return new SwfColorTransform {
-					RMul   = byte.MaxValue,
-					GMul   = byte.MaxValue,
-					BMul   = byte.MaxValue,
-					AMul   = byte.MaxValue,
-					HasMul = false,
-					RAdd   = 0,
-					GAdd   = 0,
-					BAdd   = 0,
-					AAdd   = 0,
-					HasAdd = false};
-			}
-		}
+namespace FTSwfTools.SwfTypes {
+	struct SwfColorTransform
+	{
+		public Color? Mul;
+		public Color? Add;
 
-		public static SwfColorTransform Read(SwfStreamReader reader, bool with_alpha) {
-			var transform    = SwfColorTransform.identity;
-			transform.HasAdd = reader.ReadBit();
-			transform.HasMul = reader.ReadBit();
-			var bits         = reader.ReadUnsignedBits(4);
-			if ( transform.HasMul ) {
-				transform.RMul = (short)reader.ReadSignedBits(bits);
-				transform.GMul = (short)reader.ReadSignedBits(bits);
-				transform.BMul = (short)reader.ReadSignedBits(bits);
-				transform.AMul = with_alpha ? (short)reader.ReadSignedBits(bits) : byte.MaxValue;
+		public override string ToString() => $"SwfColorTransform. Mul={Mul}, Add={Add}";
+
+		public static SwfColorTransform Read(SwfStreamReader reader, bool withAlpha) {
+			var transform    = default(SwfColorTransform);
+			var hasAdd = reader.ReadBit();
+			var hasMul = reader.ReadBit();
+			var channelBitCount = reader.ReadUnsignedBits(4);
+			if ( hasMul ) {
+				var mul = Color.Read(reader, channelBitCount, withAlpha);
+				if (withAlpha is false) mul.A = 256; // XXX: byte.MaxValue in original code
+				transform.Mul = mul;
 			}
-			if ( transform.HasAdd ) {
-				transform.RAdd = (short)reader.ReadSignedBits(bits);
-				transform.GAdd = (short)reader.ReadSignedBits(bits);
-				transform.BAdd = (short)reader.ReadSignedBits(bits);
-				transform.AAdd = with_alpha ? (short)reader.ReadSignedBits(bits) : (short)0;
+			if ( hasAdd ) {
+				var add = Color.Read(reader, channelBitCount, withAlpha);
+				if (withAlpha is false) add.A = 0;
+				transform.Add = add;
 			}
 			reader.AlignToByte();
 			return transform;
 		}
 
-		public override string ToString() {
-			return string.Format(
-				"SwfColorTransform. " +
-				"RMul: {0}, GMul: {1}, BMul: {2}, AMul: {3}, HasMul: {4}, " +
-				"RAdd: {5}, GAdd: {6}, BAdd: {7}, AAdd: {8}, HasAdd: {9}",
-				RMul, GMul, GMul, AMul, HasMul,
-				RAdd, GAdd, BAdd, AAdd, HasAdd);
+		public struct Color
+		{
+			public short R;
+			public short G;
+			public short B;
+			public short A;
+
+			public static Color Read(SwfStreamReader reader, uint channelBitCount, bool withAlpha) {
+				var r = (short)reader.ReadSignedBits(channelBitCount);
+				var g = (short)reader.ReadSignedBits(channelBitCount);
+				var b = (short)reader.ReadSignedBits(channelBitCount);
+				var a = withAlpha ? (short)reader.ReadSignedBits(channelBitCount) : default;
+				return new Color{ R = r, G = g, B = b, A = a};
+			}
+
+			public static readonly Color White = new() { R = 256, G = 256, B = 256, A = 256 };
+
+			public override string ToString() => $"({R}, {G}, {B}, {A})";
+
+			public static explicit operator SwfVec4Int(Color color) {
+				return new SwfVec4Int{ X = color.R, Y = color.G, Z = color.B, W = color.A };
+			}
 		}
 	}
 }

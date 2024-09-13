@@ -62,9 +62,7 @@ namespace FTEditor.Editors {
 		public void Shutdown() {
 			_matPropBlock.Clear();
 			_previewUtils.Cleanup();
-		#if UNITY_2021_1_OR_NEWER
 			Cleanup();
-		#endif
 		}
 
 		// ---------------------------------------------------------------------
@@ -75,12 +73,8 @@ namespace FTEditor.Editors {
 
 		public override void Initialize(Object[] targets) {
 			base.Initialize(targets);
-			if ( _matPropBlock == null ) {
-				_matPropBlock = new MaterialPropertyBlock();
-			}
-			if ( _previewUtils == null ) {
-				_previewUtils = new PreviewRenderUtility();
-			}
+			_matPropBlock ??= new MaterialPropertyBlock();
+			_previewUtils ??= new PreviewRenderUtility();
 		}
 
 		public override bool HasPreviewGUI() {

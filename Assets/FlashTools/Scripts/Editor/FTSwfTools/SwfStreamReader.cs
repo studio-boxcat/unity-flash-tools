@@ -27,9 +27,7 @@ namespace FTSwfTools {
 			_binaryReader = new BinaryReader(stream);
 		}
 
-		public bool IsEOF {
-			get { return Position >= Length; }
-		}
+		public bool IsEOF => Position >= Length;
 
 		public uint Length {
 			get {
@@ -72,18 +70,14 @@ namespace FTSwfTools {
 		}
 
 		public byte[] ReadBytes(uint count) {
-			if ( count > (uint)int.MaxValue ) {
+			if ( count > int.MaxValue ) {
 				throw new IOException();
 			}
 			return _binaryReader.ReadBytes((int)count);
 		}
 
-		public char ReadChar() {
-			return _binaryReader.ReadChar();
-		}
-
 		public char[] ReadChars(uint count) {
-			if ( count > (uint)int.MaxValue ) {
+			if ( count > int.MaxValue ) {
 				throw new IOException();
 			}
 			return _binaryReader.ReadChars((int)count);
@@ -107,10 +101,6 @@ namespace FTSwfTools {
 
 		public float ReadFloat32() {
 			return _binaryReader.ReadSingle();
-		}
-
-		public double ReadDouble64() {
-			return _binaryReader.ReadDouble();
 		}
 
 		public int ReadSignedBits(uint count) {

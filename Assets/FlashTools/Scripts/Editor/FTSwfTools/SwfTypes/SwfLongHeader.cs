@@ -1,7 +1,9 @@
-﻿namespace FTSwfTools.SwfTypes {
+﻿using UnityEngine;
+
+namespace FTSwfTools.SwfTypes {
 	public struct SwfLongHeader {
 		public SwfShortHeader ShortHeader;
-		public SwfRect        FrameSize;
+		public Rect           FrameSize;
 		public float          FrameRate;
 		public ushort         FrameCount;
 
@@ -13,13 +15,7 @@
 				FrameCount  = reader.ReadUInt16()};
 		}
 
-		public override string ToString() {
-			return string.Format(
-				"SwfLongHeader. " +
-				"Format: {0}, Version: {1}, FileLength: {2}, " +
-				"FrameSize: {3}, FrameRate: {4}, FrameCount: {5}",
-				ShortHeader.Format, ShortHeader.Version, ShortHeader.FileLength,
-				FrameSize, FrameRate, FrameCount);
-		}
+		public override string ToString() =>
+			$"SwfLongHeader. Format: {ShortHeader.Format}, Version: {ShortHeader.Version}, FileLength: {ShortHeader.FileLength}, FrameSize: {FrameSize}, FrameRate: {FrameRate}, FrameCount: {FrameCount}";
 	}
 }

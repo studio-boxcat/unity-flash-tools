@@ -9,7 +9,7 @@ using FTRuntime;
 namespace FTEditor.Editors {
 	[CustomEditor(typeof(SwfClipPhasor)), CanEditMultipleObjects]
 	class SwfClipControllerEditor : Editor {
-		List<SwfClipPhasor> _controllers = new List<SwfClipPhasor>();
+		List<SwfClipPhasor> _controllers = new();
 
 		void AllControllersForeach(System.Action<SwfClipPhasor> act) {
 			foreach ( var controller in _controllers ) {

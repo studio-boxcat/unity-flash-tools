@@ -1,7 +1,7 @@
 ﻿using FTSwfTools.SwfTypes;
 
 namespace FTSwfTools.SwfTags {
-	public class DoABCTag : SwfTagBase {
+	class DoABCTag : SwfTagBase {
 		public bool   ExecuteImmediately;
 		public string Name;
 		public byte[] ABCBytes;
@@ -10,7 +10,7 @@ namespace FTSwfTools.SwfTags {
 			get { return SwfTagType.DoABC; }
 		}
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
 		}
 

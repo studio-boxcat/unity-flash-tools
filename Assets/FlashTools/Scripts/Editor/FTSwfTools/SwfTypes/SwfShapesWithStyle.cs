@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace FTSwfTools.SwfTypes {
 	public struct SwfShapesWithStyle {
@@ -12,23 +13,14 @@ namespace FTSwfTools.SwfTypes {
 		public struct FillStyle {
 			public SwfFillStyleType Type;
 			public ushort           BitmapId;
-			public SwfMatrix        BitmapMatrix;
+			public Matrix4x4        BitmapMatrix;
 
-			public override string ToString() {
-				return string.Format(
-					"FillStyle. Type: {0}, BitmapId: {1}, BitmapMatrix: {2}",
-					Type, BitmapId, BitmapMatrix);
-			}
+			public override string ToString() => $"FillStyle. Type: {Type}, BitmapId: {BitmapId}, BitmapMatrix: {BitmapMatrix}";
 		}
 
 		public List<FillStyle> FillStyles;
 
-		public static SwfShapesWithStyle identity {
-			get {
-				return new SwfShapesWithStyle{
-					FillStyles = new List<FillStyle>()};
-			}
-		}
+		public static SwfShapesWithStyle identity => new() {FillStyles = new List<FillStyle>()};
 
 		public static SwfShapesWithStyle Read(SwfStreamReader reader, ShapeStyleType style_type) {
 			var shapes = SwfShapesWithStyle.identity;

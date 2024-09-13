@@ -1,5 +1,5 @@
 ﻿namespace FTSwfTools.SwfTags {
-	public class FrameLabelTag : SwfTagBase {
+	class FrameLabelTag : SwfTagBase {
 		public string Name;
 		public byte   AnchorFlag;
 
@@ -7,7 +7,7 @@
 			get { return SwfTagType.FrameLabel; }
 		}
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
 		}
 

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 namespace FTSwfTools.SwfTags {
-	public class ExportAssetsTag : SwfTagBase {
+	class ExportAssetsTag : SwfTagBase {
 		public struct AssetTagData {
 			public ushort Tag;
 			public string Name;
@@ -13,7 +13,7 @@ namespace FTSwfTools.SwfTags {
 			get { return SwfTagType.ExportAssets; }
 		}
 
-		public override TResult AcceptVistor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
 		}
 

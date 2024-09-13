@@ -1,7 +1,5 @@
 ﻿using UnityEngine;
 using UnityEditor;
-
-using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -10,7 +8,6 @@ using FTRuntime;
 namespace FTEditor.Editors {
 	[CustomEditor(typeof(SwfClipAsset)), CanEditMultipleObjects]
 	class SwfClipAssetEditor : Editor {
-		bool                _outdated = false;
 		List<SwfClipAsset>  _clips    = new();
 		SwfClipAssetPreview _preview  = null;
 
@@ -48,27 +45,6 @@ namespace FTEditor.Editors {
 			});
 		}
 
-		void DrawGUISourceAsset() {
-			var asset_guids = _clips.Select(p => p.AssetGUID);
-			var mixed_value = asset_guids.GroupBy(p => p).Count() > 1;
-			SwfEditorUtils.DoWithEnabledGUI(false, () => {
-				SwfEditorUtils.DoWithMixedValue(
-					mixed_value, () => {
-						var source_asset = AssetDatabase.LoadAssetAtPath<SwfAsset>(
-							AssetDatabase.GUIDToAssetPath(asset_guids.First()));
-						EditorGUILayout.ObjectField(
-							"Source Asset", source_asset, typeof(SwfAsset), false);
-					});
-			});
-		}
-
-		void DrawGUINotes() {
-			SwfEditorUtils.DrawMasksGUINotes();
-			if ( _outdated ) {
-				SwfEditorUtils.DrawOutdatedGUINotes("SwfClipAsset", _clips);
-			}
-		}
-
 		//
 		//
 		//
@@ -97,7 +73,6 @@ namespace FTEditor.Editors {
 
 		void OnEnable() {
 			_clips = targets.OfType<SwfClipAsset>().ToList();
-			_outdated = SwfEditorUtils.CheckForOutdatedAsset(_clips);
 			SetupPreviews();
 		}
 
@@ -111,8 +86,6 @@ namespace FTEditor.Editors {
 			DrawDefaultInspector();
 			DrawGUIFrameCount();
 			DrawGUISequences();
-			DrawGUISourceAsset();
-			DrawGUINotes();
 			if ( GUI.changed ) {
 				serializedObject.ApplyModifiedProperties();
 			}

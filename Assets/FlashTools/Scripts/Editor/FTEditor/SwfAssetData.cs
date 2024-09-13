@@ -1,172 +1,40 @@
 ﻿using UnityEngine;
 
 using System.Collections.Generic;
+using FTSwfTools.SwfTypes;
+using UnityEngine.Assertions;
 
 namespace FTEditor {
-	[System.Serializable]
-	struct SwfVec2Data {
-		public float x;
-		public float y;
+	struct SwfVec4Int
+	{
+		public int X;
+		public int Y;
+		public int Z;
+		public int W;
 
-		public SwfVec2Data(float x, float y) {
-			this.x = x;
-			this.y = y;
+		public SwfVec4Int(int x, int y, int z, int w)
+		{
+			X = x;
+			Y = y;
+			Z = z;
+			W = w;
 		}
 
-		public Vector2 ToUVector2() {
-			return new Vector2(x, y);
-		}
+		public static SwfVec4Int Uniform(int value) => new(value, value, value, value);
 
-		public static SwfVec2Data one {
-			get { return new SwfVec2Data(1.0f, 1.0f); }
-		}
-
-		public static SwfVec2Data zero {
-			get { return new SwfVec2Data(0.0f, 0.0f); }
-		}
+		public static SwfVec4Int operator+(SwfVec4Int a, SwfVec4Int b) => new(a.X + b.X, a.Y + b.Y, a.Z + b.Z, a.W + b.W);
+		public static SwfVec4Int operator*(SwfVec4Int a, SwfVec4Int b) => new(a.X * b.X, a.Y * b.Y, a.Z * b.Z, a.W * b.W);
 	}
 
-	[System.Serializable]
-	struct SwfVec4Data {
-		public float x;
-		public float y;
-		public float z;
-		public float w;
-
-		public SwfVec4Data(float x, float y, float z, float w) {
-			this.x = x;
-			this.y = y;
-			this.z = z;
-			this.w = w;
-		}
-
-		public Vector4 ToUVector4() {
-			return new Vector4(x, y, z, w);
-		}
-
-		public static SwfVec4Data one {
-			get { return new SwfVec4Data(1.0f, 1.0f, 1.0f, 1.0f); }
-		}
-
-		public static SwfVec4Data zero {
-			get { return new SwfVec4Data(0.0f, 0.0f, 0.0f, 0.0f); }
-		}
-	}
-
-	[System.Serializable]
-	struct SwfRectData {
-		public float xMin;
-		public float xMax;
-		public float yMin;
-		public float yMax;
-
-		public SwfRectData(float w, float h) {
-			this.xMin = 0;
-			this.yMin = 0;
-			this.xMax = w;
-			this.yMax = h;
-		}
-
-		public SwfRectData(float x, float y, float w, float h) {
-			this.xMin = x;
-			this.yMin = y;
-			this.xMax = x + w;
-			this.yMax = y + h;
-		}
-
-		public float width {
-			get {
-				return xMax - xMin;
-			}
-		}
-
-		public float height {
-			get {
-				return yMax - yMin;
-			}
-		}
-
-		public float area {
-			get {
-				return width * height;
-			}
-		}
-
-		public static SwfRectData identity {
-			get {
-				return new SwfRectData(0.0f, 0.0f, 0.0f, 0.0f);
-			}
-		}
-
-		public static SwfRectData FromURect(Rect rect) {
-			return new SwfRectData(rect.xMin, rect.yMin, rect.width, rect.height);
-		}
-	}
-
-	[System.Serializable]
-	struct SwfRectIntData {
-		public int xMin;
-		public int xMax;
-		public int yMin;
-		public int yMax;
-
-		public SwfRectIntData(int w, int h) {
-			this.xMin = 0;
-			this.yMin = 0;
-			this.xMax = w;
-			this.yMax = h;
-		}
-
-		public SwfRectIntData(int x, int y, int w, int h) {
-			this.xMin = x;
-			this.yMin = y;
-			this.xMax = x + w;
-			this.yMax = y + h;
-		}
-
-		public int width {
-			get {
-				return xMax - xMin;
-			}
-		}
-
-		public int height {
-			get {
-				return yMax - yMin;
-			}
-		}
-
-		public int area {
-			get {
-				return width * height;
-			}
-		}
-
-		public static SwfRectIntData identity {
-			get {
-				return new SwfRectIntData(0, 0, 0, 0);
-			}
-		}
-
-		public static SwfRectIntData FromURect(RectInt rect) {
-			return new SwfRectIntData(rect.xMin, rect.yMin, rect.width, rect.height);
-		}
-	}
-
-	[System.Serializable]
 	struct SwfMatrixData {
-		public SwfVec2Data sc;
-		public SwfVec2Data sk;
-		public SwfVec2Data tr;
+		Vector2 sc;
+		Vector2 sk;
+		Vector2 tr;
 
-		public static SwfMatrixData identity {
-			get {
-				return new SwfMatrixData{
-					sc = SwfVec2Data.one,
-					sk = SwfVec2Data.zero,
-					tr = SwfVec2Data.zero};
-			}
-		}
+		public static readonly SwfMatrixData identity = new() {
+			sc = new Vector2(1, 1),
+			sk = default,
+			tr = default};
 
 		public Matrix4x4 ToUMatrix() {
 			var mat = Matrix4x4.identity;
@@ -181,13 +49,12 @@ namespace FTEditor {
 
 		public static SwfMatrixData FromUMatrix(Matrix4x4 mat) {
 			return new SwfMatrixData{
-				sc = new SwfVec2Data(mat.m00, mat.m11),
-				sk = new SwfVec2Data(mat.m10, mat.m01),
-				tr = new SwfVec2Data(mat.m03, mat.m13)};
+				sc = new Vector2(mat.m00, mat.m11),
+				sk = new Vector2(mat.m10, mat.m01),
+				tr = new Vector2(mat.m03, mat.m13)};
 		}
 	}
 
-	[System.Serializable]
 	struct SwfBlendModeData {
 		public enum Types : byte {
 			Normal,
@@ -200,49 +67,69 @@ namespace FTEditor {
 		}
 		public Types type;
 
-		public SwfBlendModeData(Types type) {
-			this.type = type;
-		}
+		public SwfBlendModeData(Types type) => this.type = type;
 
-		public static SwfBlendModeData identity {
-			get {
-				return new SwfBlendModeData{
-					type = Types.Normal};
-			}
-		}
+		public static SwfBlendModeData identity => new() {type = Types.Normal};
 
-		public static SwfBlendModeData operator*(
-			SwfBlendModeData a, SwfBlendModeData b)
+		public static SwfBlendModeData operator*(SwfBlendModeData a, SwfBlendModeData b)
+			=> a.type is (Types.Normal or Types.Layer) ? b : a;
+
+		public static explicit operator SwfBlendModeData(SwfBlendMode value)
 		{
-			return (a.type == Types.Normal || a.type == Types.Layer) ? b : a;
+			return value.Value switch
+			{
+				SwfBlendMode.Mode.Normal => new SwfBlendModeData(Types.Normal),
+				SwfBlendMode.Mode.Layer => new SwfBlendModeData(Types.Layer),
+				SwfBlendMode.Mode.Multiply => new SwfBlendModeData(Types.Multiply),
+				SwfBlendMode.Mode.Screen => new SwfBlendModeData(Types.Screen),
+				SwfBlendMode.Mode.Lighten => new SwfBlendModeData(Types.Lighten),
+				SwfBlendMode.Mode.Add => new SwfBlendModeData(Types.Add),
+				SwfBlendMode.Mode.Subtract => new SwfBlendModeData(Types.Subtract),
+				_ => throw new System.Exception("Unsupported blend mode: " + value.Value)
+			};
 		}
 	}
 
-	[System.Serializable]
-	struct SwfColorTransData {
-		public SwfVec4Data mulColor;
-		public SwfVec4Data addColor;
+	struct SwfColorTransData
+	{
+		public int Depth;
+		public SwfVec4Int Mul;
+		public SwfVec4Int Add;
 
-		public static readonly SwfColorTransData identity = new() { mulColor = SwfVec4Data.one, addColor = SwfVec4Data.zero };
+		public static readonly SwfColorTransData identity = new()
+		{
+			Depth = 0,
+			Mul = SwfVec4Int.Uniform(1),
+			Add = default,
+		};
+
+		public Color CalculateMul() => CalculateColor(Mul, Depth);
+		public Color CalculateAdd() => CalculateColor(Add, Depth);
+
+		static Color CalculateColor(SwfVec4Int v, int depth)
+		{
+			Assert.IsTrue(depth is >= 0 and < 4, "Depth must be in range [0, 3]");
+			var div = 1u << (8 * depth);
+			if (div is 1) return new Color(v.X, v.Y, v.Z, v.W);
+			float divf = div;
+			return new Color(v.X / divf, v.Y / divf, v.Z / divf, v.W / divf);
+		}
 
 		public static SwfColorTransData operator*(
-			SwfColorTransData a, SwfColorTransData b)
+			SwfColorTransData a, SwfColorTransform b)
 		{
+			if (b.Mul.HasValue is false && b.Add.HasValue is false)
+				return a;
+
+			var mul = (SwfVec4Int) (b.Mul ?? SwfColorTransform.Color.White);
+			var add = (SwfVec4Int) (b.Add ?? default);
 			return new SwfColorTransData{
-				mulColor = new SwfVec4Data(
-					b.mulColor.x * a.mulColor.x,
-					b.mulColor.y * a.mulColor.y,
-					b.mulColor.z * a.mulColor.z,
-					b.mulColor.w * a.mulColor.w),
-				addColor = new SwfVec4Data(
-					b.addColor.x * a.mulColor.x + a.addColor.x,
-					b.addColor.y * a.mulColor.y + a.addColor.y,
-					b.addColor.z * a.mulColor.z + a.addColor.z,
-					b.addColor.w * a.mulColor.w + a.addColor.w)};
+				Depth = a.Depth + 1,
+				Mul = mul * a.Mul,
+				Add = add * a.Mul + a.Add};
 		}
 	}
 
-	[System.Serializable]
 	class SwfInstanceData {
 		public enum Types {
 			Mask,
@@ -253,39 +140,19 @@ namespace FTEditor {
 		public Types                 Type        = Types.Group;
 		public ushort                ClipDepth   = 0;
 		public ushort                Bitmap      = 0;
-		public SwfMatrixData         Matrix      = SwfMatrixData.identity;
+		public Matrix4x4             Matrix      = Matrix4x4.identity;
 		public SwfBlendModeData      BlendMode   = SwfBlendModeData.identity;
 		public SwfColorTransData     ColorTrans  = SwfColorTransData.identity;
 	}
 
-	[System.Serializable]
 	class SwfFrameData {
 		public string                Anchor      = string.Empty;
-		public List<string>          Labels      = new List<string>();
-		public List<SwfInstanceData> Instances   = new List<SwfInstanceData>();
+		public List<string>          Labels      = new();
+		public List<SwfInstanceData> Instances   = new();
 	}
 
-	[System.Serializable]
 	class SwfSymbolData {
 		public string                Name        = string.Empty;
-		public List<SwfFrameData>    Frames      = new List<SwfFrameData>();
-	}
-
-	[System.Serializable]
-	class SwfBitmapData {
-		public ushort                Id          = 0;
-		public byte[]                ARGB32      = new byte[0];
-		public ushort                Redirect    = 0;
-		public int                   RealWidth   = 0;
-		public int                   RealHeight  = 0;
-		public SwfRectData           SourceRect  = default;
-		public SwfRectIntData        TrimmedRect = default;
-	}
-
-	[System.Serializable]
-	class SwfAssetData {
-		public float                 FrameRate   = 0.0f;
-		public List<SwfSymbolData>   Symbols     = new List<SwfSymbolData>();
-		public List<SwfBitmapData>   Bitmaps     = new List<SwfBitmapData>();
+		public List<SwfFrameData>    Frames      = new();
 	}
 }
