@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;
@@ -14,38 +13,24 @@ namespace FTSwfTools {
 	// SwfLibrary
 	//
 
-	public enum SwfLibraryDefineType {
-		Shape,
-		Bitmap,
-		Sprite
-	}
-
 	public abstract class SwfLibraryDefine {
 		public string ExportName = string.Empty;
-		public abstract SwfLibraryDefineType Type { get; }
 	}
 
 	class SwfLibraryShapeDefine : SwfLibraryDefine
 	{
-		public (ushort, Matrix4x4)[] Bitmaps;
-
+		public readonly (ushort, Matrix4x4)[] Bitmaps;
 		public SwfLibraryShapeDefine((ushort, Matrix4x4)[] bitmaps) => Bitmaps = bitmaps;
-
-		public override SwfLibraryDefineType Type => SwfLibraryDefineType.Shape;
 	}
 
 	class SwfLibraryBitmapDefine : SwfLibraryDefine {
-		public IBitmapData Data;
-
+		public readonly IBitmapData Data;
 		public SwfLibraryBitmapDefine(IBitmapData data) => Data = data;
-
-		public override SwfLibraryDefineType Type => SwfLibraryDefineType.Bitmap;
 	}
 
 	class SwfLibrarySpriteDefine : SwfLibraryDefine {
-		public SwfControlTags ControlTags = SwfControlTags.identity;
-
-		public override SwfLibraryDefineType Type => SwfLibraryDefineType.Sprite;
+		public readonly SwfTagBase[] ControlTags;
+		public SwfLibrarySpriteDefine(SwfTagBase[] controlTags) => ControlTags = controlTags;
 	}
 
 	class SwfLibrary {
@@ -61,12 +46,15 @@ namespace FTSwfTools {
 				? def as T : null;
 		}
 
+		public bool TryGet(ushort define_id, out SwfLibraryDefine define) => Defines.TryGetValue(define_id, out define);
+
 		public SwfLibraryShapeDefine GetShapeDefine(ushort define_id) => (SwfLibraryShapeDefine) Defines[define_id];
+		public SwfLibrarySpriteDefine GetSpriteDefine(ushort define_id) => (SwfLibrarySpriteDefine) Defines[define_id];
 
 		public Dictionary<ushort, IBitmapData> GetBitmaps()
 		{
 			return Defines
-				.Where(p => p.Value.Type is SwfLibraryDefineType.Bitmap)
+				.Where(p => p.Value is SwfLibraryBitmapDefine)
 				.ToDictionary(
 					p => p.Key,
 					p => ((SwfLibraryBitmapDefine) p.Value).Data);

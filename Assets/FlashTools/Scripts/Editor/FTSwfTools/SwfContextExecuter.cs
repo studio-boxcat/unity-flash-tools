@@ -30,7 +30,7 @@ namespace FTSwfTools {
 		}
 
 		public SwfDisplayList Visit(PlaceObjectTag tag, SwfDisplayList dl) {
-			if (Library.Defines.TryGetValue(tag.CharacterId, out var define) is false)
+			if (Library.TryGet(tag.CharacterId, out var define) is false)
 				return dl;
 
 			SwfDisplayInstance new_inst = define switch
@@ -168,10 +168,8 @@ namespace FTSwfTools {
 
 		public SwfDisplayList Visit(ExportAssetsTag tag, SwfDisplayList dl) {
 			foreach ( var asset_tag in tag.AssetTags ) {
-				var define = Library.FindDefine<SwfLibraryDefine>(asset_tag.Tag);
-				if ( define != null ) {
+				if ( Library.TryGet(asset_tag.Tag, out var define) )
 					define.ExportName = asset_tag.Name.Trim();
-				}
 			}
 			return dl;
 		}
@@ -227,7 +225,8 @@ namespace FTSwfTools {
 		}
 
 		public SwfDisplayList Visit(DefineSpriteTag tag, SwfDisplayList dl) {
-			AddSpriteToLibrary(tag.SpriteId, tag.ControlTags);
+			var define = new SwfLibrarySpriteDefine(tag.ControlTags);
+			Library.Defines.Add(tag.SpriteId, define);
 			return dl;
 		}
 
@@ -262,14 +261,9 @@ namespace FTSwfTools {
 			Library.Defines.Add(define_id, define);
 		}
 
-		void AddSpriteToLibrary(ushort define_id, SwfControlTags control_tags) {
-			var define = new SwfLibrarySpriteDefine{ ControlTags = control_tags };
-			Library.Defines.Add(define_id, define);
-		}
-
 		bool IsSpriteTimelineEnd(SwfDisplaySpriteInstance sprite) {
-			var sprite_def = Library.FindDefine<SwfLibrarySpriteDefine>(sprite.Id);
-			if ( sprite_def != null && sprite.CurrentTag < sprite_def.ControlTags.Tags.Length ) {
+			var sprite_def = Library.GetSpriteDefine(sprite.Id);
+			if ( sprite.CurrentTag < sprite_def.ControlTags.Length ) {
 				return false;
 			}
 			var children = sprite.DisplayList.Instances.Values
@@ -288,15 +282,11 @@ namespace FTSwfTools {
 				.Where (p => p.Type == SwfDisplayInstanceType.Sprite)
 				.Select(p => p as SwfDisplaySpriteInstance);
 			foreach ( var sprite in sprites ) {
-				var sprite_def = Library.FindDefine<SwfLibrarySpriteDefine>(sprite.Id);
-				if ( sprite_def != null ) {
-					if ( IsSpriteTimelineEnd(sprite) ) {
-						sprite.Reset();
-					}
-					var sprite_executer = new SwfContextExecuter(Library, sprite.CurrentTag);
-					sprite_executer.NextFrame(sprite_def.ControlTags.Tags, sprite.DisplayList);
-					sprite.CurrentTag = sprite_executer.CurrentTag;
-				}
+				var sprite_def = Library.GetSpriteDefine(sprite.Id);
+				if ( IsSpriteTimelineEnd(sprite) ) sprite.Reset();
+				var sprite_executer = new SwfContextExecuter(Library, sprite.CurrentTag);
+				sprite_executer.NextFrame(sprite_def.ControlTags, sprite.DisplayList);
+				sprite.CurrentTag = sprite_executer.CurrentTag;
 			}
 		}
 	}

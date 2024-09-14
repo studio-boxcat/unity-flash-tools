@@ -5,7 +5,7 @@ using FTSwfTools.SwfTypes;
 using UnityEngine.Assertions;
 
 namespace FTEditor {
-	struct SwfBlendModeData {
+	readonly struct SwfBlendModeData {
 		public enum Types : byte {
 			Normal,
 			Layer,
@@ -15,28 +15,30 @@ namespace FTEditor {
 			Add,
 			Subtract,
 		}
-		public Types type;
+		public readonly Types type;
 
 		public SwfBlendModeData(Types type) => this.type = type;
 
-		public static SwfBlendModeData identity => new() {type = Types.Normal};
+		public static SwfBlendModeData identity => new(Types.Normal);
 
 		public static SwfBlendModeData operator*(SwfBlendModeData a, SwfBlendModeData b)
 			=> a.type is (Types.Normal or Types.Layer) ? b : a;
 
 		public static explicit operator SwfBlendModeData(SwfBlendMode value)
 		{
-			return value.Value switch
+			var t = value.Value switch
 			{
-				SwfBlendMode.Mode.Normal => new SwfBlendModeData(Types.Normal),
-				SwfBlendMode.Mode.Layer => new SwfBlendModeData(Types.Layer),
-				SwfBlendMode.Mode.Multiply => new SwfBlendModeData(Types.Multiply),
-				SwfBlendMode.Mode.Screen => new SwfBlendModeData(Types.Screen),
-				SwfBlendMode.Mode.Lighten => new SwfBlendModeData(Types.Lighten),
-				SwfBlendMode.Mode.Add => new SwfBlendModeData(Types.Add),
-				SwfBlendMode.Mode.Subtract => new SwfBlendModeData(Types.Subtract),
+				SwfBlendMode.Mode.Normal => Types.Normal,
+				SwfBlendMode.Mode.Layer => Types.Layer,
+				SwfBlendMode.Mode.Multiply => Types.Multiply,
+				SwfBlendMode.Mode.Screen => Types.Screen,
+				SwfBlendMode.Mode.Lighten => Types.Lighten,
+				SwfBlendMode.Mode.Add => Types.Add,
+				SwfBlendMode.Mode.Subtract => Types.Subtract,
 				_ => throw new System.Exception("Unsupported blend mode: " + value.Value)
 			};
+
+			return new SwfBlendModeData(t);
 		}
 	}
 
@@ -122,7 +124,13 @@ namespace FTEditor {
 	}
 
 	class SwfSymbolData {
-		public string                Name        = string.Empty;
-		public List<SwfFrameData>    Frames      = new();
+		public readonly string         Name;
+		public readonly SwfFrameData[] Frames;
+
+		public SwfSymbolData(string name, SwfFrameData[] frames)
+		{
+			Name = name;
+			Frames = frames;
+		}
 	}
 }

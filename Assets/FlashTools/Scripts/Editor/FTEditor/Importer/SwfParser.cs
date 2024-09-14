@@ -73,18 +73,16 @@ namespace FTEditor.Importer {
 
 		public static SwfSymbolData[] LoadSymbols(SwfTagBase[] tags, out SwfLibrary library)
 		{
-			var symbols = new List<SwfSymbolData>();
-			library = new SwfLibrary();
-			symbols.Add(LoadSymbol(stage_symbol, tags, library));
-			var sprite_defs = library.Defines.Values
+			var l = new SwfLibrary();
+			var symbol = LoadSymbol(stage_symbol, tags, l);
+
+			var symbols = new List<SwfSymbolData> { symbol };
+			symbols.AddRange(l.Defines.Values
 				.OfType<SwfLibrarySpriteDefine>()
 				.Where(p => !string.IsNullOrEmpty(p.ExportName))
-				.ToList();
-			foreach (var def in sprite_defs) {
-				var name = def.ExportName;
-				var control_tags = def.ControlTags.Tags;
-				symbols.Add(LoadSymbol(name, control_tags, library));
-			}
+				.Select(def => LoadSymbol(def.ExportName, def.ControlTags, l)));
+
+			library = l;
 			return symbols.ToArray();
 		}
 
@@ -93,12 +91,9 @@ namespace FTEditor.Importer {
 			var disp_lst = new SwfDisplayList();
 			var executer = new SwfContextExecuter(library, 0);
 			var symbol_frames = new List<SwfFrameData>();
-			while ( executer.NextFrame(tags, disp_lst) ) {
+			while ( executer.NextFrame(tags, disp_lst) )
 				symbol_frames.Add(LoadSymbolFrameData(library, disp_lst));
-			}
-			return new SwfSymbolData{
-				Name   = symbol_name,
-				Frames = symbol_frames};
+			return new SwfSymbolData(symbol_name, symbol_frames.ToArray());
 		}
 
 		static SwfFrameData LoadSymbolFrameData(
@@ -118,8 +113,7 @@ namespace FTEditor.Importer {
 
 			var anchor = display_list.FrameAnchors.Count > 0 ? display_list.FrameAnchors[0] : string.Empty;
 			var labels = display_list.FrameLabels.ToArray();
-			var frame = new SwfFrameData(anchor, labels, instances.ToArray());
-			return frame;
+			return new SwfFrameData(anchor, labels, instances.ToArray());
 		}
 
 		static void AddDisplayListToFrame(
