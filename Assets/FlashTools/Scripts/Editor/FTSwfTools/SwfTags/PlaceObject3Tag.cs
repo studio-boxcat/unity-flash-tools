@@ -18,7 +18,6 @@ namespace FTSwfTools.SwfTags {
 		public bool              HasClassName;
 		public bool              HasCacheAsBitmap;
 		public bool              HasBlendMode;
-		public bool              HasFilterList;
 		public ushort            Depth;
 		public string            ClassName;
 		public ushort            CharacterId;
@@ -27,58 +26,30 @@ namespace FTSwfTools.SwfTags {
 		public ushort            Ratio;
 		public string            Name;
 		public ushort            ClipDepth;
-		public SwfSurfaceFilters SurfaceFilters;
 		public SwfBlendMode      BlendMode;
 		public bool              BitmapCache;
 		public bool              Visible;
 		public SwfColor          BackgroundColor;
 		public SwfClipActions    ClipActions;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.PlaceObject3; }
-		}
+		public override SwfTagType TagType => SwfTagType.PlaceObject3;
 
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) => visitor.Visit(this, arg);
 
 		public override string ToString() {
-			var sb = new StringBuilder(1024);
+			var sb = new StringBuilder();
 			sb.Append("PlaceObject3Tag. ");
 			sb.AppendFormat("Move: {0} Depth: {1}", Move, Depth);
-			if ( HasCharacter ) {
-				sb.AppendFormat(", CharacterId: {0}", CharacterId);
-			}
-			if ( HasMatrix ) {
-				sb.AppendFormat(", Matrix: {0}", Matrix);
-			}
-			if ( HasColorTransform ) {
-				sb.AppendFormat(", ColorTransform: {0}", ColorTransform);
-			}
-			if ( HasRatio ) {
-				sb.AppendFormat(", Ratio: {0}", Ratio);
-			}
-			if ( HasName ) {
-				sb.AppendFormat(", Name: {0}", Name);
-			}
-			if ( HasClipDepth ) {
-				sb.AppendFormat(", ClipDepth: {0}", ClipDepth);
-			}
-			if ( HasFilterList ) {
-				sb.AppendFormat(", SurfaceFilters: {0}", SurfaceFilters);
-			}
-			if ( HasBlendMode ) {
-				sb.AppendFormat(", BlendMode: {0}", BlendMode);
-			}
-			if ( HasCacheAsBitmap ) {
-				sb.AppendFormat(", BitmapCache: {0}", BitmapCache);
-			}
-			if ( HasVisible ) {
-				sb.AppendFormat(", Visible: {0}", Visible);
-			}
-			if ( HasClipActions ) {
-				sb.AppendFormat(", ClipActions: {0}", ClipActions);
-			}
+			if ( HasCharacter ) sb.AppendFormat(", CharacterId: {0}", CharacterId);
+			if ( HasMatrix ) sb.AppendFormat(", Matrix: {0}", Matrix);
+			if ( HasColorTransform ) sb.AppendFormat(", ColorTransform: {0}", ColorTransform);
+			if ( HasRatio ) sb.AppendFormat(", Ratio: {0}", Ratio);
+			if ( HasName ) sb.AppendFormat(", Name: {0}", Name);
+			if ( HasClipDepth ) sb.AppendFormat(", ClipDepth: {0}", ClipDepth);
+			if ( HasBlendMode ) sb.AppendFormat(", BlendMode: {0}", BlendMode);
+			if ( HasCacheAsBitmap ) sb.AppendFormat(", BitmapCache: {0}", BitmapCache);
+			if ( HasVisible ) sb.AppendFormat(", Visible: {0}", Visible);
+			if ( HasClipActions ) sb.AppendFormat(", ClipActions: {0}", ClipActions);
 			return sb.ToString();
 		}
 
@@ -99,7 +70,7 @@ namespace FTSwfTools.SwfTags {
 			tag.HasClassName      = reader.ReadBit();
 			tag.HasCacheAsBitmap  = reader.ReadBit();
 			tag.HasBlendMode      = reader.ReadBit();
-			tag.HasFilterList     = reader.ReadBit();
+			var hasFilterList     = reader.ReadBit(); // HasFilterList
 			tag.Depth             = reader.ReadUInt16();
 
 			tag.ClassName         = tag.HasClassName
@@ -130,7 +101,7 @@ namespace FTSwfTools.SwfTags {
 				? reader.ReadUInt16()
 				: (ushort)0;
 
-			tag.SurfaceFilters    = tag.HasFilterList
+			_                     = hasFilterList
 				? SwfSurfaceFilters.Read(reader)
 				: SwfSurfaceFilters.identity;
 
@@ -138,13 +109,9 @@ namespace FTSwfTools.SwfTags {
 				? SwfBlendMode.Read(reader)
 				: SwfBlendMode.identity;
 
-			tag.BitmapCache       = tag.HasCacheAsBitmap
-				? (0 != reader.ReadByte())
-				: false;
+			tag.BitmapCache       = tag.HasCacheAsBitmap && (0 != reader.ReadByte());
 
-			tag.Visible           = tag.HasVisible && !reader.IsEOF
-				? (0 != reader.ReadByte())
-				: true;
+			tag.Visible           = !tag.HasVisible || reader.IsEOF || (0 != reader.ReadByte());
 
 			tag.BackgroundColor   = tag.HasVisible && !reader.IsEOF
 				? SwfColor.Read(reader, true)

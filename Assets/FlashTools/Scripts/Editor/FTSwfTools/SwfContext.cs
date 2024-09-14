@@ -88,7 +88,6 @@ namespace FTSwfTools {
 		public bool              Visible;
 		public Matrix4x4         Matrix;
 		public SwfBlendMode      BlendMode;
-		public SwfSurfaceFilters FilterList;
 		public SwfColorTransform ColorTransform;
 	}
 

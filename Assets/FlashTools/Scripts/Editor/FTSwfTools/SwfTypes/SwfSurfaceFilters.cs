@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using FTEditor;
 
 namespace FTSwfTools.SwfTypes {
 	public struct SwfSurfaceFilters {
@@ -17,9 +18,7 @@ namespace FTSwfTools.SwfTypes {
 		}
 
 		public class DropShadowFilter : Filter {
-			public override Types Type {
-				get { return Types.DropShadow; }
-			}
+			public override Types Type => Types.DropShadow;
 			public SwfColor   DropShadowColor;
 			public float      BlurX;
 			public float      BlurY;
@@ -33,18 +32,14 @@ namespace FTSwfTools.SwfTypes {
 		}
 
 		public class BlurFilter : Filter {
-			public override Types Type {
-				get { return Types.Blur; }
-			}
+			public override Types Type => Types.Blur;
 			public float      BlurX;
 			public float      BlurY;
 			public uint       Passes;
 		}
 
 		public class GlowFilter : Filter {
-			public override Types Type {
-				get { return Types.Glow; }
-			}
+			public override Types Type => Types.Glow;
 			public SwfColor   GlowColor;
 			public float      BlurX;
 			public float      BlurY;
@@ -56,9 +51,7 @@ namespace FTSwfTools.SwfTypes {
 		}
 
 		public class BevelFilter : Filter {
-			public override Types Type {
-				get { return Types.Bevel; }
-			}
+			public override Types Type => Types.Bevel;
 			public SwfColor   ShadowColor;
 			public SwfColor   HighlightColor;
 			public float      BlurX;
@@ -74,9 +67,7 @@ namespace FTSwfTools.SwfTypes {
 		}
 
 		public class GradientGlowFilter : Filter {
-			public override Types Type {
-				get { return Types.GradientGlow; }
-			}
+			public override Types Type => Types.GradientGlow;
 			public SwfColor[] GradientColors;
 			public byte[]     GradientRatio;
 			public float      BlurX;
@@ -92,9 +83,7 @@ namespace FTSwfTools.SwfTypes {
 		}
 
 		public class ConvolutionFilter : Filter {
-			public override Types Type {
-				get { return Types.Convolution; }
-			}
+			public override Types Type => Types.Convolution;
 			public byte       MatrixX;
 			public byte       MatrixY;
 			public float      Divisor;
@@ -106,16 +95,12 @@ namespace FTSwfTools.SwfTypes {
 		}
 
 		public class ColorMatrixFilter : Filter {
-			public override Types Type {
-				get { return Types.ColorMatrix; }
-			}
+			public override Types Type => Types.ColorMatrix;
 			public float[]    Matrix;
 		}
 
 		public class GradientBevelFilter : Filter {
-			public override Types Type {
-				get { return Types.GradientBevel; }
-			}
+			public override Types Type => Types.GradientBevel;
 			public SwfColor[] GradientColors;
 			public byte[]     GradientRatio;
 			public float      BlurX;
@@ -132,29 +117,20 @@ namespace FTSwfTools.SwfTypes {
 
 		public List<Filter> Filters;
 
-		public static SwfSurfaceFilters identity {
-			get {
-				return new SwfSurfaceFilters{
-					Filters = new List<Filter>()};
-			}
-		}
+		public static SwfSurfaceFilters identity => new() {Filters = new List<Filter>()};
 
 		public static SwfSurfaceFilters Read(SwfStreamReader reader) {
 			var filter_count = reader.ReadByte();
+			if (filter_count is not 0)
+				L.W("SwfSurfaceFilters is not supported");
+
 			var filters      = new List<Filter>(filter_count);
-			for ( var i = 0; i < filter_count; ++i ) {
+			for ( var i = 0; i < filter_count; ++i )
 				filters.Add(ReadFilter(reader));
-			}
-			return new SwfSurfaceFilters{
-				Filters = filters};
+			return new SwfSurfaceFilters{Filters = filters};
 		}
 
-		public override string ToString() {
-			return string.Format(
-				"SwfSurfaceFilters. " +
-				"Filters: {0}",
-				Filters.Count);
-		}
+		public override string ToString() => $"SwfSurfaceFilters. Filters: {Filters.Count}";
 
 		// ---------------------------------------------------------------------
 		//
@@ -167,20 +143,20 @@ namespace FTSwfTools.SwfTypes {
 			return CreateFilterFromTypeId(type_id, reader);
 		}
 
-		static Filter CreateFilterFromTypeId(byte type_id, SwfStreamReader reader) {
-			switch ( type_id ) {
-			case 0: return ReadConcreteFilter(new DropShadowFilter   (), reader);
-			case 1: return ReadConcreteFilter(new BlurFilter         (), reader);
-			case 2: return ReadConcreteFilter(new GlowFilter         (), reader);
-			case 3: return ReadConcreteFilter(new BevelFilter        (), reader);
-			case 4: return ReadConcreteFilter(new GradientGlowFilter (), reader);
-			case 5: return ReadConcreteFilter(new ConvolutionFilter  (), reader);
-			case 6: return ReadConcreteFilter(new ColorMatrixFilter  (), reader);
-			case 7: return ReadConcreteFilter(new GradientBevelFilter(), reader);
-			default:
-				throw new System.Exception(string.Format(
-					"Incorrect surface filter type id: {0}", type_id));
-			}
+		static Filter CreateFilterFromTypeId(byte type_id, SwfStreamReader reader)
+		{
+			return type_id switch
+			{
+				0 => ReadConcreteFilter(new DropShadowFilter(), reader),
+				1 => ReadConcreteFilter(new BlurFilter(), reader),
+				2 => ReadConcreteFilter(new GlowFilter(), reader),
+				3 => ReadConcreteFilter(new BevelFilter(), reader),
+				4 => ReadConcreteFilter(new GradientGlowFilter(), reader),
+				5 => ReadConcreteFilter(new ConvolutionFilter(), reader),
+				6 => ReadConcreteFilter(new ColorMatrixFilter(), reader),
+				7 => ReadConcreteFilter(new GradientBevelFilter(), reader),
+				_ => throw new System.Exception($"Incorrect surface filter type id: {type_id}")
+			};
 		}
 
 		static Filter ReadConcreteFilter(DropShadowFilter filter, SwfStreamReader reader) {
