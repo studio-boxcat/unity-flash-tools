@@ -2,12 +2,6 @@
 using UnityEngine;
 
 namespace FTSwfTools.SwfTags {
-	interface IBitmapData
-	{
-		Vector2Int Size { get; }
-		byte[] ToARGB32();
-	}
-
 	class DefineBitsLossless2Tag : SwfTagBase, IBitmapData {
 		public ushort CharacterId;
 		public byte   BitmapFormat;
@@ -15,13 +9,6 @@ namespace FTSwfTools.SwfTags {
 		public ushort BitmapHeight;
 		public ushort BitmapColorTableSize;
 		public byte[] ZlibBitmapData;
-
-		public override SwfTagType TagType => SwfTagType.DefineBitsLossless2;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) => visitor.Visit(this, arg);
-
-		public override string ToString() =>
-			$"DefineBitsLossless2Tag. CharacterId: {CharacterId}, BitmapFormat: {BitmapFormat}, Width: {BitmapWidth}, Height: {BitmapHeight}";
 
 		public static DefineBitsLossless2Tag Create(SwfStreamReader reader) {
 			var tag          = new DefineBitsLossless2Tag();
@@ -36,7 +23,7 @@ namespace FTSwfTools.SwfTags {
 			return tag;
 		}
 
-		Vector2Int IBitmapData.Size => new Vector2Int(BitmapWidth, BitmapHeight);
+		Vector2Int IBitmapData.Size => new(BitmapWidth, BitmapHeight);
 
 		byte[] IBitmapData.ToARGB32() {
 			var result     = new byte[BitmapWidth * BitmapHeight * 4];

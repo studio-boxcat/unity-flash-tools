@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using FTSwfTools.SwfTags;
 
 namespace FTSwfTools.SwfTypes {
@@ -8,7 +7,7 @@ namespace FTSwfTools.SwfTypes {
 			var tags = new List<SwfTagBase>();
 			while ( true ) {
 				var tag = SwfTagBase.Read(reader);
-				if ( tag.TagType == SwfTagType.End ) break;
+				if ( tag is EndTag ) break;
 				tags.Add(tag);
 			}
 			return tags.ToArray();

@@ -7,19 +7,6 @@ namespace FTSwfTools.SwfTags {
 		public Rect               ShapeBounds;
 		public SwfShapesWithStyle Shapes;
 
-		public override SwfTagType TagType => SwfTagType.DefineShape;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
-
-		public override string ToString() {
-			return string.Format(
-				"DefineShapeTag. " +
-				"ShapeId: {0}, ShapeBounds: {1}, Shapes: {2}",
-				ShapeId, ShapeBounds, Shapes);
-		}
-
 		public static DefineShapeTag Create(SwfStreamReader reader) {
 			return new DefineShapeTag
 			{

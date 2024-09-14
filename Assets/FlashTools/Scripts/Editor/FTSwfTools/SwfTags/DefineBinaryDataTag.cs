@@ -3,16 +3,6 @@
 		public ushort Tag;
 		public byte[] Data;
 
-		public override SwfTagType TagType => SwfTagType.DefineBinaryData;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
-
-		public override string ToString() {
-			return "DefineBinaryDataTag.";
-		}
-
 		public static DefineBinaryDataTag Create(SwfStreamReader reader) {
 			var tag = reader.ReadUInt16();
 			reader.ReadUInt32(); // reserved

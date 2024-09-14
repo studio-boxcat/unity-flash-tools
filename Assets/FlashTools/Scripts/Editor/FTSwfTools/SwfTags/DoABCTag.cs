@@ -1,20 +1,8 @@
-﻿using FTSwfTools.SwfTypes;
-
-namespace FTSwfTools.SwfTags {
+﻿namespace FTSwfTools.SwfTags {
 	class DoABCTag : SwfTagBase {
 		public bool   ExecuteImmediately;
 		public string Name;
 		public byte[] ABCBytes;
-
-		public override SwfTagType TagType => SwfTagType.DoABC;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
-
-		public override string ToString() {
-			return "DoABCTag.";
-		}
 
 		public static DoABCTag Create(SwfStreamReader reader) {
 			const int kDoAbcLazyInitializeFlag = 1;

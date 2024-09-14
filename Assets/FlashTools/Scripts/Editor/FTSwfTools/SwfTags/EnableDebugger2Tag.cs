@@ -2,19 +2,6 @@
 	class EnableDebugger2Tag : SwfTagBase {
 		public string MD5PasswordHash;
 
-		public override SwfTagType TagType => SwfTagType.EnableDebugger2;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
-
-		public override string ToString() {
-			return string.Format(
-				"EnableDebugger2Tag. " +
-				"MD5PasswordHash: {0}",
-				MD5PasswordHash.Length > 0);
-		}
-
 		public static EnableDebugger2Tag Create(SwfStreamReader reader) {
 			reader.ReadUInt16(); // reserved
 			var md5 = reader.IsEOF

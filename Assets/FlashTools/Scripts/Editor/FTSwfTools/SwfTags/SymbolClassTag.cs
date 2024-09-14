@@ -9,14 +9,6 @@ namespace FTSwfTools.SwfTags {
 
 		public List<SymbolTagData> SymbolTags;
 
-		public override SwfTagType TagType => SwfTagType.SymbolClass;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
-
-		public override string ToString() => $"SymbolClassTag. SymbolTags: {SymbolTags.Count}";
-
 		public static SymbolClassTag Create(SwfStreamReader reader) {
 			var symbol_tag_count = reader.ReadUInt16();
 			var symbol_tags      = new List<SymbolTagData>(symbol_tag_count);

@@ -6,9 +6,6 @@ using UnityEngine;
 
 namespace FTSwfTools {
 
-	using LibraryDefines   = SortedDictionary<ushort, SwfLibraryDefine>;
-	using DisplayInstances = SortedDictionary<ushort, SwfDisplayInstance>;
-
 	//
 	// SwfLibrary
 	//
@@ -34,26 +31,20 @@ namespace FTSwfTools {
 	}
 
 	class SwfLibrary {
-		public readonly LibraryDefines Defines = new();
+		readonly SortedDictionary<ushort, SwfLibraryDefine> _defines = new();
 
-		public bool HasDefine<T>(ushort define_id) where T : SwfLibraryDefine {
-			return FindDefine<T>(define_id) != null;
-		}
+		public SwfLibraryDefine this[ushort define_id] => _defines[define_id];
 
-		public T FindDefine<T>(ushort define_id) where T : SwfLibraryDefine
-		{
-			return Defines.TryGetValue(define_id, out var def)
-				? def as T : null;
-		}
+		public void Add(ushort define_id, SwfLibraryDefine define) => _defines.Add(define_id, define);
 
-		public bool TryGet(ushort define_id, out SwfLibraryDefine define) => Defines.TryGetValue(define_id, out define);
+		public SwfLibraryShapeDefine GetShapeDefine(ushort define_id) => (SwfLibraryShapeDefine) _defines[define_id];
+		public SwfLibrarySpriteDefine GetSpriteDefine(ushort define_id) => (SwfLibrarySpriteDefine) _defines[define_id];
 
-		public SwfLibraryShapeDefine GetShapeDefine(ushort define_id) => (SwfLibraryShapeDefine) Defines[define_id];
-		public SwfLibrarySpriteDefine GetSpriteDefine(ushort define_id) => (SwfLibrarySpriteDefine) Defines[define_id];
+		public IEnumerable<SwfLibrarySpriteDefine> GetSpriteDefines() => _defines.Values.OfType<SwfLibrarySpriteDefine>();
 
 		public Dictionary<ushort, IBitmapData> GetBitmaps()
 		{
-			return Defines
+			return _defines
 				.Where(p => p.Value is SwfLibraryBitmapDefine)
 				.ToDictionary(
 					p => p.Key,
@@ -65,15 +56,7 @@ namespace FTSwfTools {
 	// SwfDisplayList
 	//
 
-	public enum SwfDisplayInstanceType {
-		Shape,
-		Bitmap,
-		Sprite
-	}
-
 	abstract class SwfDisplayInstance {
-		public abstract SwfDisplayInstanceType Type { get; }
-
 		public ushort            Id;
 		public ushort            Depth;
 		public ushort            ClipDepth;
@@ -84,18 +67,14 @@ namespace FTSwfTools {
 	}
 
 	class SwfDisplayShapeInstance : SwfDisplayInstance {
-		public override SwfDisplayInstanceType Type => SwfDisplayInstanceType.Shape;
 	}
 
 	class SwfDisplayBitmapInstance : SwfDisplayInstance {
-		public override SwfDisplayInstanceType Type => SwfDisplayInstanceType.Bitmap;
 	}
 
 	class SwfDisplaySpriteInstance : SwfDisplayInstance {
 		public int            CurrentTag  = 0;
 		public SwfDisplayList DisplayList = new();
-
-		public override SwfDisplayInstanceType Type => SwfDisplayInstanceType.Sprite;
 
 		public void Reset() {
 			CurrentTag  = 0;
@@ -104,8 +83,8 @@ namespace FTSwfTools {
 	}
 
 	class SwfDisplayList {
-		public DisplayInstances Instances    = new DisplayInstances();
-		public List<string>     FrameLabels  = new List<string>();
-		public List<string>     FrameAnchors = new List<string>();
+		public readonly SortedDictionary<ushort, SwfDisplayInstance> Instances = new();
+		public readonly List<string>     FrameLabels  = new();
+		public readonly List<string>     FrameAnchors = new();
 	}
 }

@@ -9,19 +9,6 @@ namespace FTSwfTools.SwfTags {
 
 		public List<AssetTagData> AssetTags;
 
-		public override SwfTagType TagType => SwfTagType.ExportAssets;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
-
-		public override string ToString() {
-			return string.Format(
-				"ExportAssetsTag. " +
-				"AssetTags: {0}",
-				AssetTags.Count);
-		}
-
 		public static ExportAssetsTag Create(SwfStreamReader reader) {
 			var asset_tag_count = reader.ReadUInt16();
 			var asset_tags      = new List<AssetTagData>(asset_tag_count);

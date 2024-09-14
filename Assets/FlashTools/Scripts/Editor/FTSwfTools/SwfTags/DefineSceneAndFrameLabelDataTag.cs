@@ -15,19 +15,6 @@ namespace FTSwfTools.SwfTags {
 		public List<SceneOffsetData> Scenes;
 		public List<FrameLabelData>  Frames;
 
-		public override SwfTagType TagType => SwfTagType.DefineSceneAndFrameLabelData;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
-
-		public override string ToString() {
-			return string.Format(
-				"DefineSceneAndFrameLabelDataTag. " +
-				"Scenes: {0}, Frames: {1}",
-				Scenes.Count, Frames.Count);
-		}
-
 		public static DefineSceneAndFrameLabelDataTag Create(SwfStreamReader reader) {
 			var scene_count = reader.ReadEncodedU32();
 			var scenes      = new List<SceneOffsetData>((int)scene_count);

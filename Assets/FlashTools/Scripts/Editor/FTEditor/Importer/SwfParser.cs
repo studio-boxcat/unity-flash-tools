@@ -56,8 +56,7 @@ namespace FTEditor.Importer {
 				tags = new List<SwfTagBase>();
 				while ( !reader.IsEOF ) {
 					var tag = SwfTagBase.Read(reader);
-					if ( tag.TagType == SwfTagType.End )
-						break;
+					if ( tag is EndTag ) break;
 					tags.Add(tag);
 				}
 				return header;
@@ -76,8 +75,7 @@ namespace FTEditor.Importer {
 			var symbol = LoadSymbol(stage_symbol, tags, l);
 
 			var symbols = new List<SwfSymbolData> { symbol };
-			symbols.AddRange(l.Defines.Values
-				.OfType<SwfLibrarySpriteDefine>()
+			symbols.AddRange(l.GetSpriteDefines()
 				.Where(p => !string.IsNullOrEmpty(p.ExportName))
 				.Select(def => LoadSymbol(def.ExportName, def.ControlTags, l)));
 
@@ -141,8 +139,9 @@ namespace FTEditor.Importer {
 				var child_matrix          = parent_matrix          * inst.Matrix;
 				var child_blend_mode      = parent_blend_mode      * (SwfBlendModeData) inst.BlendMode;
 				var child_color_transform = parent_color_transform * inst.ColorTransform;
-				switch ( inst.Type ) {
-				case SwfDisplayInstanceType.Shape:
+
+				switch ( inst ) {
+				case SwfDisplayShapeInstance:
 				{
 					var shape_def = library.GetShapeDefine(inst.Id);
 					result.AddRange(shape_def.Bitmaps.Select(x =>
@@ -167,12 +166,12 @@ namespace FTEditor.Importer {
 					}
 					break;
 				}
-				case SwfDisplayInstanceType.Bitmap:
+				case SwfDisplayBitmapInstance b:
 				{
 					var inst_data = new SwfInstanceData{
 						Type       = child_type,
 						ClipDepth  = child_depth,
-						Bitmap     = ((SwfDisplayBitmapInstance) inst).Id,
+						Bitmap     = b.Id,
 						Matrix     = child_matrix,
 						BlendMode  = child_blend_mode,
 						ColorTrans = child_color_transform};
@@ -185,11 +184,11 @@ namespace FTEditor.Importer {
 					}
 					break;
 				}
-				case SwfDisplayInstanceType.Sprite:
+				case SwfDisplaySpriteInstance s:
 				{
 					AddDisplayListToFrame(
 						library,
-						((SwfDisplaySpriteInstance) inst).DisplayList,
+						s.DisplayList,
 						child_matrix,
 						child_blend_mode,
 						child_color_transform,
@@ -208,7 +207,7 @@ namespace FTEditor.Importer {
 					break;
 				}
 				default:
-					throw new UnityException($"unsupported SwfDisplayInstanceType: {inst.Type}");
+					throw new UnityException($"unsupported SwfDisplayInstanceType: {inst.GetType()}");
 				}
 			}
 

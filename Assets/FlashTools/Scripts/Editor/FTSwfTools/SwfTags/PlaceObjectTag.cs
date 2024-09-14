@@ -8,14 +8,6 @@ namespace FTSwfTools.SwfTags {
 		public Matrix4x4         Matrix;
 		public SwfColorTransform ColorTransform;
 
-		public override SwfTagType TagType => SwfTagType.PlaceObject;
-
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg)
-			=> visitor.Visit(this, arg);
-
-		public override string ToString() =>
-			$"PlaceObjectTag. CharacterId: {CharacterId}, Depth: {Depth}, Matrix: {Matrix}, ColorTransform: {ColorTransform}";
-
 		public static PlaceObjectTag Create(SwfStreamReader reader) {
 			return new PlaceObjectTag
 			{
