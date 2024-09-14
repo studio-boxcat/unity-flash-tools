@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-
-using System.Collections.Generic;
 using FTSwfTools.SwfTypes;
 using UnityEngine.Assertions;
 
@@ -17,9 +15,9 @@ namespace FTEditor {
 		}
 		public readonly Types type;
 
-		public SwfBlendModeData(Types type) => this.type = type;
+		SwfBlendModeData(Types type) => this.type = type;
 
-		public static SwfBlendModeData identity => new(Types.Normal);
+		public static SwfBlendModeData normal => new(Types.Normal);
 
 		public static SwfBlendModeData operator*(SwfBlendModeData a, SwfBlendModeData b)
 			=> a.type is (Types.Normal or Types.Layer) ? b : a;
@@ -42,18 +40,20 @@ namespace FTEditor {
 		}
 	}
 
-	struct SwfColorTransData
+	readonly struct SwfColorTransData
 	{
-		public int Depth;
-		public SwfVec4Int Mul;
-		public SwfVec4Int Add;
+		public readonly int Depth;
+		public readonly SwfVec4Int Mul;
+		public readonly SwfVec4Int Add;
 
-		public static readonly SwfColorTransData identity = new()
+		SwfColorTransData(int depth, SwfVec4Int mul, SwfVec4Int add)
 		{
-			Depth = 0,
-			Mul = SwfVec4Int.Uniform(1),
-			Add = default,
-		};
+			Depth = depth;
+			Mul = mul;
+			Add = add;
+		}
+
+		public static readonly SwfColorTransData identity = new(0, SwfVec4Int.Uniform(1), default);
 
 		public Color CalculateMul() => CalculateColor(Mul, Depth);
 		public Color CalculateAdd() => CalculateColor(Add, Depth);
@@ -75,10 +75,10 @@ namespace FTEditor {
 
 			var mul = (SwfVec4Int) (b.Mul ?? SwfColorTransform.Color.White);
 			var add = (SwfVec4Int) (b.Add ?? default);
-			return new SwfColorTransData{
-				Depth = a.Depth + 1,
-				Mul = mul * a.Mul,
-				Add = add * a.Mul + a.Add};
+			return new SwfColorTransData(
+				a.Depth + 1,
+				mul * a.Mul,
+				add * a.Mul + a.Add);
 		}
 	}
 
@@ -93,7 +93,7 @@ namespace FTEditor {
 		public ushort                ClipDepth   = 0;
 		public ushort                Bitmap      = 0;
 		public Matrix4x4             Matrix      = Matrix4x4.identity;
-		public SwfBlendModeData      BlendMode   = SwfBlendModeData.identity;
+		public SwfBlendModeData      BlendMode   = SwfBlendModeData.normal;
 		public SwfColorTransData     ColorTrans  = SwfColorTransData.identity;
 
 		public static SwfInstanceData MaskReset(SwfInstanceData mask)
@@ -110,7 +110,7 @@ namespace FTEditor {
 		}
 	}
 
-	class SwfFrameData {
+	readonly struct SwfFrameData {
 		public readonly string            Anchor;
 		public readonly string[]          Labels;
 		public readonly SwfInstanceData[] Instances;

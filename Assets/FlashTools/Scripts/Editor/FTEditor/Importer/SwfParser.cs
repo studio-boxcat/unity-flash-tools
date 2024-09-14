@@ -5,7 +5,6 @@ using System.IO;
 using FTSwfTools;
 using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;
-using UnityEngine.Assertions;
 
 namespace FTEditor.Importer {
 	readonly struct SwfFileData
@@ -104,7 +103,7 @@ namespace FTEditor.Importer {
 				library,
 				display_list,
 				Matrix4x4.identity,
-				SwfBlendModeData.identity,
+				SwfBlendModeData.normal,
 				SwfColorTransData.identity,
 				0,
 				0,
@@ -149,7 +148,6 @@ namespace FTEditor.Importer {
 					result.AddRange(shape_def.Bitmaps.Select(x =>
 					{
 						var (bitmap_id, bitmap_matrix) = x;
-						Assert.AreNotEqual(ushort.MaxValue, bitmap_id);
 						return new SwfInstanceData
 						{
 							Type = child_type,
@@ -178,7 +176,6 @@ namespace FTEditor.Importer {
 						Matrix     = child_matrix,
 						BlendMode  = child_blend_mode,
 						ColorTrans = child_color_transform};
-					Assert.AreNotEqual(ushort.MaxValue, inst_data.Bitmap);
 					result.Add(inst_data);
 
 					if ( parent_mask > 0 ) {
