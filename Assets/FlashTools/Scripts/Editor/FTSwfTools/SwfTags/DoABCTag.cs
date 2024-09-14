@@ -6,9 +6,7 @@ namespace FTSwfTools.SwfTags {
 		public string Name;
 		public byte[] ABCBytes;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.DoABC; }
-		}
+		public override SwfTagType TagType => SwfTagType.DoABC;
 
 		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);

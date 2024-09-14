@@ -3,9 +3,7 @@
 		public string Name;
 		public byte   AnchorFlag;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.FrameLabel; }
-		}
+		public override SwfTagType TagType => SwfTagType.FrameLabel;
 
 		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);

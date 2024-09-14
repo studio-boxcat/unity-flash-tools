@@ -104,11 +104,7 @@ namespace FTEditor.Importer {
 		static SwfFrameData LoadSymbolFrameData(
 			SwfLibrary library, SwfDisplayList display_list)
 		{
-			var frame = new SwfFrameData{
-				Anchor = display_list.FrameAnchors.Count > 0
-					? display_list.FrameAnchors[0]
-					: string.Empty,
-				Labels = new List<string>(display_list.FrameLabels)};
+			var instances = new List<SwfInstanceData>();
 			AddDisplayListToFrame(
 				library,
 				display_list,
@@ -118,7 +114,11 @@ namespace FTEditor.Importer {
 				0,
 				0,
 				null,
-				frame.Instances);
+				instances);
+
+			var anchor = display_list.FrameAnchors.Count > 0 ? display_list.FrameAnchors[0] : string.Empty;
+			var labels = display_list.FrameLabels.ToArray();
+			var frame = new SwfFrameData(anchor, labels, instances.ToArray());
 			return frame;
 		}
 

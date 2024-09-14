@@ -9,9 +9,7 @@ namespace FTSwfTools.SwfTags {
 
 		public List<AssetTagData> AssetTags;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.ExportAssets; }
-		}
+		public override SwfTagType TagType => SwfTagType.ExportAssets;
 
 		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);

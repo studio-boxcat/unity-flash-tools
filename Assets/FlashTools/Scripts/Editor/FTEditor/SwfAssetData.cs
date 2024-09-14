@@ -109,9 +109,16 @@ namespace FTEditor {
 	}
 
 	class SwfFrameData {
-		public string                Anchor      = string.Empty;
-		public List<string>          Labels      = new();
-		public List<SwfInstanceData> Instances   = new();
+		public readonly string            Anchor;
+		public readonly string[]          Labels;
+		public readonly SwfInstanceData[] Instances;
+
+		public SwfFrameData(string anchor, string[] labels, SwfInstanceData[] instances)
+		{
+			Anchor = anchor;
+			Labels = labels;
+			Instances = instances;
+		}
 	}
 
 	class SwfSymbolData {

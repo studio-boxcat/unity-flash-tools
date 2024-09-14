@@ -2,9 +2,7 @@
 	class EnableDebuggerTag : SwfTagBase {
 		public string MD5PasswordHash;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.EnableDebugger; }
-		}
+		public override SwfTagType TagType => SwfTagType.EnableDebugger;
 
 		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);

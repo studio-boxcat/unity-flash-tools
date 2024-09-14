@@ -3,9 +3,7 @@
 		public ushort Tag;
 		public byte[] Data;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.DefineBinaryData; }
-		}
+		public override SwfTagType TagType => SwfTagType.DefineBinaryData;
 
 		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);

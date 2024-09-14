@@ -15,9 +15,7 @@ namespace FTSwfTools.SwfTags {
 		public List<SceneOffsetData> Scenes;
 		public List<FrameLabelData>  Frames;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.DefineSceneAndFrameLabelData; }
-		}
+		public override SwfTagType TagType => SwfTagType.DefineSceneAndFrameLabelData;
 
 		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);

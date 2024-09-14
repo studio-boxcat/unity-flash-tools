@@ -2,9 +2,7 @@
 	class EnableTelemetryTag : SwfTagBase {
 		public byte[] SHA256PasswordHash;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.EnableTelemetry; }
-		}
+		public override SwfTagType TagType => SwfTagType.EnableTelemetry;
 
 		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
 			return visitor.Visit(this, arg);
