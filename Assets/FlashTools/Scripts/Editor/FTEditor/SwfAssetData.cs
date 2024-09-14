@@ -5,56 +5,6 @@ using FTSwfTools.SwfTypes;
 using UnityEngine.Assertions;
 
 namespace FTEditor {
-	struct SwfVec4Int
-	{
-		public int X;
-		public int Y;
-		public int Z;
-		public int W;
-
-		public SwfVec4Int(int x, int y, int z, int w)
-		{
-			X = x;
-			Y = y;
-			Z = z;
-			W = w;
-		}
-
-		public static SwfVec4Int Uniform(int value) => new(value, value, value, value);
-
-		public static SwfVec4Int operator+(SwfVec4Int a, SwfVec4Int b) => new(a.X + b.X, a.Y + b.Y, a.Z + b.Z, a.W + b.W);
-		public static SwfVec4Int operator*(SwfVec4Int a, SwfVec4Int b) => new(a.X * b.X, a.Y * b.Y, a.Z * b.Z, a.W * b.W);
-	}
-
-	struct SwfMatrixData {
-		Vector2 sc;
-		Vector2 sk;
-		Vector2 tr;
-
-		public static readonly SwfMatrixData identity = new() {
-			sc = new Vector2(1, 1),
-			sk = default,
-			tr = default};
-
-		public Matrix4x4 ToUMatrix() {
-			var mat = Matrix4x4.identity;
-			mat.m00 = sc.x;
-			mat.m11 = sc.y;
-			mat.m10 = sk.x;
-			mat.m01 = sk.y;
-			mat.m03 = tr.x;
-			mat.m13 = tr.y;
-			return mat;
-		}
-
-		public static SwfMatrixData FromUMatrix(Matrix4x4 mat) {
-			return new SwfMatrixData{
-				sc = new Vector2(mat.m00, mat.m11),
-				sk = new Vector2(mat.m10, mat.m01),
-				tr = new Vector2(mat.m03, mat.m13)};
-		}
-	}
-
 	struct SwfBlendModeData {
 		public enum Types : byte {
 			Normal,
@@ -143,6 +93,19 @@ namespace FTEditor {
 		public Matrix4x4             Matrix      = Matrix4x4.identity;
 		public SwfBlendModeData      BlendMode   = SwfBlendModeData.identity;
 		public SwfColorTransData     ColorTrans  = SwfColorTransData.identity;
+
+		public static SwfInstanceData MaskReset(SwfInstanceData mask)
+		{
+			return new SwfInstanceData
+			{
+				Type = Types.MaskReset,
+				ClipDepth = 0,
+				Bitmap     = mask.Bitmap,
+				Matrix     = mask.Matrix,
+				BlendMode  = mask.BlendMode,
+				ColorTrans = mask.ColorTrans,
+			};
+		}
 	}
 
 	class SwfFrameData {

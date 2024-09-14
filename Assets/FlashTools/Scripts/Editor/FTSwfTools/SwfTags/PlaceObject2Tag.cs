@@ -21,39 +21,21 @@ namespace FTSwfTools.SwfTags {
 		public ushort            ClipDepth;
 		public SwfClipActions    ClipActions;
 
-		public override SwfTagType TagType {
-			get { return SwfTagType.PlaceObject2; }
-		}
+		public override SwfTagType TagType => SwfTagType.PlaceObject2;
 
-		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) {
-			return visitor.Visit(this, arg);
-		}
+		public override TResult AcceptVisitor<TArg, TResult>(SwfTagVisitor<TArg, TResult> visitor, TArg arg) => visitor.Visit(this, arg);
 
 		public override string ToString() {
-			var sb = new StringBuilder(1024);
+			var sb = new StringBuilder();
 			sb.Append("PlaceObject2Tag. ");
 			sb.AppendFormat("Move: {0} Depth: {1}", Move, Depth);
-			if ( HasCharacter ) {
-				sb.AppendFormat(", CharacterId: {0}", CharacterId);
-			}
-			if ( HasMatrix ) {
-				sb.AppendFormat(", Matrix: {0}", Matrix);
-			}
-			if ( HasColorTransform ) {
-				sb.AppendFormat(", ColorTransform: {0}", ColorTransform);
-			}
-			if ( HasRatio ) {
-				sb.AppendFormat(", Ratio: {0}", Ratio);
-			}
-			if ( HasName ) {
-				sb.AppendFormat(", Name: {0}", Name);
-			}
-			if ( HasClipDepth ) {
-				sb.AppendFormat(", ClipDepth: {0}", ClipDepth);
-			}
-			if ( HasClipActions ) {
-				sb.AppendFormat(", ClipActions: {0}", ClipActions);
-			}
+			if ( HasCharacter ) sb.AppendFormat(", CharacterId: {0}", CharacterId);
+			if ( HasMatrix ) sb.AppendFormat(", Matrix: {0}", Matrix);
+			if ( HasColorTransform ) sb.AppendFormat(", ColorTransform: {0}", ColorTransform);
+			if ( HasRatio ) sb.AppendFormat(", Ratio: {0}", Ratio);
+			if ( HasName ) sb.AppendFormat(", Name: {0}", Name);
+			if ( HasClipDepth ) sb.AppendFormat(", ClipDepth: {0}", ClipDepth);
+			if ( HasClipActions ) sb.AppendFormat(", ClipActions: {0}", ClipActions);
 			return sb.ToString();
 		}
 

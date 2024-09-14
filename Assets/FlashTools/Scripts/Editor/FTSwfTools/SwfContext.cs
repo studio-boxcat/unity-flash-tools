@@ -25,9 +25,11 @@ namespace FTSwfTools {
 		public abstract SwfLibraryDefineType Type { get; }
 	}
 
-	class SwfLibraryShapeDefine : SwfLibraryDefine {
-		public ushort[]    Bitmaps  = Array.Empty<ushort>();
-		public Matrix4x4[] Matrices = Array.Empty<Matrix4x4>();
+	class SwfLibraryShapeDefine : SwfLibraryDefine
+	{
+		public (ushort, Matrix4x4)[] Bitmaps;
+
+		public SwfLibraryShapeDefine((ushort, Matrix4x4)[] bitmaps) => Bitmaps = bitmaps;
 
 		public override SwfLibraryDefineType Type => SwfLibraryDefineType.Shape;
 	}
@@ -58,6 +60,8 @@ namespace FTSwfTools {
 			return Defines.TryGetValue(define_id, out var def)
 				? def as T : null;
 		}
+
+		public SwfLibraryShapeDefine GetShapeDefine(ushort define_id) => (SwfLibraryShapeDefine) Defines[define_id];
 
 		public Dictionary<ushort, IBitmapData> GetBitmaps()
 		{
@@ -101,7 +105,7 @@ namespace FTSwfTools {
 
 	class SwfDisplaySpriteInstance : SwfDisplayInstance {
 		public int            CurrentTag  = 0;
-		public SwfDisplayList DisplayList = new SwfDisplayList();
+		public SwfDisplayList DisplayList = new();
 
 		public override SwfDisplayInstanceType Type => SwfDisplayInstanceType.Sprite;
 

@@ -10,14 +10,8 @@
 			NonSmoothedRepeatingBitmap,
 			NonSmoothedClippedBitmap
 		}
-		public Type Value;
 
-		public static SwfFillStyleType identity {
-			get {
-				return new SwfFillStyleType{
-					Value = Type.SolidColor};
-			}
-		}
+		public Type Value;
 
 		public static SwfFillStyleType Read(SwfStreamReader reader) {
 			var type_id = reader.ReadByte();
@@ -25,49 +19,26 @@
 				Value = TypeFromByte(type_id)};
 		}
 
-		public override string ToString() {
-			return string.Format(
-				"SwfFillStyleType. " +
-				"Type: {0}",
-				Value);
-		}
+		public override string ToString() => "SwfFillStyleType. " + $"Type: {Value}";
 
-		public bool IsSolidType {
-			get { return Value == Type.SolidColor; }
-		}
+		public bool IsSolidType => Value == Type.SolidColor;
+		public bool IsBitmapType => Value is Type.RepeatingBitmap or Type.ClippedBitmap or Type.NonSmoothedRepeatingBitmap or Type.NonSmoothedClippedBitmap;
+		public bool IsGradientType => Value is Type.LinearGradient or Type.RadialGradient or Type.FocalGradient;
 
-		public bool IsBitmapType {
-			get { return
-				Value == Type.RepeatingBitmap ||
-				Value == Type.ClippedBitmap ||
-				Value == Type.NonSmoothedRepeatingBitmap ||
-				Value == Type.NonSmoothedClippedBitmap;
-			}
-		}
-
-		public bool IsGradientType {
-			get { return
-				Value == Type.LinearGradient ||
-				Value == Type.RadialGradient ||
-				Value == Type.FocalGradient;
-			}
-		}
-
-		static Type TypeFromByte(byte type_id) {
-			switch ( type_id ) {
-			case 0x00: return Type.SolidColor;
-			case 0x10: return Type.LinearGradient;
-			case 0x12: return Type.RadialGradient;
-			case 0x13: return Type.FocalGradient;
-			case 0x40: return Type.RepeatingBitmap;
-			case 0x41: return Type.ClippedBitmap;
-			case 0x42: return Type.NonSmoothedRepeatingBitmap;
-			case 0x43: return Type.NonSmoothedClippedBitmap;
-			default:
-				throw new System.Exception(string.Format(
-					"Incorrect fill stype type id: {0}",
-					type_id));
-			}
+		static Type TypeFromByte(byte type_id)
+		{
+			return type_id switch
+			{
+				0x00 => Type.SolidColor,
+				0x10 => Type.LinearGradient,
+				0x12 => Type.RadialGradient,
+				0x13 => Type.FocalGradient,
+				0x40 => Type.RepeatingBitmap,
+				0x41 => Type.ClippedBitmap,
+				0x42 => Type.NonSmoothedRepeatingBitmap,
+				0x43 => Type.NonSmoothedClippedBitmap,
+				_ => throw new System.Exception($"Incorrect fill stype type id: {type_id}")
+			};
 		}
 	}
 }

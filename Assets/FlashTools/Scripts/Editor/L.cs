@@ -1,17 +1,14 @@
 using UnityEngine;
 
-namespace FTEditor
+static class L
 {
-    static class L
+    public static void I(string message, Object context = null)
     {
-        public static void I(string message, Object context = null)
-        {
-            Debug.Log($"[FlashTools] {message}", context);
-        }
+        Debug.Log($"[FlashTools] {message}", context);
+    }
 
-        public static void W(string message)
-        {
-            Debug.LogWarning($"[FlashTools] {message}");
-        }
+    public static void W(string message)
+    {
+        Debug.LogWarning($"[FlashTools] {message}");
     }
 }

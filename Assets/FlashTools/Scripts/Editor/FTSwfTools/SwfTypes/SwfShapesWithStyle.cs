@@ -23,7 +23,7 @@ namespace FTSwfTools.SwfTypes {
 		public static SwfShapesWithStyle identity => new() {FillStyles = new List<FillStyle>()};
 
 		public static SwfShapesWithStyle Read(SwfStreamReader reader, ShapeStyleType style_type) {
-			var shapes = SwfShapesWithStyle.identity;
+			var shapes = identity;
 			switch ( style_type ) {
 			case ShapeStyleType.Shape:
 				shapes.FillStyles = ReadFillStyles(reader, false, false);
@@ -73,8 +73,15 @@ namespace FTSwfTools.SwfTypes {
 				count = reader.ReadUInt16();
 			}
 			var styles = new List<FillStyle>(count);
-			for ( var i = 0; i < count; ++i ) {
-				styles.Add(ReadFillStyle(reader, with_alpha));
+			for ( var i = 0; i < count; ++i )
+			{
+				var style = ReadFillStyle(reader, with_alpha);
+				if (style.BitmapId == ushort.MaxValue)
+				{
+					L.W("ReadFillStyles: Unsupported bitmap id");
+					continue;
+				}
+				styles.Add(style);
 			}
 			return styles;
 		}

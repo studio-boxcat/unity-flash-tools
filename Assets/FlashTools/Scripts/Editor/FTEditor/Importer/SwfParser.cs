@@ -5,6 +5,7 @@ using System.IO;
 using FTSwfTools;
 using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;
+using UnityEngine.Assertions;
 
 namespace FTEditor.Importer {
 	readonly struct SwfFileData
@@ -108,7 +109,7 @@ namespace FTEditor.Importer {
 					? display_list.FrameAnchors[0]
 					: string.Empty,
 				Labels = new List<string>(display_list.FrameLabels)};
-			return AddDisplayListToFrame(
+			AddDisplayListToFrame(
 				library,
 				display_list,
 				Matrix4x4.identity,
@@ -117,10 +118,11 @@ namespace FTEditor.Importer {
 				0,
 				0,
 				null,
-				frame);
+				frame.Instances);
+			return frame;
 		}
 
-		static SwfFrameData AddDisplayListToFrame(
+		static void AddDisplayListToFrame(
 			SwfLibrary            library,
 			SwfDisplayList        display_list,
 			Matrix4x4             parent_matrix,
@@ -129,203 +131,114 @@ namespace FTEditor.Importer {
 			ushort                parent_masked,
 			ushort                parent_mask,
 			List<SwfInstanceData> parent_masks,
-			SwfFrameData          frame)
+			List<SwfInstanceData> result)
 		{
 			var self_masks = new List<SwfInstanceData>();
 			foreach ( var inst in display_list.Instances.Values.Where(p => p.Visible) ) {
-				CheckSelfMasks(self_masks, inst.Depth, frame);
+				for (var i = self_masks.Count - 1; i >= 0; i--)
+				{
+					var self_mask = self_masks[i];
+					if (self_mask.ClipDepth >= inst.Depth) continue;
+					result.Add(SwfInstanceData.MaskReset(self_mask));
+					self_masks.RemoveAt(i);
+				}
+
+				var child_type = ResolveInstType(parent_mask, inst.ClipDepth, parent_masked, self_masks.Count);
+				var child_depth = ResolveClipDepth(parent_mask, inst.ClipDepth, parent_masked, self_masks.Count);
 				var child_matrix          = parent_matrix          * inst.Matrix;
 				var child_blend_mode      = parent_blend_mode      * (SwfBlendModeData) inst.BlendMode;
 				var child_color_transform = parent_color_transform * inst.ColorTransform;
 				switch ( inst.Type ) {
 				case SwfDisplayInstanceType.Shape:
-					AddShapeInstanceToFrame(
-						library,
-						inst as SwfDisplayShapeInstance,
-						child_matrix,
-						child_blend_mode,
-						child_color_transform,
-						parent_masked,
-						parent_mask,
-						parent_masks,
-						self_masks,
-						frame);
+				{
+					var shape_def = library.GetShapeDefine(inst.Id);
+					result.AddRange(shape_def.Bitmaps.Select(x =>
+					{
+						var (bitmap_id, bitmap_matrix) = x;
+						Assert.AreNotEqual(ushort.MaxValue, bitmap_id);
+						return new SwfInstanceData
+						{
+							Type = child_type,
+							ClipDepth = child_depth,
+							Bitmap = bitmap_id,
+							Matrix = child_matrix * bitmap_matrix,
+							BlendMode = child_blend_mode,
+							ColorTrans = child_color_transform
+						};
+					}));
+
+					var inst_data = result[^1];
+					if ( parent_mask > 0 ) {
+						parent_masks.Add(inst_data);
+					} else if ( inst.ClipDepth > 0 ) {
+						self_masks.Add(inst_data);
+					}
 					break;
+				}
 				case SwfDisplayInstanceType.Bitmap:
-					AddBitmapInstanceToFrame(
-						library,
-						inst as SwfDisplayBitmapInstance,
-						child_matrix,
-						child_blend_mode,
-						child_color_transform,
-						parent_masked,
-						parent_mask,
-						parent_masks,
-						self_masks,
-						frame);
+				{
+					var inst_data = new SwfInstanceData{
+						Type       = child_type,
+						ClipDepth  = child_depth,
+						Bitmap     = ((SwfDisplayBitmapInstance) inst).Id,
+						Matrix     = child_matrix,
+						BlendMode  = child_blend_mode,
+						ColorTrans = child_color_transform};
+					Assert.AreNotEqual(ushort.MaxValue, inst_data.Bitmap);
+					result.Add(inst_data);
+
+					if ( parent_mask > 0 ) {
+						parent_masks.Add(inst_data);
+					} else if ( inst.ClipDepth > 0 ) {
+						self_masks.Add(inst_data);
+					}
 					break;
+				}
 				case SwfDisplayInstanceType.Sprite:
-					AddSpriteInstanceToFrame(
+				{
+					AddDisplayListToFrame(
 						library,
-						inst as SwfDisplaySpriteInstance,
+						((SwfDisplaySpriteInstance) inst).DisplayList,
 						child_matrix,
 						child_blend_mode,
 						child_color_transform,
-						parent_masked,
-						parent_mask,
-						parent_masks,
-						self_masks,
-						frame);
+						(ushort)(parent_masked + self_masks.Count),
+						(ushort)(parent_mask > 0
+							? parent_mask
+							: (inst.ClipDepth > 0
+								? inst.ClipDepth
+								: (ushort)0)),
+						parent_mask > 0
+							? parent_masks
+							: (inst.ClipDepth > 0
+								? self_masks
+								: null),
+						result);
 					break;
+				}
 				default:
 					throw new UnityException($"unsupported SwfDisplayInstanceType: {inst.Type}");
 				}
 			}
-			CheckSelfMasks(self_masks, ushort.MaxValue, frame);
-			return frame;
+
+			result.AddRange(self_masks.Select(SwfInstanceData.MaskReset));
+			self_masks.Clear();
 		}
 
-		static void AddShapeInstanceToFrame(
-			SwfLibrary              library,
-			SwfDisplayShapeInstance inst,
-			Matrix4x4               inst_matrix,
-			SwfBlendModeData        inst_blend_mode,
-			SwfColorTransData       inst_color_transform,
-			ushort                  parent_masked,
-			ushort                  parent_mask,
-			List<SwfInstanceData>   parent_masks,
-			List<SwfInstanceData>   self_masks,
-			SwfFrameData            frame)
+		static ushort ResolveClipDepth(int parent_mask, int clip_depth, int parent_masked, int self_mask_count)
 		{
-			var shape_def = library.FindDefine<SwfLibraryShapeDefine>(inst.Id);
-			if (shape_def == null) return;
-
-			for ( var i = 0; i < shape_def.Bitmaps.Length; ++i ) {
-				var bitmap_id     = shape_def.Bitmaps[i];
-				var bitmap_def    = library.FindDefine<SwfLibraryBitmapDefine>(bitmap_id);
-				if (bitmap_def is null) continue;
-
-				var bitmap_matrix = i < shape_def.Matrices.Length ? shape_def.Matrices[i] : Matrix4x4.identity;
-				var frame_inst_type =
-					(parent_mask > 0 || inst.ClipDepth > 0)
-						? SwfInstanceData.Types.Mask
-						: (parent_masked > 0 || self_masks.Count > 0)
-							? SwfInstanceData.Types.Masked
-							: SwfInstanceData.Types.Group;
-				var frame_inst_clip_depth =
-					(parent_mask > 0)
-						? parent_mask
-						: (inst.ClipDepth > 0)
-							? inst.ClipDepth
-							: parent_masked + self_masks.Count;
-				frame.Instances.Add(new SwfInstanceData{
-					Type       = frame_inst_type,
-					ClipDepth  = (ushort)frame_inst_clip_depth,
-					Bitmap     = bitmap_id,
-					Matrix     = inst_matrix * bitmap_matrix,
-					BlendMode  = inst_blend_mode,
-					ColorTrans = inst_color_transform});
-				if ( parent_mask > 0 ) {
-					parent_masks.Add(frame.Instances[^1]);
-				} else if ( inst.ClipDepth > 0 ) {
-					self_masks.Add(frame.Instances[^1]);
-				}
-			}
+			if (parent_mask > 0) return (ushort)parent_mask;
+			if (clip_depth > 0) return (ushort)clip_depth;
+			return (ushort)(parent_masked + self_mask_count);
 		}
 
-		static void AddBitmapInstanceToFrame(
-			SwfLibrary               library,
-			SwfDisplayBitmapInstance inst,
-			Matrix4x4                inst_matrix,
-			SwfBlendModeData         inst_blend_mode,
-			SwfColorTransData        inst_color_transform,
-			ushort                   parent_masked,
-			ushort                   parent_mask,
-			List<SwfInstanceData>    parent_masks,
-			List<SwfInstanceData>    self_masks,
-			SwfFrameData             frame)
+		static SwfInstanceData.Types ResolveInstType(int parent_mask, int clip_depth, int parent_masked, int self_mask_count)
 		{
-			var bitmap_def = library.FindDefine<SwfLibraryBitmapDefine>(inst.Id);
-			if (bitmap_def is null) return;
-
-			var frame_inst_type =
-				(parent_mask > 0 || inst.ClipDepth > 0)
+			return (parent_mask > 0 || clip_depth > 0)
 					? SwfInstanceData.Types.Mask
-					: (parent_masked > 0 || self_masks.Count > 0)
+					: (parent_masked > 0 || self_mask_count > 0)
 						? SwfInstanceData.Types.Masked
 						: SwfInstanceData.Types.Group;
-			var frame_inst_clip_depth =
-				(parent_mask > 0)
-					? parent_mask
-					: (inst.ClipDepth > 0)
-						? inst.ClipDepth
-						: parent_masked + self_masks.Count;
-			frame.Instances.Add(new SwfInstanceData{
-				Type       = frame_inst_type,
-				ClipDepth  = (ushort)frame_inst_clip_depth,
-				Bitmap     = inst.Id,
-				Matrix     = inst_matrix,
-				BlendMode  = inst_blend_mode,
-				ColorTrans = inst_color_transform});
-			if ( parent_mask > 0 ) {
-				parent_masks.Add(frame.Instances[^1]);
-			} else if ( inst.ClipDepth > 0 ) {
-				self_masks.Add(frame.Instances[^1]);
-			}
-		}
-
-		static void AddSpriteInstanceToFrame(
-			SwfLibrary               library,
-			SwfDisplaySpriteInstance inst,
-			Matrix4x4                inst_matrix,
-			SwfBlendModeData         inst_blend_mode,
-			SwfColorTransData        inst_color_transform,
-			ushort                   parent_masked,
-			ushort                   parent_mask,
-			List<SwfInstanceData>    parent_masks,
-			List<SwfInstanceData>    self_masks,
-			SwfFrameData             frame)
-		{
-			var sprite_def = library.FindDefine<SwfLibrarySpriteDefine>(inst.Id);
-			if (sprite_def is null) return;
-
-			AddDisplayListToFrame(
-				library,
-				inst.DisplayList,
-				inst_matrix,
-				inst_blend_mode,
-				inst_color_transform,
-				(ushort)(parent_masked + self_masks.Count),
-				(ushort)(parent_mask > 0
-					? parent_mask
-					: (inst.ClipDepth > 0
-						? inst.ClipDepth
-						: (ushort)0)),
-				parent_mask > 0
-					? parent_masks
-					: (inst.ClipDepth > 0
-						? self_masks
-						: null),
-				frame);
-		}
-
-		static void CheckSelfMasks(
-			List<SwfInstanceData> masks,
-			ushort                depth,
-			SwfFrameData          frame)
-		{
-			foreach ( var mask in masks )
-			{
-				if (mask.ClipDepth >= depth) continue;
-				frame.Instances.Add(new SwfInstanceData{
-					Type       = SwfInstanceData.Types.MaskReset,
-					ClipDepth  = 0,
-					Bitmap     = mask.Bitmap,
-					Matrix     = mask.Matrix,
-					BlendMode  = mask.BlendMode,
-					ColorTrans = mask.ColorTrans});
-			}
-			masks.RemoveAll(p => p.ClipDepth < depth);
 		}
 	}
 }

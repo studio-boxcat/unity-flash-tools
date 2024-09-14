@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using FTEditor;
 
 namespace FTSwfTools.SwfTypes {
 	public struct SwfSurfaceFilters {

@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-using FTEditor;
 using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;
 using UnityEngine;
@@ -254,10 +253,7 @@ namespace FTSwfTools {
 
 		void AddShapesToLibrary(ushort define_id, SwfShapesWithStyle shapes) {
 			var bitmap_styles = shapes.FillStyles.Where(p => p.Type.IsBitmapType);
-			var define = new SwfLibraryShapeDefine{
-				Bitmaps  = bitmap_styles.Select(p => p.BitmapId    ).ToArray(),
-				Matrices = bitmap_styles.Select(p => p.BitmapMatrix).ToArray()
-			};
+			var define = new SwfLibraryShapeDefine(bitmap_styles.Select(p => (p.BitmapId, p.BitmapMatrix)).ToArray());
 			Library.Defines.Add(define_id, define);
 		}
 

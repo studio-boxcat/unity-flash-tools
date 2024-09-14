@@ -1,6 +1,4 @@
-﻿using FTEditor;
-
-namespace FTSwfTools.SwfTypes {
+﻿namespace FTSwfTools.SwfTypes {
 	public struct SwfBlendMode {
 		public enum Mode {
 			Normal,

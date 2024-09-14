@@ -1,6 +1,4 @@
-﻿using FTEditor;
-
-namespace FTSwfTools.SwfTypes {
+﻿namespace FTSwfTools.SwfTypes {
 	struct SwfColorTransform
 	{
 		public Color? Mul;
