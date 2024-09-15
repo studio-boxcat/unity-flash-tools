@@ -8,8 +8,12 @@ namespace FTSwfTools.SwfTags {
 		byte[] ToARGB32();
 	}
 
-	class DefineBitsLosslessTag : SwfTagBase, IBitmapData {
-		public ushort CharacterId;
+	interface IDefineBitsLosslessTag : IBitmapData {
+		public ushort CharacterId { get; }
+	}
+
+	class DefineBitsLosslessTag : SwfTagBase, IDefineBitsLosslessTag {
+		public ushort CharacterId { get; private set; }
 		public byte   BitmapFormat;
 		public ushort BitmapWidth;
 		public ushort BitmapHeight;
@@ -63,9 +67,7 @@ namespace FTSwfTools.SwfTags {
 					result[i * 4 + 3] = (byte)((pix24 >> 24) & 0xFF);
 				}
 			} else {
-				throw new System.Exception(string.Format(
-					"Incorrect DefineBitsLossless format: {0}",
-					BitmapFormat));
+				throw new System.Exception($"Incorrect DefineBitsLossless format: {BitmapFormat}");
 			}
 			return result;
 		}

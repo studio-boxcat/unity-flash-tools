@@ -2,8 +2,8 @@
 using UnityEngine;
 
 namespace FTSwfTools.SwfTags {
-	class DefineBitsLossless2Tag : SwfTagBase, IBitmapData {
-		public ushort CharacterId;
+	class DefineBitsLossless2Tag : SwfTagBase, IDefineBitsLosslessTag {
+		public ushort CharacterId { get; private set; }
 		public byte   BitmapFormat;
 		public ushort BitmapWidth;
 		public ushort BitmapHeight;

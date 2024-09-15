@@ -33,25 +33,47 @@ namespace FTSwfTools {
 		{
 			switch (tag)
 			{
-			case PlaceObjectTag t: executer.Visit(t, displayList); break;
-			case PlaceObject2Tag t: executer.Visit(t, displayList); break;
-			case PlaceObject3Tag t: executer.Visit(t, displayList); break;
-			case RemoveObjectTag t: executer.Visit(t, displayList); break;
-			case RemoveObject2Tag t: executer.Visit(t, displayList); break;
+			case PlaceObjectTag t: executer.ApplyPlaceObjectTag(t, displayList); break;
+			case PlaceObject2Tag t: executer.ApplyPlaceObjectTag(t, displayList); break;
+			case PlaceObject3Tag t: executer.ApplyPlaceObjectTag(t, displayList); break;
+
+			case RemoveObjectTagBase t: displayList.Instances.Remove(t.Depth); break;
 
 			case FrameLabelTag t: executer.Visit(t, displayList); break;
-			case ExportAssetsTag t: executer.Visit(t, displayList); break;
-			case SymbolClassTag t: executer.Visit(t, displayList); break;
 
-			case DefineShapeTag t: executer.Visit(t, displayList); break;
-			case DefineShape2Tag t: executer.Visit(t, displayList); break;
-			case DefineShape3Tag t: executer.Visit(t, displayList); break;
-			case DefineShape4Tag t: executer.Visit(t, displayList); break;
+			case ExportAssetsTag t:
+			{
+				foreach ( var asset_tag in t.AssetTags )
+					executer.Library[asset_tag.Tag].ExportName = asset_tag.Name.Trim();
+				break;
+			}
+			case SymbolClassTag t:
+			{
+				foreach ( var symbol_tag in t.SymbolTags )
+					executer.Library[symbol_tag.Tag].ExportName = symbol_tag.Name.Trim();
+				break;
+			}
 
-			case DefineBitsLosslessTag t: executer.Visit(t, displayList); break;
-			case DefineBitsLossless2Tag t: executer.Visit(t, displayList); break;
+			case DefineShapeTagBase t:
+			{
+				var bitmap_styles = t.Shapes.FillStyles.Where(p => p.Type.IsBitmapType);
+				var define = new SwfLibraryShapeDefine(bitmap_styles.Select(p => (p.BitmapId, p.BitmapMatrix)).ToArray());
+				executer.Library.Add(t.ShapeId, define);
+				break;
+			}
 
-			case DefineSpriteTag t: executer.Visit(t, displayList); break;
+			case IDefineBitsLosslessTag t:
+			{
+				var define = new SwfLibraryBitmapDefine(t);
+				executer.Library.Add(t.CharacterId, define);
+				break;
+			}
+
+			case DefineSpriteTag t:
+            {
+				executer.Library.Add(t.SpriteId, new SwfLibrarySpriteDefine(t.ControlTags));
+				break;
+			}
 
 			case ShowFrameTag:
 			case SetBackgroundColorTag:
@@ -66,6 +88,7 @@ namespace FTSwfTools {
 			case FileAttributesTag:
 			case EnableTelemetryTag:
 			case DefineBinaryDataTag:
+				// Do nothing
 				break;
 
 			case UnknownTag:
@@ -76,7 +99,7 @@ namespace FTSwfTools {
 			}
 		}
 
-		public void Visit(PlaceObjectTag tag, SwfDisplayList dl) {
+		void ApplyPlaceObjectTag(PlaceObjectTag tag, SwfDisplayList dl) {
 			var new_inst = CreateDisplayInstanceFromDefine(Library[tag.CharacterId]);
 			new_inst.Id             = tag.CharacterId;
 			new_inst.Depth          = tag.Depth;
@@ -88,7 +111,7 @@ namespace FTSwfTools {
 			dl.Instances.Add(new_inst.Depth, new_inst);
 		}
 
-		public void Visit(PlaceObject2Tag tag, SwfDisplayList dl) {
+		void ApplyPlaceObjectTag(PlaceObject2Tag tag, SwfDisplayList dl) {
 			if ( tag.HasCharacter ) {
 				SwfDisplayInstance old_inst = null;
 				if ( tag.Move ) { // replace character
@@ -113,7 +136,7 @@ namespace FTSwfTools {
 			}
 		}
 
-		public void Visit(PlaceObject3Tag tag, SwfDisplayList dl) {
+		void ApplyPlaceObjectTag(PlaceObject3Tag tag, SwfDisplayList dl) {
 			if ( tag.HasCharacter ) {
 				SwfDisplayInstance old_inst = null;
 				if ( tag.Move ) { // replace character
@@ -150,9 +173,6 @@ namespace FTSwfTools {
 			};
 		}
 
-		public void Visit(RemoveObjectTag tag, SwfDisplayList dl) => dl.Instances.Remove(tag.Depth);
-		public void Visit(RemoveObject2Tag tag, SwfDisplayList dl) => dl.Instances.Remove(tag.Depth);
-
 		public void Visit(FrameLabelTag tag, SwfDisplayList dl) {
 			const string anchor_prefix = "FT_ANCHOR:";
 			if ( tag.Name.StartsWith(anchor_prefix) ) {
@@ -164,39 +184,9 @@ namespace FTSwfTools {
 			}
 		}
 
-		public void Visit(ExportAssetsTag tag, SwfDisplayList dl) {
-			foreach ( var asset_tag in tag.AssetTags )
-				Library[asset_tag.Tag].ExportName = asset_tag.Name.Trim();
-		}
-
-		public void Visit(SymbolClassTag tag, SwfDisplayList dl) {
-			foreach ( var symbol_tag in tag.SymbolTags )
-				Library[symbol_tag.Tag].ExportName = symbol_tag.Name.Trim();
-		}
-
-		public void Visit(DefineShapeTag tag, SwfDisplayList dl) => AddShapesToLibrary(tag.ShapeId, tag.Shapes);
-		public void Visit(DefineShape2Tag tag, SwfDisplayList dl) => AddShapesToLibrary(tag.ShapeId, tag.Shapes);
-		public void Visit(DefineShape3Tag tag, SwfDisplayList dl) => AddShapesToLibrary(tag.ShapeId, tag.Shapes);
-		public void Visit(DefineShape4Tag tag, SwfDisplayList dl) => AddShapesToLibrary(tag.ShapeId, tag.Shapes);
-		public void Visit(DefineBitsLosslessTag tag, SwfDisplayList dl) => AddBitmapToLibrary(tag.CharacterId, tag);
-		public void Visit(DefineBitsLossless2Tag tag, SwfDisplayList dl) => AddBitmapToLibrary(tag.CharacterId, tag);
-
-		public void Visit(DefineSpriteTag tag, SwfDisplayList dl) => Library.Add(tag.SpriteId, new SwfLibrarySpriteDefine(tag.ControlTags));
-
 		//
 		//
 		//
-
-		void AddShapesToLibrary(ushort define_id, SwfShapesWithStyle shapes) {
-			var bitmap_styles = shapes.FillStyles.Where(p => p.Type.IsBitmapType);
-			var define = new SwfLibraryShapeDefine(bitmap_styles.Select(p => (p.BitmapId, p.BitmapMatrix)).ToArray());
-			Library.Add(define_id, define);
-		}
-
-		void AddBitmapToLibrary(ushort define_id, IBitmapData bitmapData) {
-			var define = new SwfLibraryBitmapDefine(bitmapData);
-			Library.Add(define_id, define);
-		}
 
 		void ChildrenNextFrameLooped(SwfDisplayList dl) {
 			var sprites = dl.Instances.Values

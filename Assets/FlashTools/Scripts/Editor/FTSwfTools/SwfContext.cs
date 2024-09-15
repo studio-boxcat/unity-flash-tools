@@ -10,7 +10,7 @@ namespace FTSwfTools {
 	// SwfLibrary
 	//
 
-	public abstract class SwfLibraryDefine {
+	abstract class SwfLibraryDefine {
 		public string ExportName = string.Empty;
 	}
 
