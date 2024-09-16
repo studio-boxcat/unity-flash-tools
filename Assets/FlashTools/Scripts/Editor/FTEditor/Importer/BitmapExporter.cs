@@ -7,16 +7,20 @@ namespace FTEditor.Importer
 {
     static class BitmapExporter
     {
-        public static void ExportBitmaps(Dictionary<ushort, IBitmapData> bitmaps, string dir)
+        public static string GetSpriteName(ushort bitmapId) => $"{bitmapId:D4}.png";
+
+        public static void ExportBitmaps(Dictionary<ushort, IBitmapData> bitmaps, string dir, out Dictionary<ushort, Texture2D> textures)
         {
             if (Directory.Exists(dir))
                 Directory.Delete(dir, true);
             Directory.CreateDirectory(dir);
 
+            textures = new Dictionary<ushort, Texture2D>();
             foreach (var (bitmapId, bitmapData) in bitmaps)
             {
                 var tex = LoadTextureFromData(bitmapData);
-                File.WriteAllBytes($"{dir}/{bitmapId:D4}.png", tex.EncodeToPNG());
+                textures.Add(bitmapId, tex);
+                File.WriteAllBytes($"{dir}/{GetSpriteName(bitmapId)}", tex.EncodeToPNG());
             }
             return;
 

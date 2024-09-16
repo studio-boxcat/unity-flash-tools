@@ -68,9 +68,7 @@ namespace FTEditor.Importer
             var vertexOffset = (ushort) _curPoses.Count;
 
             // Pos
-            var matrix =
-                Matrix4x4.Scale(new Vector3(1.0f, -1.0f, 1.0f) / ImportConfig.PixelsPerUnit / ImportConfig.CustomScaleFactor) *
-                inst.Matrix;
+            var matrix = GetVertexMatrix(inst.Matrix);
             foreach (var pos in spriteData.Poses)
                 _curPoses.Add(matrix.MultiplyPoint3x4(pos));
 
@@ -90,6 +88,9 @@ namespace FTEditor.Importer
                 _curIndices.Add((ushort) (vertexOffset + index));
             }
         }
+
+        public static Matrix4x4 GetVertexMatrix(Matrix4x4 m) =>
+            Matrix4x4.Scale(new Vector3(1.0f, -1.0f, 1.0f) / ImportConfig.PixelsPerUnit / ImportConfig.CustomScaleFactor) * m;
 
         public BatchInfo[] Flush()
         {
