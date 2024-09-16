@@ -52,14 +52,16 @@ namespace FTSwfTools {
 		}
 	}
 
+	enum Depth : ushort { }
+
 	//
 	// SwfDisplayList
 	//
 
 	abstract class SwfDisplayInstance {
 		public ushort            Id;
-		public ushort            Depth;
-		public ushort            ClipDepth;
+		public Depth             Depth;
+		public Depth             ClipDepth;
 		public bool              Visible;
 		public Matrix4x4         Matrix;
 		public SwfBlendMode      BlendMode;
@@ -83,7 +85,7 @@ namespace FTSwfTools {
 	}
 
 	class SwfDisplayList {
-		public readonly SortedDictionary<ushort, SwfDisplayInstance> Instances = new();
+		public readonly SortedDictionary<Depth, SwfDisplayInstance> Instances = new();
 		public readonly List<string>     FrameLabels  = new();
 		public readonly List<string>     FrameAnchors = new();
 	}

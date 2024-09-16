@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using FTSwfTools;
+using UnityEngine;
 using FTSwfTools.SwfTypes;
 using UnityEngine.Assertions;
 
@@ -19,8 +20,8 @@ namespace FTEditor {
 
 		public static SwfBlendModeData normal => new(Types.Normal);
 
-		public static SwfBlendModeData operator*(SwfBlendModeData a, SwfBlendModeData b)
-			=> a.type is (Types.Normal or Types.Layer) ? b : a;
+		public static SwfBlendModeData operator*(SwfBlendModeData a, SwfBlendMode b)
+			=> a.type is (Types.Normal or Types.Layer) ? ((SwfBlendModeData) b) : a;
 
 		public static explicit operator SwfBlendModeData(SwfBlendMode value)
 		{
@@ -83,14 +84,14 @@ namespace FTEditor {
 	}
 
 	class SwfInstanceData {
-		public enum Types {
-			Mask,
-			Group,
+		public enum Types : byte {
+			Simple,
 			Masked,
-			MaskReset
+			MaskIn,
+			MaskOut
 		}
-		public Types                 Type        = Types.Group;
-		public ushort                ClipDepth   = 0;
+		public Types                 Type        = Types.Simple;
+		public Depth                 ClipDepth   = 0; // Stencil
 		public ushort                Bitmap      = 0;
 		public Matrix4x4             Matrix      = Matrix4x4.identity;
 		public SwfBlendModeData      BlendMode   = SwfBlendModeData.normal;
@@ -100,7 +101,7 @@ namespace FTEditor {
 		{
 			return new SwfInstanceData
 			{
-				Type = Types.MaskReset,
+				Type = Types.MaskOut,
 				ClipDepth = 0,
 				Bitmap     = mask.Bitmap,
 				Matrix     = mask.Matrix,

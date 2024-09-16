@@ -5,6 +5,7 @@ using UnityEditor;
 
 using System.IO;
 using System.Collections.Generic;
+using FTSwfTools;
 using JetBrains.Annotations;
 
 namespace FTEditor {
@@ -58,14 +59,14 @@ namespace FTEditor {
 		//
 		// ---------------------------------------------------------------------
 
-		public static Material Query(SwfInstanceData.Types type, SwfBlendModeData.Types blend_mode, int clip_depth)
+		public static Material Query(SwfInstanceData.Types type, SwfBlendModeData.Types blend_mode, Depth clip_depth)
 		{
 			ValueTuple<string, string, Action<Material>> tuple = type switch
 			{
-				SwfInstanceData.Types.Mask => (SwfIncrMaskShaderName, "", null),
-				SwfInstanceData.Types.Group => (SwfSimpleShaderName, $"_{blend_mode}", material => SetMaterialProperties(material, blend_mode, 0)),
-				SwfInstanceData.Types.Masked => (SwfMaskedShaderName, $"_{blend_mode}_{clip_depth}", material => SetMaterialProperties(material, blend_mode, clip_depth)),
-				SwfInstanceData.Types.MaskReset => (SwfDecrMaskShaderName, "", null),
+				SwfInstanceData.Types.Simple => (SwfSimpleShaderName, $"_{blend_mode}", material => SetMaterialProperties(material, blend_mode, 0)),
+				SwfInstanceData.Types.Masked => (SwfMaskedShaderName, $"_{blend_mode}_{(int) clip_depth}", material => SetMaterialProperties(material, blend_mode, clip_depth)),
+				SwfInstanceData.Types.MaskIn => (SwfIncrMaskShaderName, "", null),
+				SwfInstanceData.Types.MaskOut => (SwfDecrMaskShaderName, "", null),
 				_ => throw new UnityException($"Incorrect instance type: {type}")
 			};
 
@@ -83,7 +84,7 @@ namespace FTEditor {
 		static void SetMaterialProperties(
 			Material               material,
 			SwfBlendModeData.Types blend_mode,
-			int                    stencil_id)
+			Depth                  stencil_id)
 		{
 			var (blendOp, srcBlend, dstBlend) = blend_mode switch
 			{
@@ -99,7 +100,7 @@ namespace FTEditor {
 			material.SetFloat("_BlendOp", (int)blendOp);
 			material.SetFloat("_SrcBlend", (int)srcBlend);
 			material.SetFloat("_DstBlend", (int)dstBlend);
-			material.SetFloat("_StencilID", stencil_id);
+			material.SetFloat("_StencilID", (int)stencil_id);
 		}
 	}
 }

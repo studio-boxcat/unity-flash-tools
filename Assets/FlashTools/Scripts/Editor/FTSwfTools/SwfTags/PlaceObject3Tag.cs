@@ -17,19 +17,16 @@ namespace FTSwfTools.SwfTags {
 		public bool              HasClassName;
 		public bool              HasCacheAsBitmap;
 		public bool              HasBlendMode;
-		public ushort            Depth;
-		public string            ClassName;
+		public Depth             Depth;
 		public ushort            CharacterId;
 		public Matrix4x4         Matrix;
 		public SwfColorTransform ColorTransform;
 		public ushort            Ratio;
-		public string            Name;
-		public ushort            ClipDepth;
+		public Depth             ClipDepth;
 		public SwfBlendMode      BlendMode;
 		public bool              BitmapCache;
 		public bool              Visible;
 		public SwfColor          BackgroundColor;
-		public SwfClipActions    ClipActions;
 
 		public static PlaceObject3Tag Create(SwfStreamReader reader) {
 			var tag               = new PlaceObject3Tag();
@@ -49,9 +46,9 @@ namespace FTSwfTools.SwfTags {
 			tag.HasCacheAsBitmap  = reader.ReadBit();
 			tag.HasBlendMode      = reader.ReadBit();
 			var hasFilterList     = reader.ReadBit(); // HasFilterList
-			tag.Depth             = reader.ReadUInt16();
+			tag.Depth             = (Depth) reader.ReadUInt16();
 
-			tag.ClassName         = tag.HasClassName
+			_                     = tag.HasClassName
 				? reader.ReadString()
 				: string.Empty;
 
@@ -71,13 +68,13 @@ namespace FTSwfTools.SwfTags {
 				? reader.ReadUInt16()
 				: (ushort)0;
 
-			tag.Name              = tag.HasName
+			_                     = tag.HasName
 				? reader.ReadString()
 				: string.Empty;
 
 			tag.ClipDepth         = tag.HasClipDepth
-				? reader.ReadUInt16()
-				: (ushort)0;
+				? (Depth) reader.ReadUInt16()
+				: 0;
 
 			_                     = hasFilterList
 				? SwfSurfaceFilters.Read(reader)
@@ -95,9 +92,8 @@ namespace FTSwfTools.SwfTags {
 				? SwfColor.Read(reader, true)
 				: SwfColor.identity;
 
-			tag.ClipActions       = tag.HasClipActions && !reader.IsEOF
-				? SwfClipActions.Read(reader)
-				: SwfClipActions.identity;
+			if (tag.HasClipActions)
+				throw new System.Exception("Clip actions is unsupported");
 
 			return tag;
 		}

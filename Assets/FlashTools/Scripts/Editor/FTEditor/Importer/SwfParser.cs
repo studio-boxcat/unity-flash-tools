@@ -120,7 +120,7 @@ namespace FTEditor.Importer {
 			SwfBlendModeData      parent_blend_mode,
 			SwfColorTransData     parent_color_transform,
 			ushort                parent_masked,
-			ushort                parent_mask,
+			Depth                 parent_mask,
 			List<SwfInstanceData> parent_masks,
 			List<SwfInstanceData> result)
 		{
@@ -134,10 +134,11 @@ namespace FTEditor.Importer {
 					self_masks.RemoveAt(i);
 				}
 
-				var child_type = ResolveInstType(parent_mask, inst.ClipDepth, parent_masked, self_masks.Count);
-				var child_depth = ResolveClipDepth(parent_mask, inst.ClipDepth, parent_masked, self_masks.Count);
+				var masked = parent_masked + self_masks.Count;
+				var child_type = ResolveInstType(parent_mask, inst.ClipDepth, masked);
+				var child_depth = ResolveClipDepth(parent_mask, inst.ClipDepth, masked);
 				var child_matrix          = parent_matrix          * inst.Matrix;
-				var child_blend_mode      = parent_blend_mode      * (SwfBlendModeData) inst.BlendMode;
+				var child_blend_mode      = parent_blend_mode      * inst.BlendMode;
 				var child_color_transform = parent_color_transform * inst.ColorTransform;
 
 				switch ( inst ) {
@@ -192,13 +193,13 @@ namespace FTEditor.Importer {
 						child_matrix,
 						child_blend_mode,
 						child_color_transform,
-						(ushort)(parent_masked + self_masks.Count),
-						(ushort)(parent_mask > 0
+						parent_masked: (ushort)masked,
+						parent_mask: parent_mask > 0
 							? parent_mask
 							: (inst.ClipDepth > 0
 								? inst.ClipDepth
-								: (ushort)0)),
-						parent_mask > 0
+								: 0),
+						parent_masks: parent_mask > 0
 							? parent_masks
 							: (inst.ClipDepth > 0
 								? self_masks
@@ -215,20 +216,17 @@ namespace FTEditor.Importer {
 			self_masks.Clear();
 		}
 
-		static ushort ResolveClipDepth(int parent_mask, int clip_depth, int parent_masked, int self_mask_count)
+		static Depth ResolveClipDepth(Depth parent_mask, Depth inst_mask, int masked)
 		{
-			if (parent_mask > 0) return (ushort)parent_mask;
-			if (clip_depth > 0) return (ushort)clip_depth;
-			return (ushort)(parent_masked + self_mask_count);
+			if (parent_mask > 0) return parent_mask;
+			if (inst_mask > 0) return inst_mask;
+			return (Depth)masked;
 		}
 
-		static SwfInstanceData.Types ResolveInstType(int parent_mask, int clip_depth, int parent_masked, int self_mask_count)
+		static SwfInstanceData.Types ResolveInstType(Depth parent_mask, Depth inst_mask, int masked)
 		{
-			return (parent_mask > 0 || clip_depth > 0)
-					? SwfInstanceData.Types.Mask
-					: (parent_masked > 0 || self_mask_count > 0)
-						? SwfInstanceData.Types.Masked
-						: SwfInstanceData.Types.Group;
+			if (parent_mask > 0 || inst_mask > 0) return SwfInstanceData.Types.MaskIn;
+			return masked is not 0 ? SwfInstanceData.Types.Masked : SwfInstanceData.Types.Simple;
 		}
 	}
 }

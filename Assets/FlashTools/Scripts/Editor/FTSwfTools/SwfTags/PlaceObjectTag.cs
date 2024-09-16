@@ -4,7 +4,7 @@ using UnityEngine;
 namespace FTSwfTools.SwfTags {
 	class PlaceObjectTag : SwfTagBase {
 		public ushort            CharacterId;
-		public ushort            Depth;
+		public Depth             Depth;
 		public Matrix4x4         Matrix;
 		public SwfColorTransform ColorTransform;
 
@@ -12,7 +12,7 @@ namespace FTSwfTools.SwfTags {
 			return new PlaceObjectTag
 			{
 				CharacterId = reader.ReadUInt16(),
-				Depth = reader.ReadUInt16(),
+				Depth = (Depth) reader.ReadUInt16(),
 				Matrix = SwfMatrix.Read(reader),
 				ColorTransform = reader.IsEOF ? default : SwfColorTransform.Read(reader, false)
 			};

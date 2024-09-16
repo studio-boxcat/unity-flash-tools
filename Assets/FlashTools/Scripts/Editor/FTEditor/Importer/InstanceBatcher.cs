@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using FTSwfTools;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -10,9 +12,9 @@ namespace FTEditor.Importer
         {
             public readonly SwfInstanceData.Types Type;
             public readonly SwfBlendModeData.Types BlendMode;
-            public readonly int ClipDepth;
+            public readonly Depth ClipDepth;
 
-            BatchProperties(SwfInstanceData.Types type, SwfBlendModeData.Types blendMode, int clipDepth)
+            BatchProperties(SwfInstanceData.Types type, SwfBlendModeData.Types blendMode, Depth clipDepth)
             {
                 Type = type;
                 BlendMode = blendMode;
@@ -21,7 +23,7 @@ namespace FTEditor.Importer
 
             public static BatchProperties FromInstanceData(SwfInstanceData inst) => new(inst.Type, inst.BlendMode.type, inst.ClipDepth);
 
-            public static BatchProperties Invalid => new((SwfInstanceData.Types) int.MaxValue, default, default);
+            public static BatchProperties Invalid => new((SwfInstanceData.Types) byte.MaxValue, default, default);
 
             public bool Equals(BatchProperties other) => Type == other.Type && BlendMode == other.BlendMode && ClipDepth == other.ClipDepth;
         }
@@ -93,9 +95,29 @@ namespace FTEditor.Importer
         {
             if (_curPoses.Count is not 0)
                 SettleIntoNewBatch();
+
+            // If there's a single mask-out batch, remove it.
+            if (SingleMaskOut(_batches, out var index))
+                _batches.RemoveAt(index);
+
             var batches = _batches.ToArray();
             _batches.Clear();
             return batches;
+
+            static bool SingleMaskOut(List<BatchInfo> batches, out int index)
+            {
+                for (var i = 0; i < batches.Count; i++)
+                {
+                    if (batches[i].Property.Type is SwfInstanceData.Types.MaskOut)
+                    {
+                        index = i;
+                        return true;
+                    }
+                }
+
+                index = default;
+                return false;
+            }
         }
 
         void SettleIntoNewBatch()

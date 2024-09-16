@@ -11,14 +11,11 @@ namespace FTSwfTools.SwfTags {
 		public bool              HasMatrix;
 		public bool              HasCharacter;
 		public bool              Move;
-		public ushort            Depth;
+		public Depth             Depth;
 		public ushort            CharacterId;
 		public Matrix4x4         Matrix;
 		public SwfColorTransform ColorTransform;
-		public ushort            Ratio;
-		public string            Name;
-		public ushort            ClipDepth;
-		public SwfClipActions    ClipActions;
+		public Depth             ClipDepth;
 
 		public static PlaceObject2Tag Create(SwfStreamReader reader) {
 			var tag               = new PlaceObject2Tag();
@@ -30,7 +27,7 @@ namespace FTSwfTools.SwfTags {
 			tag.HasMatrix         = reader.ReadBit();
 			tag.HasCharacter      = reader.ReadBit();
 			tag.Move              = reader.ReadBit();
-			tag.Depth             = reader.ReadUInt16();
+			tag.Depth             = (Depth)reader.ReadUInt16();
 
 			tag.CharacterId       = tag.HasCharacter
 				? reader.ReadUInt16()
@@ -44,21 +41,20 @@ namespace FTSwfTools.SwfTags {
 				? SwfColorTransform.Read(reader, true)
 				: default;
 
-			tag.Ratio             = tag.HasRatio
+			_                     = tag.HasRatio
 				? reader.ReadUInt16()
 				: (ushort)0;
 
-			tag.Name              = tag.HasName
+			_                     = tag.HasName
 				? reader.ReadString()
 				: string.Empty;
 
 			tag.ClipDepth         = tag.HasClipDepth
-				? reader.ReadUInt16()
-				: (ushort)0;
+				? (Depth) reader.ReadUInt16()
+				: 0;
 
-			tag.ClipActions       = tag.HasClipActions
-				? SwfClipActions.Read(reader)
-				: SwfClipActions.identity;
+			if (tag.HasClipActions)
+				throw new System.Exception("Clip actions is unsupported");
 
 			return tag;
 		}
