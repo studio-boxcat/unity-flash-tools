@@ -8,6 +8,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
+using UnityEngine.Serialization;
 using Object = UnityEngine.Object;
 
 namespace FTEditor.Importer
@@ -26,8 +27,9 @@ namespace FTEditor.Importer
 
         [BoxGroup("Pack Options"), SerializeField]
         public int AtlasMaxSize = 1024;
+        [FormerlySerializedAs("AtlasExtrude")]
         [BoxGroup("Pack Options"), SerializeField]
-        public int AtlasExtrude = 2;
+        public int AtlasShapePadding = 2;
 
 
         [ButtonGroup, Button(ButtonSizes.Medium)]
@@ -66,7 +68,7 @@ namespace FTEditor.Importer
             // Pack atlas
             var sheetPath = swfPath.Replace(".swf", ".png");
             var dataPath = swfPath.Replace(".swf", ".tpsheet");
-            TexturePackerUtils.Pack(sheetPath, dataPath, exportDir, AtlasMaxSize, AtlasExtrude);
+            TexturePackerUtils.Pack(sheetPath, dataPath, exportDir, AtlasMaxSize, AtlasShapePadding);
             AssetDatabase.ImportAsset(sheetPath);
             Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
 
