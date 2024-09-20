@@ -17,7 +17,7 @@ namespace FTEditor.Importer
         [BoxGroup("Objects")]
         [SerializeField, Required, AssetsOnly]
         public Object SwfFile;
-        [BoxGroup("Objects")]
+        [BoxGroup("Objects"), InfoBox("$AtlasSizeHint", visibleIfMemberName: "Atlas")]
         [SerializeField, Required, ChildGameObjectsOnly]
         public Texture2D Atlas;
         [BoxGroup("Objects")]
@@ -185,6 +185,13 @@ namespace FTEditor.Importer
                 if (path.EndsWith(".swf") is false)
                     result.AddError("SwfFile must be a .swf file");
             }
+        }
+
+        static string AtlasSizeHint(Texture2D tex)
+        {
+            var size = $"{tex.width}x{tex.height}";
+            var sqrt = Mathf.Sqrt(tex.width * tex.height);
+            return $"Size: {size}, Sqrt: {sqrt:F1}";
         }
 
         static IEnumerable<(ushort MaskBitmap, ushort RenderBitmap)> FindDuplicateMaskTextures(
