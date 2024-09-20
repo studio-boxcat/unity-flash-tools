@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,13 +27,20 @@ namespace FTEditor.Importer
         public SwfClipAsset ClipAsset;
 
         [BoxGroup("Pack Options"), SerializeField]
-        public int AtlasMaxSize = 1024;
+        public int AtlasMaxSize = 2048;
         [FormerlySerializedAs("AtlasExtrude")]
         [BoxGroup("Pack Options"), SerializeField]
         public int AtlasShapePadding = 2;
 
 
-        [ButtonGroup, Button(ButtonSizes.Medium)]
+        string GetSwfPath()
+        {
+            var path = AssetDatabase.GetAssetPath(SwfFile);
+            Assert.IsTrue(path.EndsWith(".swf"));
+            return path;
+        }
+
+        [Button(ButtonSizes.Medium), PropertySpace(8, 0)]
         void BuildAtlas()
         {
             L.I($"Building atlas for {SwfFile.name}...");
@@ -50,8 +58,7 @@ namespace FTEditor.Importer
                 .ToDictionary(x => x.Key, x => x.Value);
 
             // Export bitmaps
-            var swfPath = AssetDatabase.GetAssetPath(SwfFile);
-            Assert.IsTrue(swfPath.EndsWith(".swf"));
+            var swfPath = GetSwfPath();
             var exportDir = swfPath.Replace(".swf", "_Sprites~");
             BitmapExporter.ExportBitmaps(bitmaps, exportDir, out var textures);
 
@@ -67,15 +74,12 @@ namespace FTEditor.Importer
 
             // Pack atlas
             var sheetPath = swfPath.Replace(".swf", ".png");
-            var dataPath = swfPath.Replace(".swf", ".tpsheet");
-            TexturePackerUtils.Pack(sheetPath, dataPath, exportDir, AtlasMaxSize, AtlasShapePadding);
-            AssetDatabase.ImportAsset(sheetPath);
-            Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
+            Atlas = PackAtlas(sheetPath, exportDir, AtlasMaxSize, AtlasShapePadding);
 
             L.I($"Atlas has been successfully built: {sheetPath}", Atlas);
         }
 
-        [ButtonGroup, Button(ButtonSizes.Medium), EnableIf("Atlas")]
+        [Button(ButtonSizes.Medium), EnableIf("Atlas")]
         void BakeClip()
         {
             // load swf and atlas
@@ -125,6 +129,53 @@ namespace FTEditor.Importer
 
                 // Load published texture
                 return AssetDatabase.LoadAssetAtPath<Texture2D>(dstPath);
+            }
+        }
+
+        [Button(ButtonSizes.Medium), EnableIf("Atlas")]
+        void OptimizeAtlasSize()
+        {
+            var swfPath = GetSwfPath();
+            var sheetPath = swfPath.Replace(".swf", ".png");
+            var spriteFolder = swfPath.Replace(".swf", "_Sprites~");
+
+            var oldMaxSize = AtlasMaxSize;
+            var maxSize = AtlasMaxSize;
+            byte[] granularitySeries = { 64, 32, 16, 8, 4, 2, 1 };
+            foreach (var granularity in granularitySeries)
+            {
+                var testSize = maxSize;
+                var failedCount = 0;
+                while (true)
+                {
+                    testSize -= granularity;
+                    if (testSize <= 0) break;
+                    L.I($"Trying to pack atlas with size {testSize}...");
+
+                    var atlas = PackAtlas(sheetPath, spriteFolder, testSize, AtlasShapePadding);
+                    if (atlas is not null)
+                    {
+                        Atlas = atlas;
+                        maxSize = testSize;
+                        failedCount = 0;
+                        continue;
+                    }
+
+                    failedCount++;
+                    if (failedCount >= 10)
+                        break;
+                }
+            }
+
+            if (maxSize != oldMaxSize)
+            {
+                L.I($"Atlas size has been optimized: {oldMaxSize} → {maxSize}");
+                AtlasMaxSize = maxSize;
+                EditorUtility.SetDirty(this);
+            }
+            else
+            {
+                L.I("Atlas size is already optimized.");
             }
         }
 
@@ -194,6 +245,24 @@ namespace FTEditor.Importer
             var size = $"{tex.width}x{tex.height}";
             var sqrt = Mathf.Sqrt(tex.width * tex.height);
             return $"Size: {size}, Sqrt: {sqrt:F1}";
+        }
+
+        static Texture2D PackAtlas(string sheetPath, string spriteFolder, int maxSize, int shapePadding)
+        {
+            var dataPath = sheetPath.Replace(".png", ".tpsheet");
+
+            try
+            {
+                TexturePackerUtils.Pack(sheetPath, dataPath, spriteFolder, maxSize, shapePadding);
+                AssetDatabase.ImportAsset(sheetPath);
+                return AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
+            }
+            catch (Exception e)
+            {
+                L.E("Failed to pack atlas: " + Path.GetFileName(sheetPath));
+                L.E(e);
+                return null;
+            }
         }
 
         static IEnumerable<(ushort MaskBitmap, ushort RenderBitmap)> FindDuplicateMaskTextures(
