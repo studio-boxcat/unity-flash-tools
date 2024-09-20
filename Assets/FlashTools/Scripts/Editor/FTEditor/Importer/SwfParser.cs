@@ -130,7 +130,7 @@ namespace FTEditor.Importer {
 				{
 					var self_mask = self_masks[i];
 					if (self_mask.ClipDepth >= inst.Depth) continue;
-					result.Add(SwfInstanceData.MaskReset(self_mask));
+					result.Add(SwfInstanceData.MaskOut(self_mask));
 					self_masks.RemoveAt(i);
 				}
 
@@ -212,7 +212,7 @@ namespace FTEditor.Importer {
 				}
 			}
 
-			result.AddRange(self_masks.Select(SwfInstanceData.MaskReset));
+			result.AddRange(self_masks.Select(SwfInstanceData.MaskOut));
 			self_masks.Clear();
 		}
 

@@ -7,31 +7,15 @@ namespace FTEditor.Importer
 {
     static class BitmapExporter
     {
-        public static string GetSpriteName(ushort bitmapId) => $"{bitmapId:D4}.png";
+        static string GetSpriteName(ushort bitmapId) => $"{bitmapId:D4}.png";
 
-        public static void ExportBitmaps(Dictionary<ushort, IBitmapData> bitmaps, string dir, out Dictionary<ushort, Texture2D> textures)
+        public static Texture2D LoadTextureFromData(IBitmapData data)
         {
-            if (Directory.Exists(dir))
-                Directory.Delete(dir, true);
-            Directory.CreateDirectory(dir);
-
-            textures = new Dictionary<ushort, Texture2D>();
-            foreach (var (bitmapId, bitmapData) in bitmaps)
-            {
-                var tex = LoadTextureFromData(bitmapData);
-                textures.Add(bitmapId, tex);
-                File.WriteAllBytes($"{dir}/{GetSpriteName(bitmapId)}", tex.EncodeToPNG());
-            }
-            return;
-
-            static Texture2D LoadTextureFromData(IBitmapData data)
-            {
-                var size = data.Size;
-                var texture = new Texture2D(size.x, size.y, TextureFormat.ARGB32, false);
-                texture.LoadRawTextureData(data.ToARGB32());
-                RevertTexturePremultipliedAlpha(texture);
-                return texture;
-            }
+            var size = data.Size;
+            var texture = new Texture2D(size.x, size.y, TextureFormat.ARGB32, false);
+            texture.LoadRawTextureData(data.ToARGB32());
+            RevertTexturePremultipliedAlpha(texture);
+            return texture;
 
             static void RevertTexturePremultipliedAlpha(Texture2D texture)
             {
@@ -50,6 +34,16 @@ namespace FTEditor.Importer
                 texture.SetPixels(pixels);
                 texture.Apply();
             }
+        }
+
+        public static void ExportBitmaps(Dictionary<ushort, Texture2D> bitmaps, string dir)
+        {
+            if (Directory.Exists(dir))
+                Directory.Delete(dir, true);
+            Directory.CreateDirectory(dir);
+
+            foreach (var (bitmapId, tex) in bitmaps)
+                File.WriteAllBytes($"{dir}/{GetSpriteName(bitmapId)}", tex.EncodeToPNG());
         }
     }
 }

@@ -48,29 +48,34 @@ namespace FTEditor.Importer
             // Parse swf
             var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
             var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
-            var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
-            var instances = symbol.Frames.SelectMany(x => x.Instances).ToArray();
+            var frames = symbols.Single(x => x.Name is not SwfParser.stage_symbol).Frames;
+            var instances = frames.SelectMany(x => x.Instances).ToArray();
 
             // Find used bitmaps
             var usedBitmaps = instances.Select(x => x.Bitmap).ToHashSet();
             var bitmaps = library.GetBitmaps()
                 .Where(x => usedBitmaps.Contains(x.Key))
-                .ToDictionary(x => x.Key, x => x.Value);
+                .ToDictionary(x => x.Key, x => BitmapExporter.LoadTextureFromData(x.Value));
+
+            // Find mask only textures.
+            foreach (var (maskBitmap, renderBitmap) in FindDuplicateMaskTextures(instances, bitmaps))
+            {
+                foreach (var instData in instances)
+                {
+                    if (instData.Bitmap == maskBitmap)
+                        instData.Bitmap = renderBitmap;
+                }
+                bitmaps.Remove(maskBitmap);
+                L.I($"Mask only bitmap {maskBitmap} has been replaced with {renderBitmap}");
+            }
+
+            // Remove occluded pixels
+            bitmaps = OcclusionProcessor.RemoveOccludedPixels(frames, bitmaps);
 
             // Export bitmaps
             var swfPath = GetSwfPath();
             var exportDir = swfPath.Replace(".swf", "_Sprites~");
-            BitmapExporter.ExportBitmaps(bitmaps, exportDir, out var textures);
-
-            // Find mask only textures.
-            foreach (var (maskBitmap, renderBitmap) in FindDuplicateMaskTextures(instances, textures))
-            {
-                var maskPath = Path.Combine(exportDir, BitmapExporter.GetSpriteName(maskBitmap));
-                var renderPath = Path.Combine(exportDir, BitmapExporter.GetSpriteName(renderBitmap));
-                File.Delete(maskPath);
-                File.Copy(renderPath, maskPath);
-                L.I($"Mask only bitmap {maskBitmap} has been replaced with {renderBitmap}");
-            }
+            BitmapExporter.ExportBitmaps(bitmaps, exportDir);
 
             // Pack atlas
             var sheetPath = swfPath.Replace(".swf", ".png");
@@ -304,7 +309,7 @@ namespace FTEditor.Importer
                 if (a.Length != b.Length) return false;
                 for (var i = 0; i < a.Length; i++)
                     if (Mathf.Abs(a[i] - b[i]) > threshold)
-                        return false;
+                    return false;
                 return true;
             }
         }
