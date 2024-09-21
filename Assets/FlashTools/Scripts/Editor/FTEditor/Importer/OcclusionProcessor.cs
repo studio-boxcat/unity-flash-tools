@@ -108,15 +108,16 @@ namespace FTEditor.Importer
                 if (pixelColor.a is 0)
                     continue;
 
-                // Instances with alpha cannot occlude pixels behind
-                var replace = noAlphaTint && pixelColor.a is 255;
-
+                var center = TransformPoint(x, y, matrix);
+                var replace = noAlphaTint && pixelColor.a is 255; // Instances with alpha cannot occlude pixels behind
                 const int range = kernelSize / 2;
                 for (var dy = -range; dy <= range; dy++)
                 for (var dx = -range; dx <= range; dx++)
                 {
                     // Transform pixel position using instance's Matrix
-                    var framebufferPos = TransformPoint(x, y, dx * 0.5f, dy * 0.5f, matrix);
+                    var framebufferPos = new Vector2Int(
+                        Mathf.RoundToInt(center.x + dx * 0.5f),
+                        Mathf.RoundToInt(center.y + dy * 0.5f));
 
                     // Pixel is masked out
                     if (!mask.IsPixelInMask(framebufferPos))
@@ -134,7 +135,7 @@ namespace FTEditor.Importer
         }
 
         // Bitmap space -> Framebuffer space
-        static Vector2Int TransformPoint(float x, float y, float ox, float oy, Matrix4x4 m)
+        static Vector2 TransformPoint(float x, float y, Matrix4x4 m)
         {
             // Vector2Int version of Matrix4x4.MultiplyPoint
             Vector2 v;
@@ -143,9 +144,7 @@ namespace FTEditor.Importer
             var num = 1f / (m.m30 * x + m.m31 * y + m.m33);
             v.x *= num;
             v.y *= num;
-            v.x += ox;
-            v.y += oy;
-            return Vector2Int.RoundToInt(v);
+            return v;
         }
 
         static Matrix4x4 SwfToUnitMatrix(Matrix4x4 m)
@@ -175,12 +174,15 @@ namespace FTEditor.Importer
                 if (pixelColor.a is 0)
                     continue;
 
+                var center = TransformPoint(x, y, matrix);
                 const int range = kernelSize / 2;
                 for (var dy = -range; dy <= range; dy++)
                 for (var dx = -range; dx <= range; dx++)
                 {
                     // Add pixel to mask if it's not clipped by parent mask
-                    var maskPos = TransformPoint(x, y, dx * 0.5f, dy * 0.5f, matrix);
+                    var maskPos = new Vector2Int(
+                        Mathf.RoundToInt(center.x + dx * 0.5f),
+                        Mathf.RoundToInt(center.y + dy * 0.5f));
                     if (parentMask.IsPixelInMask(maskPos))
                         pixels.Add(maskPos);
                 }
