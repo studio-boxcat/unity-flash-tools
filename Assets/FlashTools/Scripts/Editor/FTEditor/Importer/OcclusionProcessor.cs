@@ -126,12 +126,12 @@ namespace FTEditor.Importer
                         continue;
 
                     // Check if pixel has same color as background.
-                    var hasBg = framebuffer.TryGetValue(framebufferPos, out var fbPixel);
-                    var single = !hasBg || replace;
-                    var pixelPos = new Vector2Int(x, y);
-                    framebuffer[framebufferPos] = single
-                        ? FramebufferPixel.CreateSingle(instance.Bitmap, pixelPos)
-                        : fbPixel.Add(instance.Bitmap, pixelPos);
+                    var p = new FramebufferPixel.Pixel(instance.Bitmap, (ushort) x, (ushort) y);
+                    framebuffer[framebufferPos] = replace
+                        ? new FramebufferPixel(p)
+                        : framebuffer.TryGetValue(framebufferPos, out var existing)
+                            ? existing.Add(p)
+                            : new FramebufferPixel(p);
                 }
             }
         }
@@ -284,28 +284,24 @@ namespace FTEditor.Importer
                 [FieldOffset(4)]
                 public readonly ushort Y;
 
-                public Pixel(ushort bitmap, Vector2Int position) : this()
+                public Pixel(ushort bitmap, ushort x, ushort y) : this()
                 {
                     Bitmap = bitmap;
-                    X = (ushort) position.x;
-                    Y = (ushort) position.y;
+                    X = x;
+                    Y = y;
                 }
             }
 
             public readonly Pixel Single;
             public readonly Pixel[] Multiple;
 
-            FramebufferPixel(Pixel single) : this() => Single = single;
+            public FramebufferPixel(Pixel single) : this() => Single = single;
             FramebufferPixel(Pixel[] multiple) : this() => Multiple = multiple;
-
-            public static FramebufferPixel CreateSingle(ushort bitmap, Vector2Int position) => new(new Pixel(bitmap, position));
 
             public bool IsSingle => Multiple is null;
 
-            public FramebufferPixel Add(ushort bitmap, Vector2Int position)
+            public FramebufferPixel Add(Pixel p)
             {
-                var p = new Pixel(bitmap, position);
-
                 if (Multiple is null)
                 {
                     return Single.Data == p.Data
