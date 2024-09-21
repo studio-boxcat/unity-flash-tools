@@ -305,6 +305,9 @@ namespace FTEditor.Importer
                 if (f1 != f2)
                     result.AddError($"Atlas file size mismatch: {f1} vs {f2}");
             }
+
+            if (AtlasMaxSize == 2048)
+                result.AddError("Atlas has never been optimized.");
         }
 
         static string AtlasSizeHint(Texture2D tex)
