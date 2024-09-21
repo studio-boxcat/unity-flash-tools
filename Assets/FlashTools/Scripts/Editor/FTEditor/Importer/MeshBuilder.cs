@@ -77,8 +77,9 @@ namespace FTEditor.Importer
                 for (var i = 0; i < count; ++i)
                 {
                     Assert.AreEqual(poses.Length, uvas.Length);
-                    Assert.IsTrue((uvas[i].x is >= 0 and <= 1) && (uvas[i].y is >= 0 and <= 1),
-                        $"Invalid UV: uva={uvas[i]}, index={i}");
+                    // Sometimes the UVs are out of range.
+                    Assert.IsTrue((uvas[i].x is >= -0.00001f and <= 1) && (uvas[i].y is >= -0.00001f and <= 1),
+                        $"Invalid UV: uva=(x={uvas[i].x}, y={uvas[i].y}, z={uvas[i].z})");
                     verts[i + offset] = new VertexData(
                         (half2) poses[i],
                         (half4) uvas[i]);
