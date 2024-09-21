@@ -127,11 +127,10 @@ namespace FTEditor.Importer
             var swfPath = GetSwfPath();
             var spriteFolder = swfPath.Replace(".swf", "_Sprites~");
 
-            if (AtlasOptimizer.Optimize(AtlasMaxSize, AtlasShapePadding, spriteFolder, out var newAtlasPath, out var newMaxSize))
+            var sheetPath = swfPath.Replace(".swf", ".png");
+            var dataPath = swfPath.Replace(".swf", ".tpsheet");
+            if (AtlasOptimizer.Optimize(AtlasMaxSize, AtlasShapePadding, spriteFolder, sheetPath, dataPath, out var newMaxSize))
             {
-                var sheetPath = swfPath.Replace(".swf", ".png");
-                File.Copy(newAtlasPath!, sheetPath, true);
-                AssetDatabase.ImportAsset(sheetPath);
                 Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
                 AtlasMaxSize = newMaxSize;
             }

@@ -1,16 +1,17 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
+using UnityEditor;
 
 namespace FTEditor.Importer
 {
     static class AtlasOptimizer
     {
-        public static bool Optimize(int initialMaxSize, int shapePadding, string spriteFolder, [CanBeNull] out string newAtlasPath, out int newMaxSize)
+        public static bool Optimize(int initialMaxSize, int shapePadding, string spriteFolder, string outputSheetPath, string outputDataPath, out int newMaxSize)
         {
             var timestamp = System.DateTime.Now.ToString("yyyyMMddHHmmss");
             var guid = System.Guid.NewGuid().ToString().Replace("-", "");
-            var sheetFormat = $"Temp/Atlas_{timestamp}_{guid}_{{0}}.png";
+            var sheetFormat = $"Temp/Atlas_{timestamp}_{guid}_";
 
             var maxSize = initialMaxSize;
             var triedSizes = new Dictionary<int, bool>();
@@ -35,8 +36,8 @@ namespace FTEditor.Importer
                 Parallel.For(0, testCount, j =>
                 {
                     var (size, _) = tests[j];
-                    var sheetPath = string.Format(sheetFormat, size);
-                    var success = PackAtlas(sheetPath, spriteFolder, size, shapePadding);
+                    var (sheetPath, dataPath) = FormatPath(sheetFormat, size);
+                    var success = PackAtlas(sheetPath, dataPath, spriteFolder, size, shapePadding);
                     tests[j] = (size, success);
                 });
 
@@ -62,26 +63,33 @@ namespace FTEditor.Importer
                 }
             }
 
-            if (maxSize < initialMaxSize)
-            {
-                L.I($"Atlas size has been optimized: {initialMaxSize} → {maxSize}");
-                newAtlasPath = string.Format(sheetFormat, maxSize);
-                newMaxSize = maxSize;
-                return true;
-            }
-            else
+
+            if (maxSize >= initialMaxSize)
             {
                 L.I("Atlas size is already optimized.");
-                newAtlasPath = null;
                 newMaxSize = initialMaxSize;
                 return false;
             }
+
+            L.I($"Atlas size has been optimized: {initialMaxSize} → {maxSize}");
+            var (finalSheetPath, finalDataPath) = FormatPath(sheetFormat, maxSize);
+            File.Copy(finalSheetPath, outputSheetPath, true);
+            File.Copy(finalDataPath, outputDataPath, true);
+            AssetDatabase.ImportAsset(outputSheetPath);
+            AssetDatabase.ImportAsset(outputDataPath);
+            newMaxSize = maxSize;
+            return true;
+
+            static (string, string) FormatPath(string format, int size)
+            {
+                var sheetPath = string.Format(format, size) + ".png";
+                var dataPath = string.Format(format, size) + ".tpsheet";
+                return (sheetPath, dataPath);
+            }
         }
 
-        static bool PackAtlas(string sheetPath, string spriteFolder, int maxSize, int shapePadding)
+        static bool PackAtlas(string sheetPath, string dataPath, string spriteFolder, int maxSize, int shapePadding)
         {
-            var dataPath = sheetPath.Replace(".png", ".tpsheet");
-
             try
             {
                 TexturePackerUtils.Pack(sheetPath, dataPath, spriteFolder, maxSize, shapePadding);
