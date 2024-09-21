@@ -65,6 +65,7 @@ namespace FTEditor.Importer
             }
         }
 
+        // Swf space -> view space.
         public static Matrix4x4 GetVertexMatrix(Matrix4x4 m) =>
             Matrix4x4.Scale(new Vector3(1.0f, -1.0f, 1.0f) / ImportConfig.PixelsPerUnit / ImportConfig.CustomScaleFactor) * m;
 

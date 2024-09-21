@@ -14,13 +14,9 @@ namespace FTEditor.Importer
         public SpriteData(Sprite sprite)
         {
             var verts = sprite.vertices;
-            var ppu = sprite.pixelsPerUnit;
-
             Poses = new Vector2[verts.Length];
-            // For swf, the pivot is in the top-right corner.
-            var offset = (sprite.rect.size / 2) / ppu;
             for (var i = 0; i < verts.Length; i++)
-                Poses[i] = (verts[i] + offset) * ImportConfig.PixelsPerUnit;
+                Poses[i] = verts[i] * ImportConfig.PixelsPerUnit;
             UVs = sprite.uv;
             Indices = sprite.triangles;
         }

@@ -94,6 +94,8 @@ namespace FTEditor.Importer
         // Helper method to process an instance
         static void ProcessInstance(SwfInstanceData instance, TextureData bitmap, Dictionary<Vector2Int, FramebufferPixel> framebuffer, Mask mask)
         {
+            const int kernelSize = 3; // 3x3 kernel
+
             var tintAlpha = instance.TintAlpha;
             if (tintAlpha is 0) return; // Fully transparent instance, skip
 
@@ -115,13 +117,12 @@ namespace FTEditor.Importer
                 // Instances with alpha cannot occlude pixels behind
                 var replace = noAlphaTint && pixelColor.a is 255;
 
-                const int kernelSize = 3; // 3x3 kernel
                 const int range = kernelSize / 2;
                 for (var dy = -range; dy <= range; dy++)
                 for (var dx = -range; dx <= range; dx++)
                 {
                     // Transform pixel position using instance's Matrix
-                    var framebufferPos = TransformPoint(x, y, dx * 0.25f, dy * 0.25f, matrix);
+                    var framebufferPos = TransformPoint(x, y, dx * 0.5f, dy * 0.5f, matrix);
 
                     // Pixel is masked out
                     if (!mask.IsPixelInMask(framebufferPos))
@@ -180,12 +181,12 @@ namespace FTEditor.Importer
                 if (pixelColor.a is 0)
                     continue;
 
-                var range = kernelSize / 2;
+                const int range = kernelSize / 2;
                 for (var dy = -range; dy <= range; dy++)
                 for (var dx = -range; dx <= range; dx++)
                 {
                     // Add pixel to mask if it's not clipped by parent mask
-                    var maskPos = TransformPoint(x, y, dx * 0.25f, dy * 0.25f, matrix);
+                    var maskPos = TransformPoint(x, y, dx * 0.5f, dy * 0.5f, matrix);
                     if (parentMask.IsPixelInMask(maskPos))
                         pixels.Add(maskPos);
                 }
@@ -196,8 +197,7 @@ namespace FTEditor.Importer
 
         static bool[,] ReduceOcclusionArtifacts(bool[,] visibilityMap)
         {
-            const int kernelSize = 3; // 3x3 kernel
-            const int threshold = 3;
+            const int kernelSize = 7; // 7x7 kernel
 
             var width = visibilityMap.GetLength(0);
             var height = visibilityMap.GetLength(1);
@@ -213,7 +213,6 @@ namespace FTEditor.Importer
                     continue;
                 }
 
-                var count = 0;
                 const int range = kernelSize / 2;
                 for (var ox = -range; ox <= range; ox++)
                 for (var oy = -range; oy <= range; oy++)
@@ -225,11 +224,12 @@ namespace FTEditor.Importer
                     var ny = y + oy;
                     if (nx < 0 || nx >= width || ny < 0 || ny >= height)
                         continue;
-                    if (visibilityMap[nx, ny])
-                        count++;
 
-                    if (count >= threshold)
+                    if (visibilityMap[nx, ny])
+                    {
                         newVisibilityMap[x, y] = true;
+                        break;
+                    }
                 }
             }
 

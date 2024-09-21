@@ -9,7 +9,7 @@ namespace FTEditor.Importer
     {
         static string GetSpriteName(ushort bitmapId) => $"{bitmapId:D4}.png";
 
-        public static TextureData LoadTextureFromData(IBitmapData data)
+        public static TextureData CreateData(IBitmapData data)
         {
             var size = data.Size;
             var colors = ToColor32(data.ToARGB32());
@@ -34,38 +34,42 @@ namespace FTEditor.Importer
             }
         }
 
-        public static void ExportBitmaps(Dictionary<ushort, TextureData> bitmaps, string dir)
+        public static Texture2D CreateFlippedTexture(TextureData data)
+        {
+            var (width, height, orgColors) = data;
+
+            var len = orgColors.Length;
+            var colors = new Color[len];
+
+            for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
+            {
+                var i = y * width + x;
+                var j = (height - y - 1) * width + x;
+                colors[j] = RevertPremultipliedAlpha(orgColors[i]);
+            }
+
+            var tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+            tex.SetPixels(colors);
+            return tex;
+
+            static Color RevertPremultipliedAlpha(Color32 c)
+            {
+                // finalR = (r / 255f) / (a / 255f) = r / a
+                var a = c.a;
+                var div = (a is 0 or 255) ? 255f : a;
+                return new Color(c.r / div, c.g / div, c.b / div, a / 255f);
+            }
+        }
+
+        public static void SaveAsPng(Dictionary<ushort, Texture2D> bitmaps, string dir)
         {
             if (Directory.Exists(dir))
                 Directory.Delete(dir, true);
             Directory.CreateDirectory(dir);
 
-            foreach (var (bitmapId, data) in bitmaps)
-            {
-                var (width, height, orgColors) = data;
-                var colors = RevertPremultipliedAlpha(orgColors);
-                var tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
-                tex.SetPixels(colors);
+            foreach (var (bitmapId, tex) in bitmaps)
                 File.WriteAllBytes($"{dir}/{GetSpriteName(bitmapId)}", tex.EncodeToPNG());
-            }
-            return;
-
-            static Color[] RevertPremultipliedAlpha(Color32[] colors)
-            {
-                var len = colors.Length;
-                var result = new Color[len];
-
-                for (var i = 0; i < len; i++)
-                {
-                    // finalR = (r / 255f) / (a / 255f) = r / a
-                    var c = colors[i];
-                    var a = c.a;
-                    var div = (a is 0 or 255) ? 255f : a;
-                    result[i] = new Color(c.r / div, c.g / div, c.b / div, a / 255f);
-                }
-
-                return result;
-            }
         }
     }
 }

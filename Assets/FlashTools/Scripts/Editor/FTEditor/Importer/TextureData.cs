@@ -8,13 +8,6 @@ namespace FTEditor.Importer
         public readonly int Height;
         public readonly Color32[] Data;
 
-        public TextureData(Texture2D tex)
-        {
-            Width = tex.width;
-            Height = tex.height;
-            Data = tex.GetPixels32();
-        }
-
         public TextureData(int width, int height, Color32[] data)
         {
             Width = width;

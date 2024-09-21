@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using FTRuntime;
 using FTRuntime.Internal;
+using FTSwfTools.SwfTags;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
@@ -58,7 +59,7 @@ namespace FTEditor.Importer
             var usedBitmaps = instances.Select(x => x.Bitmap).ToHashSet();
             var bitmaps = library.GetBitmaps()
                 .Where(x => usedBitmaps.Contains(x.Key))
-                .ToDictionary(x => x.Key, x => BitmapExporter.LoadTextureFromData(x.Value));
+                .ToDictionary(x => x.Key, x => BitmapExporter.CreateData(x.Value));
 
             // Remove duplicate mask textures
             t = new TimeLogger("Removing duplicate mask textures");
@@ -79,17 +80,34 @@ namespace FTEditor.Importer
             OcclusionProcessor.RemoveOccludedPixels(frames, bitmaps);
             t.Dispose();
 
+            // Flip & adjust pivot center
+            t = new TimeLogger("FlipYAndAdjustPivotToCenter");
+            var textures = bitmaps.ToDictionary(x => x.Key,
+                x => BitmapExporter.CreateFlippedTexture(x.Value));
+            t.Dispose();
+
             // Export bitmaps
-            t = new TimeLogger("BitmapExporter.ExportBitmaps");
+            t = new TimeLogger("BitmapExporter.SaveAsPng");
             var swfPath = GetSwfPath();
             var exportDir = swfPath.Replace(".swf", "_Sprites~");
-            BitmapExporter.ExportBitmaps(bitmaps, exportDir);
+            BitmapExporter.SaveAsPng(textures, exportDir);
             t.Dispose();
 
             // Pack atlas
             t = new TimeLogger("PackAtlas");
             var sheetPath = swfPath.Replace(".swf", ".png");
             Atlas = PackAtlas(sheetPath, exportDir, AtlasMaxSize, AtlasShapePadding);
+            if (Atlas == null)
+            {
+                L.W("Atlas packing failed. Trying to pack with larger size...");
+                const int newMaxSize = 2048;
+                var newAtlas = PackAtlas(sheetPath, exportDir, newMaxSize, AtlasShapePadding);
+                if (newAtlas is not null)
+                {
+                    Atlas = newAtlas;
+                    AtlasMaxSize = newMaxSize;
+                }
+            }
             t.Dispose();
 
             L.I($"Atlas has been successfully built: {sheetPath}", Atlas);
@@ -100,10 +118,13 @@ namespace FTEditor.Importer
         {
             // load swf and atlas
             var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
-            var symbols = SwfParser.LoadSymbols(fileData.Tags, out _);
+            var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
+
+            var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
+            var frames = symbol.Frames;
+            FlipYAndAdjustPivotToCenter(frames, library.GetBitmaps().ToDictionary(x => x.Key, x => x.Value.Size));
 
             // bake
-            var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
             var atlasDef = AtlasDef.FromTexture(Atlas);
             var sequences = ClipBaker.Bake(symbol, atlasDef, out var meshes, out var materialGroups);
 
@@ -331,6 +352,19 @@ namespace FTEditor.Importer
 
                 var avgDelta = deltaSum / a.Length;
                 return avgDelta < avgThreshold;
+            }
+        }
+
+        static void FlipYAndAdjustPivotToCenter(SwfFrameData[] frames, Dictionary<ushort, Vector2Int> bitmapSizes)
+        {
+            foreach (var swfFrameData in frames)
+            foreach (var inst in swfFrameData.Instances)
+            {
+                var size = bitmapSizes[inst.Bitmap];
+                inst.Matrix =
+                    inst.Matrix
+                    * Matrix4x4.Scale(new Vector3(1, -1, 1))
+                    * Matrix4x4.Translate(new Vector3(size.x / 2f, -size.y / 2f, 0));
             }
         }
 
