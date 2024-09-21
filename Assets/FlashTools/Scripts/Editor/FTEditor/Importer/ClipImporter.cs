@@ -130,6 +130,7 @@ namespace FTEditor.Importer
 
             var oldMaxSize = AtlasMaxSize;
             var maxSize = AtlasMaxSize;
+            var triedSizes = new Dictionary<int, bool>();
             byte[] granularitySeries = { 64, 32, 16, 8, 4, 2, 1 };
             foreach (var granularity in granularitySeries)
             {
@@ -139,6 +140,13 @@ namespace FTEditor.Importer
                 {
                     testSize -= granularity;
                     if (testSize <= 0) break;
+
+                    if (triedSizes.TryGetValue(testSize, out var prevResult))
+                    {
+                        if (prevResult is false) failedCount++;
+                        continue;
+                    }
+
                     L.I($"Trying to pack atlas with size {testSize}...");
 
                     var atlas = PackAtlas(sheetPath, spriteFolder, testSize, AtlasShapePadding);
