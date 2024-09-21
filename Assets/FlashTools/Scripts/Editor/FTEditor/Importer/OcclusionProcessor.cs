@@ -15,6 +15,7 @@ namespace FTEditor.Importer
             var maskBitmaps = new ConcurrentBag<ushort>();
 
             // Process each frame
+            var t = new TimeLogger("Processing frames");
             Parallel.For(0, frames.Length, i =>
             {
                 // Initialize framebuffer & mask stack
@@ -54,14 +55,18 @@ namespace FTEditor.Importer
                     }
                 }
             });
+            t.Dispose();
 
 
             // Create visibility maps for each bitmap
+            t = new TimeLogger("Building visibility maps");
             var visibilityMaps = BuildVisibilityMap(
                 framebuffers, bitmaps, maskBitmaps.ToHashSet());
+            t.Dispose();
 
 
             // Now, modify the bitmaps based on visibility maps
+            t = new TimeLogger("Modifying bitmaps");
             Parallel.ForEach(bitmaps, d =>
             {
                 var (bitmapId, bitmap) = d;
@@ -77,6 +82,7 @@ namespace FTEditor.Importer
                         pixels[i].a = 0;
                 }
             });
+            t.Dispose();
         }
 
         // Helper method to process an instance
@@ -197,9 +203,10 @@ namespace FTEditor.Importer
             {
                 if (pixel.IsSingle)
                 {
+                    var bitmap = pixel.SingleBitmap;
                     var p = pixel.SinglePosition;
-                    if (maskBitmaps.Contains(pixel.SingleBitmap)) continue;
-                    visibilityMaps[pixel.SingleBitmap][p.x, p.y] = true;
+                    if (maskBitmaps.Contains(bitmap)) continue;
+                    visibilityMaps[bitmap][p.x, p.y] = true;
                 }
                 else
                 {
@@ -232,7 +239,7 @@ namespace FTEditor.Importer
 
         static bool[,] ReduceOcclusionArtifacts(bool[,] visibilityMap)
         {
-            const int kernelSize = 8;
+            const int kernelSize = 12;
 
             var width = visibilityMap.GetLength(0);
             var height = visibilityMap.GetLength(1);
