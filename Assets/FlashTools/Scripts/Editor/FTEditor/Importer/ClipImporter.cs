@@ -150,7 +150,10 @@ namespace FTEditor.Importer
                     L.I($"Trying to pack atlas with size {testSize}...");
 
                     var atlas = PackAtlas(sheetPath, spriteFolder, testSize, AtlasShapePadding);
-                    if (atlas is not null)
+                    var success = atlas is not null;
+                    triedSizes.Add(testSize, success);
+
+                    if (success)
                     {
                         Atlas = atlas;
                         maxSize = testSize;
