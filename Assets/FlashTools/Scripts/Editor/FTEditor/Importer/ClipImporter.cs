@@ -60,8 +60,8 @@ namespace FTEditor.Importer
                 .Where(x => usedBitmaps.Contains(x.Key))
                 .ToDictionary(x => x.Key, x => BitmapExporter.LoadTextureFromData(x.Value));
 
-            // Find mask only textures.
-            t = new TimeLogger("FindDuplicateMaskTextures");
+            // Remove duplicate mask textures
+            t = new TimeLogger("Removing duplicate mask textures");
             foreach (var (maskBitmap, renderBitmap) in FindDuplicateMaskTextures(instances, bitmaps))
             {
                 foreach (var instData in instances)
@@ -76,7 +76,7 @@ namespace FTEditor.Importer
 
             // Remove occluded pixels
             t = new TimeLogger("OcclusionProcessor.RemoveOccludedPixels");
-            bitmaps = OcclusionProcessor.RemoveOccludedPixels(frames, bitmaps);
+            OcclusionProcessor.RemoveOccludedPixels(frames, bitmaps);
             t.Dispose();
 
             // Export bitmaps
@@ -282,7 +282,7 @@ namespace FTEditor.Importer
         }
 
         static IEnumerable<(ushort MaskBitmap, ushort RenderBitmap)> FindDuplicateMaskTextures(
-            SwfInstanceData[] instances, Dictionary<ushort, Texture2D> textures)
+            SwfInstanceData[] instances, Dictionary<ushort, TextureData> textures)
         {
             var renderBitmaps = instances.Where(x => x.Type is SwfInstanceData.Types.Simple or SwfInstanceData.Types.Masked).Select(x => x.Bitmap).ToHashSet();
             var maskBitmaps = instances
@@ -300,11 +300,11 @@ namespace FTEditor.Importer
             }
 
             // find any texture exists with same alpha.
-            var renderBitmapAlphaDict = renderBitmaps.ToDictionary(x => x, x => textures[x].GetPixels().Select(y => y.a).ToArray());
+            var renderBitmapAlphaDict = renderBitmaps.ToDictionary(x => x, x => textures[x].Data.Select(y => y.a).ToArray());
             foreach (var maskBitmap in maskBitmaps)
             {
                 var maskOnlyTexture = textures[maskBitmap];
-                var maskOnlyAlpha = maskOnlyTexture.GetPixels().Select(x => x.a).ToArray();
+                var maskOnlyAlpha = maskOnlyTexture.Data.Select(x => x.a).ToArray();
                 var found = renderBitmapAlphaDict.FirstOrDefault(x => AlphaEquals(x.Value, maskOnlyAlpha));
                 if (found.Key is not 0)
                 {
@@ -314,14 +314,25 @@ namespace FTEditor.Importer
             }
             yield break;
 
-            static bool AlphaEquals(float[] a, float[] b)
+            static bool AlphaEquals(byte[] a, byte[] b)
             {
-                const float threshold = 0.4f;
-                if (a.Length != b.Length) return false;
-                for (var i = 0; i < a.Length; i++)
-                    if (Mathf.Abs(a[i] - b[i]) > threshold)
+                const byte deltaThreshold = 100;
+                const byte avgThreshold = 3;
+
+                if (a.Length != b.Length)
                     return false;
-                return true;
+
+                float deltaSum = 0;
+                for (var i = 0; i < a.Length; i++)
+                {
+                    var delta = Mathf.Abs(a[i] - b[i]);
+                    if (delta > deltaThreshold) return false;
+                    deltaSum += delta;
+                }
+
+                var avgDelta = deltaSum / a.Length;
+                return avgDelta < avgThreshold;
+            }
         }
 
         readonly struct TimeLogger

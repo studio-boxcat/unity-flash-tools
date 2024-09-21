@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -8,10 +7,11 @@ namespace FTEditor.Importer
 {
     static class OcclusionProcessor
     {
-        public static Dictionary<ushort, Texture2D> RemoveOccludedPixels(SwfFrameData[] frames, Dictionary<ushort, Texture2D> bitmaps)
+        const int _kernelSize = 3;
+
+        public static void RemoveOccludedPixels(SwfFrameData[] frames, Dictionary<ushort, TextureData> bitmaps)
         {
             var framebuffers = new Dictionary<Vector2Int, FramebufferPixel>[frames.Length];
-            var bitmapsData = bitmaps.ToDictionary(kv => kv.Key, kv => new TextureData(kv.Value));
 
             // Process each frame
             Parallel.For(0, frames.Length, i =>
@@ -19,11 +19,12 @@ namespace FTEditor.Importer
                 // Initialize framebuffer & mask stack
                 var framebuffer = framebuffers[i] = new Dictionary<Vector2Int, FramebufferPixel>();
                 var maskStack = new Stack<Mask>();
+                var mask = Mask.CreateEmpty();
 
                 foreach (var instance in frames[i].Instances)
                 {
                     // Get the bitmap for this instance
-                    var bitmap = bitmapsData[instance.Bitmap];
+                    var bitmap = bitmaps[instance.Bitmap];
 
                     // Process according to type
                     switch (instance.Type)
@@ -31,19 +32,22 @@ namespace FTEditor.Importer
                         case SwfInstanceData.Types.Simple:
                         case SwfInstanceData.Types.Masked:
                         {
-                            ProcessInstance(instance, bitmap, framebuffer, Mask.Composite(maskStack));
+                            ProcessInstance(instance, bitmap, framebuffer, mask);
                             break;
                         }
 
                         case SwfInstanceData.Types.MaskIn:
                         {
-                            var mask = CreateMask(instance, bitmap, Mask.Composite(maskStack));
+                            mask = CreateMask(instance, bitmap, parentMask: mask);
                             maskStack.Push(mask);
                             break;
                         }
 
                         case SwfInstanceData.Types.MaskOut:
                             maskStack.Pop();
+                            mask = maskStack.Count is not 0
+                                ? maskStack.Peek()
+                                : Mask.CreateEmpty();
                             break;
                     }
                 }
@@ -52,7 +56,7 @@ namespace FTEditor.Importer
             // Create visibility maps for each bitmap
             var visibilityMaps = new Dictionary<ushort, bool[,]>();
             foreach (var (bitmapId, bitmap) in bitmaps)
-                visibilityMaps[bitmapId] = new bool[bitmap.width, bitmap.height];
+                visibilityMaps[bitmapId] = new bool[bitmap.Width, bitmap.Height];
 
             foreach (var framebuffer in framebuffers)
             foreach (var pixel in framebuffer.Values)
@@ -69,13 +73,16 @@ namespace FTEditor.Importer
                 }
             }
 
+
             // Now, modify the bitmaps based on visibility maps
-            Parallel.ForEach(bitmapsData, d =>
+            Parallel.ForEach(bitmaps, d =>
             {
                 var (bitmapId, bitmap) = d;
                 var (width, _, pixels) = bitmap;
 
                 var visibilityMap = visibilityMaps[bitmapId];
+                visibilityMap = ReduceOcclusionArtifacts(visibilityMap); // Expand visibility maps to avoid occlusion artifacts
+
                 for (var i = 0; i < pixels.Length; i++)
                 {
                     var x = i % width;
@@ -84,9 +91,6 @@ namespace FTEditor.Importer
                         pixels[i].a = 0;
                 }
             });
-
-            // Convert the modified bitmaps back to Texture2D
-            return bitmapsData.ToDictionary(kv => kv.Key, kv => kv.Value.ToTexture2D());
         }
 
         // Helper method to process an instance
@@ -117,12 +121,12 @@ namespace FTEditor.Importer
                 if (!mask.IsPixelInMask(framebufferPos))
                     continue;
 
-                // Instances with TintAlpha != 1 cannot occlude pixels behind
-                var replace = noAlphaTint && pixelColor.a == 1f;
+                // Instances with alpha cannot occlude pixels behind
+                var replace = noAlphaTint && pixelColor.a is 255;
 
-                // Kernel size is 5x5
-                for (var ox = -2; ox <= 2; ox++)
-                for (var oy = -2; oy <= 2; oy++)
+                const int range = _kernelSize / 2;
+                for (var ox = -range; ox <= range; ox++)
+                for (var oy = -range; oy <= range; oy++)
                 {
                     var pos = framebufferPos + new Vector2Int(ox, oy);
 
@@ -131,7 +135,7 @@ namespace FTEditor.Importer
                     if (replace
                         && hasBg
                         && fbPixel.IsSingle
-                        && fbPixel.SingleColor == pixelColor) // Only if both colors are same.
+                        && ColorEquals(fbPixel.SingleColor, pixelColor)) // Only if both colors are same.
                     {
                         continue;
                     }
@@ -168,7 +172,7 @@ namespace FTEditor.Importer
         static Mask CreateMask(SwfInstanceData instance, TextureData bitmap, Mask parentMask)
         {
             var (width, height, bitmapPixels) = bitmap;
-            var pixels = new List<Vector2Int>(width * height);
+            var pixels = new List<Vector2Int>(width * height * (_kernelSize * _kernelSize)); // 5x5 kernel
             var matrix = SwfToUnitMatrix(instance.Matrix);
 
             // For each pixel in the bitmap
@@ -185,54 +189,72 @@ namespace FTEditor.Importer
                 // Transform pixel position using instance's Matrix
                 var maskPos = TransformPoint(x, y, matrix);
 
-                // Pixel is not part of the parent mask
-                if (!parentMask.IsPixelInMask(maskPos))
-                    continue;
-
-                pixels.Add(maskPos);
+                const int range = _kernelSize / 2;
+                for (var ox = -range; ox <= range; ox++)
+                for (var oy = -range; oy <= range; oy++)
+                {
+                    // Add pixel to mask if it's not clipped by parent mask
+                    var pos = maskPos + new Vector2Int(ox, oy);
+                    if (parentMask.IsPixelInMask(pos))
+                        pixels.Add(pos);
+                }
             }
 
             return new Mask(new HashSet<Vector2Int>(pixels));
         }
 
-        readonly struct TextureData
+        static bool[,] ReduceOcclusionArtifacts(bool[,] visibilityMap)
         {
-            public readonly int Width;
-            public readonly int Height;
-            public readonly Color[] Data;
+            const int threshold = 3;
 
-            public TextureData(Texture2D tex)
+            var width = visibilityMap.GetLength(0);
+            var height = visibilityMap.GetLength(1);
+            var newVisibilityMap = new bool[width, height];
+
+            for (var x = 0; x < width; x++)
+            for (var y = 0; y < height; y++)
             {
-                Width = tex.width;
-                Height = tex.height;
-                Data = tex.GetPixels();
+                var center = visibilityMap[x, y];
+                if (center)
+                {
+                    newVisibilityMap[x, y] = true;
+                    continue;
+                }
+
+                var count = 0;
+                const int range = _kernelSize / 2;
+                for (var ox = -range; ox <= range; ox++)
+                for (var oy = -range; oy <= range; oy++)
+                {
+                    if (ox is 0 && oy is 0)
+                        continue;
+
+                    var nx = x + ox;
+                    var ny = y + oy;
+                    if (nx < 0 || nx >= width || ny < 0 || ny >= height)
+                        continue;
+                    if (visibilityMap[nx, ny])
+                        count++;
+
+                    if (count >= threshold)
+                        newVisibilityMap[x, y] = true;
+                }
             }
 
-            public void Deconstruct(out int width, out int height, out Color[] data)
-            {
-                width = Width;
-                height = Height;
-                data = Data;
-            }
-
-            public Texture2D ToTexture2D()
-            {
-                var tex = new Texture2D(Width, Height, TextureFormat.RGBA32, false);
-                tex.SetPixels(Data);
-                tex.Apply();
-                return tex;
-            }
+            return newVisibilityMap;
         }
+
+        static bool ColorEquals(Color32 a, Color32 b) => a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
 
         // Classes to represent the framebuffer pixel and masks
         readonly struct FramebufferPixel
         {
             public readonly ushort SingleBitmap;
             public readonly Vector2Int SinglePosition;
-            public readonly Color SingleColor;
+            public readonly Color32 SingleColor;
             public readonly (ushort, Vector2Int)[] BlendingBitmaps;
 
-            FramebufferPixel(ushort bitmap, Vector2Int position, Color color) : this()
+            FramebufferPixel(ushort bitmap, Vector2Int position, Color32 color) : this()
             {
                 SingleBitmap = bitmap;
                 SinglePosition = position;
@@ -241,7 +263,7 @@ namespace FTEditor.Importer
 
             FramebufferPixel((ushort, Vector2Int)[] blendingBitmaps) : this() => BlendingBitmaps = blendingBitmaps;
 
-            public static FramebufferPixel Single(ushort bitmap, Vector2Int position, Color color) => new(bitmap, position, color);
+            public static FramebufferPixel Single(ushort bitmap, Vector2Int position, Color32 color) => new(bitmap, position, color);
 
             public bool IsSingle => BlendingBitmaps is null;
 
@@ -267,22 +289,7 @@ namespace FTEditor.Importer
             public bool IsPixelInMask(Vector2Int position)
                 => _pixels is null || _pixels.Contains(position);
 
-            public static Mask Composite(Stack<Mask> maskStack)
-            {
-                if (maskStack.Count is 0)
-                    return default;
-
-                var result = new HashSet<Vector2Int>();
-                foreach (var mask in maskStack)
-                {
-                    if (mask._pixels is not null)
-                        result.UnionWith(mask._pixels);
-                }
-
-                return result.Count is not 0
-                    ? new Mask(result)
-                    : default;
-            }
+            public static Mask CreateEmpty() => default;
         }
     }
 }
