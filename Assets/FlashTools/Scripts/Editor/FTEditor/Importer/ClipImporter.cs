@@ -282,6 +282,29 @@ namespace FTEditor.Importer
                 if (path.EndsWith(".swf") is false)
                     result.AddError("SwfFile must be a .swf file");
             }
+
+            if (Atlas != null && ClipAsset != null && ClipAsset.Atlas != Atlas)
+            {
+                // both atlas data should be same. (texture size, file size)
+                var atlas1 = Atlas;
+                var atlas2 = ClipAsset.Atlas;
+
+                // compare texture size
+                var w1 = atlas1.width;
+                var h1 = atlas1.height;
+                var w2 = atlas2.width;
+                var h2 = atlas2.height;
+                if (w1 != w2 || h1 != h2)
+                    result.AddError($"Atlas size mismatch: {w1}x{h1} vs {w2}x{h2}");
+
+                // compare file size
+                var p1 = AssetDatabase.GetAssetPath(atlas1);
+                var p2 = AssetDatabase.GetAssetPath(atlas2);
+                var f1 = new FileInfo(p1).Length;
+                var f2 = new FileInfo(p2).Length;
+                if (f1 != f2)
+                    result.AddError($"Atlas file size mismatch: {f1} vs {f2}");
+            }
         }
 
         static string AtlasSizeHint(Texture2D tex)
