@@ -293,17 +293,15 @@ namespace FTEditor.Importer
 
             if (Atlas != null && ClipAsset != null && ClipAsset.Atlas != Atlas)
             {
-                // both atlas data should be same. (texture size, file size)
+                // both atlas data should be same. (aspect ratio, file size)
                 var atlas1 = Atlas;
                 var atlas2 = ClipAsset.Atlas;
 
                 // compare texture size
-                var w1 = atlas1.width;
-                var h1 = atlas1.height;
-                var w2 = atlas2.width;
-                var h2 = atlas2.height;
-                if (w1 != w2 || h1 != h2)
-                    result.AddError($"Atlas size mismatch: {w1}x{h1} vs {w2}x{h2}");
+                var a1 = atlas1.width / atlas1.height;
+                var a2 = atlas2.width / atlas2.height;
+                if (a1 != a2)
+                    result.AddError($"Atlas aspect ratio mismatch: {a1:F2} vs {a2:F2}");
 
                 // compare file size
                 var p1 = AssetDatabase.GetAssetPath(atlas1);
