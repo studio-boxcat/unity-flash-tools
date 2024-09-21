@@ -7,7 +7,7 @@ namespace FTEditor.Importer
 {
     static class BitmapExporter
     {
-        static string GetSpriteName(ushort bitmapId) => $"{bitmapId:D4}.png";
+        public static string GetSpriteName(ushort bitmapId) => $"{bitmapId:D4}.png";
 
         public static TextureData CreateData(IBitmapData data)
         {

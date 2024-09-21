@@ -5,7 +5,6 @@ using System.IO;
 using System.Linq;
 using FTRuntime;
 using FTRuntime.Internal;
-using FTSwfTools.SwfTags;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
@@ -61,17 +60,18 @@ namespace FTEditor.Importer
                 .Where(x => usedBitmaps.Contains(x.Key))
                 .ToDictionary(x => x.Key, x => BitmapExporter.CreateData(x.Value));
 
-            // Remove duplicate mask textures
-            t = new TimeLogger("Removing duplicate mask textures");
-            foreach (var (maskBitmap, renderBitmap) in FindDuplicateMaskTextures(instances, bitmaps))
+            // Remove duplicate textures
+            t = new TimeLogger("Removing duplicate textures");
+            var duplicateTextures = AnalyzeDuplicateTextures(bitmaps, instances);
+            foreach (var (bitmapA, bitmapB) in duplicateTextures) // Replace A with B
             {
                 foreach (var instData in instances)
                 {
-                    if (instData.Bitmap == maskBitmap)
-                        instData.Bitmap = renderBitmap;
+                    if (instData.Bitmap == bitmapA)
+                        instData.Bitmap = bitmapB;
                 }
-                bitmaps.Remove(maskBitmap);
-                L.I($"Mask only bitmap {maskBitmap} has been replaced with {renderBitmap}");
+                bitmaps.Remove(bitmapA);
+                L.I($"Duplicate bitmap {bitmapA} has been replaced with {bitmapB}");
             }
             t.Dispose();
 
@@ -92,6 +92,14 @@ namespace FTEditor.Importer
             var exportDir = swfPath.Replace(".swf", "_Sprites~");
             BitmapExporter.SaveAsPng(textures, exportDir);
             t.Dispose();
+
+            // Redirect duplicated textures
+            foreach (var (bitmapA, bitmapB) in duplicateTextures)
+            {
+                var srcPath = Path.Combine(exportDir, BitmapExporter.GetSpriteName(bitmapB));
+                var dstPath = Path.Combine(exportDir, BitmapExporter.GetSpriteName(bitmapA));
+                File.Copy(srcPath, dstPath, true);
+            }
 
             // Pack atlas
             t = new TimeLogger("PackAtlas");
@@ -301,8 +309,68 @@ namespace FTEditor.Importer
             }
         }
 
+        static List<(ushort, ushort)> AnalyzeDuplicateTextures(Dictionary<ushort, TextureData> textures, SwfInstanceData[] instances)
+        {
+            var duplicateTextures = FindDuplicateTextures(textures)
+                .Concat(FindDuplicateMaskTextures(textures, instances))
+                .ToList();
+
+            // Iterate until no chain of duplicates found. (1 -> 2, 2 -> 3 should be replaced with 1 -> 3)
+            while (true)
+            {
+                var replaced = false;
+
+                for (var i = 0; i < duplicateTextures.Count; i++)
+                {
+                    var (bitmapA, bitmapB1) = duplicateTextures[i];
+                    for (var j = 0; j < duplicateTextures.Count; j++)
+                    {
+                        if (i == j) continue;
+                        var (bitmapB2, bitmapC) = duplicateTextures[j];
+                        if (bitmapB1 != bitmapB2) continue;
+                        duplicateTextures[i] = (bitmapA, bitmapC);
+                        replaced = true;
+                        break;
+                    }
+                }
+
+                if (replaced is false)
+                    break;
+            }
+
+            return duplicateTextures;
+        }
+
+        static IEnumerable<(ushort BitmapA, ushort BitmapB)> FindDuplicateTextures(Dictionary<ushort, TextureData> textures)
+        {
+            var textureList = textures.ToList();
+            for (var i = 0; i < textureList.Count; i++)
+            for (var j = i + 1; j < textureList.Count; j++)
+            {
+                var a = textureList[i];
+                var b = textureList[j];
+                if (ColorEquals(a.Value.Data, b.Value.Data))
+                    yield return (a.Key, b.Key);
+            }
+            yield break;
+
+            static bool ColorEquals(Color32[] a, Color32[] b)
+            {
+                var len = a.Length;
+                for (var i = 0; i < len; i++)
+                {
+                    if (a[i].r != b[i].r) return false;
+                    if (a[i].g != b[i].g) return false;
+                    if (a[i].b != b[i].b) return false;
+                    if (a[i].a != b[i].a) return false;
+                }
+
+                return true;
+            }
+        }
+
         static IEnumerable<(ushort MaskBitmap, ushort RenderBitmap)> FindDuplicateMaskTextures(
-            SwfInstanceData[] instances, Dictionary<ushort, TextureData> textures)
+            Dictionary<ushort, TextureData> textures, SwfInstanceData[] instances)
         {
             var renderBitmaps = instances.Where(x => x.Type is SwfInstanceData.Types.Simple or SwfInstanceData.Types.Masked).Select(x => x.Bitmap).ToHashSet();
             var maskBitmaps = instances
