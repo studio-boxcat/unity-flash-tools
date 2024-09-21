@@ -73,8 +73,15 @@ namespace FTEditor.Importer
 
             L.I($"Atlas size has been optimized: {initialMaxSize} → {maxSize}");
             var (finalSheetPath, finalDataPath) = FormatPath(sheetFormat, maxSize);
+
+            // Copy texture as it is.
             File.Copy(finalSheetPath, outputSheetPath, true);
-            File.Copy(finalDataPath, outputDataPath, true);
+
+            // Replace the png name in the data file.
+            var data = File.ReadAllText(finalDataPath);
+            data = data.Replace(Path.GetFileName(finalSheetPath), Path.GetFileName(outputSheetPath));
+            File.WriteAllText(outputDataPath, data);
+
             AssetDatabase.ImportAsset(outputSheetPath);
             AssetDatabase.ImportAsset(outputDataPath);
             newMaxSize = maxSize;
@@ -82,8 +89,8 @@ namespace FTEditor.Importer
 
             static (string, string) FormatPath(string format, int size)
             {
-                var sheetPath = string.Format(format, size) + ".png";
-                var dataPath = string.Format(format, size) + ".tpsheet";
+                var sheetPath = format + size + ".png";
+                var dataPath = format + size + ".tpsheet";
                 return (sheetPath, dataPath);
             }
         }
