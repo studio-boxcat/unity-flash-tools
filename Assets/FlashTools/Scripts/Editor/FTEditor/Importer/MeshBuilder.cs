@@ -1,47 +1,36 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using UnityEngine;
 using System.Runtime.InteropServices;
 using Unity.Collections;
-using UnityEditor;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
 namespace FTEditor.Importer
 {
-    class MeshData
+    readonly struct MeshData
     {
         public readonly Vector2[] Poses;
         public readonly Vector3[] UVAs; // z = alpha
         public readonly ushort[] Indices;
+        public readonly int Hash;
 
         public MeshData(Vector2[] poses, Vector3[] uvAs, ushort[] indices)
         {
             Poses = poses;
             UVAs = uvAs;
             Indices = indices;
+
+            Hash = default;
+            foreach (var x in Poses) Hash ^= x.GetHashCode();
+            foreach (var x in UVAs) Hash ^= x.GetHashCode();
+            foreach (var x in Indices) Hash ^= x;
         }
 
-        public override int GetHashCode()
-        {
-            var hash = new Hash128();
-            hash.Append(Poses);
-            hash.Append(UVAs);
-            hash.Append(Indices);
-            return hash.GetHashCode();
-        }
+        public override int GetHashCode() => Hash;
     }
 
     static class MeshBuilder
     {
-        public static int GetHashCode(MeshData[] meshData)
-        {
-            var hash = new Hash128();
-            foreach (var data in meshData)
-                hash.Append(data.GetHashCode());
-            return hash.GetHashCode();
-        }
-
         public static Mesh Build(MeshData[] mesh_data)
         {
             var mesh = new Mesh();

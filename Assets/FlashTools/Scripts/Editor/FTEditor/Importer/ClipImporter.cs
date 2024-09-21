@@ -105,7 +105,7 @@ namespace FTEditor.Importer
             // bake
             var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
             var atlasDef = AtlasDef.FromTexture(Atlas);
-            ClipBaker.Bake(symbol, atlasDef, out var sequences, out var meshes, out var materialGroups);
+            var sequences = ClipBaker.Bake(symbol, atlasDef, out var meshes, out var materialGroups);
 
             // configure
             var asset = ClipAsset;
@@ -227,8 +227,7 @@ namespace FTEditor.Importer
                         inst.Matrix, inst.ColorTrans.CalculateMul().a);
 
                     var mr = instGO.GetComponent<MeshRenderer>();
-                    mr.sharedMaterial = SwfMaterialCache.Query(
-                        inst.Type, inst.BlendMode.type, inst.ClipDepth);
+                    mr.sharedMaterial = SwfMaterialCache.Query(inst.GetMaterialKey());
                     mr.SetPropertyBlock(propBlock);
                 }
             }

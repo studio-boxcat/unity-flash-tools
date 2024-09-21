@@ -59,8 +59,10 @@ namespace FTEditor {
 		//
 		// ---------------------------------------------------------------------
 
-		public static Material Query(SwfInstanceData.Types type, SwfBlendModeData.Types blend_mode, Depth clip_depth)
+		public static Material Query(MaterialKey key)
 		{
+			var (type, blend_mode, clip_depth) = key;
+
 			ValueTuple<string, string, Action<Material>> tuple = type switch
 			{
 				SwfInstanceData.Types.Simple => (SwfSimpleShaderName, $"_{blend_mode}", material => SetMaterialProperties(material, blend_mode, 0)),

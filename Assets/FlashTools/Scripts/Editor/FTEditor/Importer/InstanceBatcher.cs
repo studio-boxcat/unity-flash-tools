@@ -1,53 +1,30 @@
 using System.Collections.Generic;
-using FTSwfTools;
 using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace FTEditor.Importer
 {
+    readonly struct RenderUnit
+    {
+        public readonly MeshData Mesh;
+        public readonly MaterialKey Material;
+
+        public RenderUnit(MeshData mesh, MaterialKey material)
+        {
+            Mesh = mesh;
+            Material = material;
+        }
+    }
+
     class InstanceBatcher
     {
-        public readonly struct BatchProperties
-        {
-            public readonly SwfInstanceData.Types Type;
-            public readonly SwfBlendModeData.Types BlendMode;
-            public readonly Depth ClipDepth;
-
-            BatchProperties(SwfInstanceData.Types type, SwfBlendModeData.Types blendMode, Depth clipDepth)
-            {
-                Type = type;
-                BlendMode = blendMode;
-                ClipDepth = clipDepth;
-            }
-
-            public static BatchProperties FromInstanceData(SwfInstanceData inst) => new(inst.Type, inst.BlendMode.type, inst.ClipDepth);
-
-            public static BatchProperties Invalid => new((SwfInstanceData.Types) byte.MaxValue, default, default);
-
-            public bool Equals(BatchProperties other) => Type == other.Type && BlendMode == other.BlendMode && ClipDepth == other.ClipDepth;
-        }
-
-        public readonly struct BatchInfo
-        {
-            public readonly BatchProperties Property;
-            public readonly Vector2[] Poses;
-            public readonly Vector3[] UVAs;
-            public readonly ushort[] Indices;
-
-            public BatchInfo(BatchProperties property, Vector2[] poses, Vector3[] uvAs, ushort[] indices)
-            {
-                Property = property;
-                Poses = poses;
-                UVAs = uvAs;
-                Indices = indices;
-            }
-        }
-
-        BatchProperties _curBatchProps = BatchProperties.Invalid; // intentionally set to invalid value.
+        MaterialKey _curMaterial = _invalidMaterial; // intentionally set to invalid value.
         readonly List<Vector2> _curPoses = new();
         readonly List<Vector3> _curUVAs = new();
         readonly List<ushort> _curIndices = new();
-        readonly List<BatchInfo> _batches = new();
+        readonly List<RenderUnit> _batches = new();
+
+        static readonly MaterialKey _invalidMaterial = new((SwfInstanceData.Types) byte.MaxValue, default, default);
 
 
         public void Feed(SwfInstanceData inst, SpriteData spriteData)
@@ -55,12 +32,12 @@ namespace FTEditor.Importer
             Assert.IsNotNull(inst);
 
             // Start new batch if necessary.
-            var instBatchProps = BatchProperties.FromInstanceData(inst);
-            if (_curBatchProps.Equals(instBatchProps) is false)
+            var instMaterial = inst.GetMaterialKey();
+            if (_curMaterial.Equals(instMaterial) is false)
             {
                 if (_curPoses.Count is not 0)
                     SettleIntoNewBatch();
-                _curBatchProps = instBatchProps;
+                _curMaterial = instMaterial;
             }
 
             // Store vertex offset.
@@ -91,7 +68,7 @@ namespace FTEditor.Importer
         public static Matrix4x4 GetVertexMatrix(Matrix4x4 m) =>
             Matrix4x4.Scale(new Vector3(1.0f, -1.0f, 1.0f) / ImportConfig.PixelsPerUnit / ImportConfig.CustomScaleFactor) * m;
 
-        public BatchInfo[] Flush()
+        public RenderUnit[] Flush()
         {
             if (_curPoses.Count is not 0)
                 SettleIntoNewBatch();
@@ -104,11 +81,11 @@ namespace FTEditor.Importer
             _batches.Clear();
             return batches;
 
-            static bool SingleMaskOut(List<BatchInfo> batches, out int index)
+            static bool SingleMaskOut(List<RenderUnit> batches, out int index)
             {
                 for (var i = 0; i < batches.Count; i++)
                 {
-                    if (batches[i].Property.Type is SwfInstanceData.Types.MaskOut)
+                    if (batches[i].Material.Type is SwfInstanceData.Types.MaskOut)
                     {
                         index = i;
                         return true;
@@ -125,14 +102,11 @@ namespace FTEditor.Importer
             Assert.IsTrue(_curPoses.Count is not 0,
                 "No poses to settle into new batch");
 
-            _batches.Add(new BatchInfo(
-                _curBatchProps,
-                _curPoses.ToArray(),
-                _curUVAs.ToArray(),
-                _curIndices.ToArray()
-            ));
+            _batches.Add(new RenderUnit(
+                new MeshData(_curPoses.ToArray(), _curUVAs.ToArray(), _curIndices.ToArray()),
+                _curMaterial));
 
-            _curBatchProps = BatchProperties.Invalid;
+            _curMaterial = _invalidMaterial;
             _curPoses.Clear();
             _curUVAs.Clear();
             _curIndices.Clear();

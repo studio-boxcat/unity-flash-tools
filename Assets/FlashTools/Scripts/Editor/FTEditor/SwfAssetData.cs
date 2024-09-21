@@ -98,6 +98,9 @@ namespace FTEditor {
 		public SwfColorTransData     ColorTrans  = SwfColorTransData.identity;
 		public float                 TintAlpha => ColorTrans.CalculateMul().a;
 
+		public MaterialKey GetMaterialKey()
+			=> new(Type, BlendMode.type, ClipDepth);
+
 		public static SwfInstanceData MaskOut(SwfInstanceData mask)
 		{
 			return new SwfInstanceData
