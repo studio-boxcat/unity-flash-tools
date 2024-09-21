@@ -7,8 +7,6 @@ namespace FTEditor.Importer
 {
     static class OcclusionProcessor
     {
-        const int _kernelSize = 3;
-
         public static void RemoveOccludedPixels(SwfFrameData[] frames, Dictionary<ushort, TextureData> bitmaps)
         {
             var framebuffers = new Dictionary<Vector2Int, FramebufferPixel>[frames.Length];
@@ -114,42 +112,34 @@ namespace FTEditor.Importer
                 if (pixelColor.a is 0)
                     continue;
 
-                // Transform pixel position using instance's Matrix
-                var framebufferPos = TransformPoint(x, y, matrix);
-
-                // Pixel is masked out
-                if (!mask.IsPixelInMask(framebufferPos))
-                    continue;
-
                 // Instances with alpha cannot occlude pixels behind
                 var replace = noAlphaTint && pixelColor.a is 255;
 
-                const int range = _kernelSize / 2;
-                for (var ox = -range; ox <= range; ox++)
-                for (var oy = -range; oy <= range; oy++)
+                const int kernelSize = 3; // 3x3 kernel
+                const int range = kernelSize / 2;
+                for (var dy = -range; dy <= range; dy++)
+                for (var dx = -range; dx <= range; dx++)
                 {
-                    var pos = framebufferPos + new Vector2Int(ox, oy);
+                    // Transform pixel position using instance's Matrix
+                    var framebufferPos = TransformPoint(x, y, dx * 0.25f, dy * 0.25f, matrix);
+
+                    // Pixel is masked out
+                    if (!mask.IsPixelInMask(framebufferPos))
+                        continue;
 
                     // Check if pixel has same color as background.
-                    var hasBg = framebuffer.TryGetValue(pos, out var fbPixel);
-                    if (replace
-                        && hasBg
-                        && fbPixel.IsSingle
-                        && ColorEquals(fbPixel.SingleColor, pixelColor)) // Only if both colors are same.
-                    {
-                        continue;
-                    }
-
+                    var hasBg = framebuffer.TryGetValue(framebufferPos, out var fbPixel);
                     var single = !hasBg || replace;
                     var pixelPos = new Vector2Int(x, y);
-                    framebuffer[pos] = single
-                        ? FramebufferPixel.Single(instance.Bitmap, pixelPos, pixelColor)
+                    framebuffer[framebufferPos] = single
+                        ? FramebufferPixel.Single(instance.Bitmap, pixelPos)
                         : fbPixel.Add(instance.Bitmap, pixelPos);
                 }
             }
         }
 
-        static Vector2Int TransformPoint(int x, int y, Matrix4x4 m)
+        // Bitmap space -> Framebuffer space
+        static Vector2Int TransformPoint(float x, float y, float ox, float oy, Matrix4x4 m)
         {
             // Vector2Int version of Matrix4x4.MultiplyPoint
             Vector2 v;
@@ -158,6 +148,8 @@ namespace FTEditor.Importer
             var num = 1f / (m.m30 * x + m.m31 * y + m.m33);
             v.x *= num;
             v.y *= num;
+            v.x += ox;
+            v.y += oy;
             return Vector2Int.RoundToInt(v);
         }
 
@@ -171,8 +163,10 @@ namespace FTEditor.Importer
         // Helper method to create a mask from an instance
         static Mask CreateMask(SwfInstanceData instance, TextureData bitmap, Mask parentMask)
         {
+            const int kernelSize = 3; // 3x3 kernel
+
             var (width, height, bitmapPixels) = bitmap;
-            var pixels = new List<Vector2Int>(width * height * (_kernelSize * _kernelSize)); // 5x5 kernel
+            var pixels = new List<Vector2Int>(width * height * kernelSize * kernelSize);
             var matrix = SwfToUnitMatrix(instance.Matrix);
 
             // For each pixel in the bitmap
@@ -186,17 +180,14 @@ namespace FTEditor.Importer
                 if (pixelColor.a is 0)
                     continue;
 
-                // Transform pixel position using instance's Matrix
-                var maskPos = TransformPoint(x, y, matrix);
-
-                const int range = _kernelSize / 2;
-                for (var ox = -range; ox <= range; ox++)
-                for (var oy = -range; oy <= range; oy++)
+                var range = kernelSize / 2;
+                for (var dy = -range; dy <= range; dy++)
+                for (var dx = -range; dx <= range; dx++)
                 {
                     // Add pixel to mask if it's not clipped by parent mask
-                    var pos = maskPos + new Vector2Int(ox, oy);
-                    if (parentMask.IsPixelInMask(pos))
-                        pixels.Add(pos);
+                    var maskPos = TransformPoint(x, y, dx * 0.25f, dy * 0.25f, matrix);
+                    if (parentMask.IsPixelInMask(maskPos))
+                        pixels.Add(maskPos);
                 }
             }
 
@@ -205,6 +196,7 @@ namespace FTEditor.Importer
 
         static bool[,] ReduceOcclusionArtifacts(bool[,] visibilityMap)
         {
+            const int kernelSize = 3; // 3x3 kernel
             const int threshold = 3;
 
             var width = visibilityMap.GetLength(0);
@@ -222,7 +214,7 @@ namespace FTEditor.Importer
                 }
 
                 var count = 0;
-                const int range = _kernelSize / 2;
+                const int range = kernelSize / 2;
                 for (var ox = -range; ox <= range; ox++)
                 for (var oy = -range; oy <= range; oy++)
                 {
@@ -244,33 +236,41 @@ namespace FTEditor.Importer
             return newVisibilityMap;
         }
 
-        static bool ColorEquals(Color32 a, Color32 b) => a.r == b.r && a.g == b.g && a.b == b.b && a.a == b.a;
-
         // Classes to represent the framebuffer pixel and masks
         readonly struct FramebufferPixel
         {
             public readonly ushort SingleBitmap;
             public readonly Vector2Int SinglePosition;
-            public readonly Color32 SingleColor;
             public readonly (ushort, Vector2Int)[] BlendingBitmaps;
 
-            FramebufferPixel(ushort bitmap, Vector2Int position, Color32 color) : this()
+            FramebufferPixel(ushort bitmap, Vector2Int position) : this()
             {
                 SingleBitmap = bitmap;
                 SinglePosition = position;
-                SingleColor = color;
             }
 
             FramebufferPixel((ushort, Vector2Int)[] blendingBitmaps) : this() => BlendingBitmaps = blendingBitmaps;
 
-            public static FramebufferPixel Single(ushort bitmap, Vector2Int position, Color32 color) => new(bitmap, position, color);
+            public static FramebufferPixel Single(ushort bitmap, Vector2Int position) => new(bitmap, position);
 
             public bool IsSingle => BlendingBitmaps is null;
 
             public FramebufferPixel Add(ushort bitmap, Vector2Int position)
             {
                 if (BlendingBitmaps is null)
+                {
+                    // If the new pixel is same as the existing one, return self
+                    if (SingleBitmap == bitmap && SinglePosition == position)
+                        return this;
                     return new FramebufferPixel(new[] { (SingleBitmap, SinglePosition), (bitmap, position) });
+                }
+
+                foreach (var (existingBitmap, existingPosition) in BlendingBitmaps)
+                {
+                    // If the new pixel is same as an existing one, return self
+                    if (existingBitmap == bitmap && existingPosition == position)
+                        return this;
+                }
 
                 var oldLen = BlendingBitmaps.Length;
                 var bitmaps = new (ushort, Vector2Int)[oldLen + 1];

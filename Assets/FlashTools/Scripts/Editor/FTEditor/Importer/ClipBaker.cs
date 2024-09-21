@@ -72,7 +72,7 @@ namespace FTEditor.Importer {
 				for (var fi = 0; fi < sequenceDef.Frames.Length; fi++)
 				{
 					var frame = sequenceDef.Frames[fi];
-					var mesh = GetOrCreateMesh(frame.Batches.Select(x => x.Mesh), meshStore);
+					var mesh = GetOrCreateMesh(frame.Batches.Select(x => x.Mesh).ToArray(), meshStore);
 					var materialGroupIndex = GetOrAddMaterialGroup(
 						frame.Batches.Select(x => x.Material).ToArray(), materialStore);
 					assetFrames[fi] = new SwfClipAsset.Frame(mesh, materialGroupIndex);
@@ -91,7 +91,7 @@ namespace FTEditor.Importer {
 			}
 			return assetSequences;
 
-			static Mesh GetOrCreateMesh(IEnumerable<MeshData> meshes, Dictionary<int, Mesh> meshStore)
+			static Mesh GetOrCreateMesh(MeshData[] meshes, Dictionary<int, Mesh> meshStore)
 			{
 				var hash = OrderSensitiveHash(meshes);
 				if (meshStore.TryGetValue(hash, out var mesh))
@@ -117,13 +117,13 @@ namespace FTEditor.Importer {
 				return groupIndex;
 			}
 
-			static int OrderSensitiveHash<T>(IEnumerable<T> items)
+			static int OrderSensitiveHash<T>(T[] items)
 			{
 				var hash = 0;
-				foreach (var item in items)
+				for (var i = 0; i < items.Length; i++)
 				{
-					hash <<= 2; // 2 is arbitrary.
-					hash ^= item.GetHashCode(); // Order matters.
+					hash ^= i; // Order matters.
+					hash ^= items[i].GetHashCode();
 				}
 
 				return hash;

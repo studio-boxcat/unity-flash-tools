@@ -211,7 +211,7 @@ namespace FTEditor.Importer
 
             for (var index = 0; index < symbol.Frames.Length; index++)
             {
-                var frameGO = new GameObject(index.ToString("D3"));
+                var frameGO = new GameObject(index.ToString("D3"), typeof(SortingGroup));
                 frameGO.transform.SetParent(go.transform, false);
 
                 var frame = symbol.Frames[index];
@@ -219,7 +219,7 @@ namespace FTEditor.Importer
                 {
                     var inst = frame.Instances[i];
                     var instGO = new GameObject($"{i:D3}:B{inst.Bitmap:D3}:T{inst.Type}",
-                        typeof(MeshFilter), typeof(MeshRenderer), typeof(SortingGroup));
+                        typeof(MeshFilter), typeof(MeshRenderer));
                     instGO.transform.SetParent(frameGO.transform, false);
 
                     var spriteData = atlasDef[inst.Bitmap];
