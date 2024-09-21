@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using FTRuntime;
@@ -46,10 +47,12 @@ namespace FTEditor.Importer
             L.I($"Building atlas for {SwfFile.name}...");
 
             // Parse swf
+            var t = new TimeLogger("SwfParser.Parse");
             var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
             var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
             var frames = symbols.Single(x => x.Name is not SwfParser.stage_symbol).Frames;
             var instances = frames.SelectMany(x => x.Instances).ToArray();
+            t.Dispose();
 
             // Find used bitmaps
             var usedBitmaps = instances.Select(x => x.Bitmap).ToHashSet();
@@ -58,6 +61,7 @@ namespace FTEditor.Importer
                 .ToDictionary(x => x.Key, x => BitmapExporter.LoadTextureFromData(x.Value));
 
             // Find mask only textures.
+            t = new TimeLogger("FindDuplicateMaskTextures");
             foreach (var (maskBitmap, renderBitmap) in FindDuplicateMaskTextures(instances, bitmaps))
             {
                 foreach (var instData in instances)
@@ -68,18 +72,25 @@ namespace FTEditor.Importer
                 bitmaps.Remove(maskBitmap);
                 L.I($"Mask only bitmap {maskBitmap} has been replaced with {renderBitmap}");
             }
+            t.Dispose();
 
             // Remove occluded pixels
+            t = new TimeLogger("OcclusionProcessor.RemoveOccludedPixels");
             bitmaps = OcclusionProcessor.RemoveOccludedPixels(frames, bitmaps);
+            t.Dispose();
 
             // Export bitmaps
+            t = new TimeLogger("BitmapExporter.ExportBitmaps");
             var swfPath = GetSwfPath();
             var exportDir = swfPath.Replace(".swf", "_Sprites~");
             BitmapExporter.ExportBitmaps(bitmaps, exportDir);
+            t.Dispose();
 
             // Pack atlas
+            t = new TimeLogger("PackAtlas");
             var sheetPath = swfPath.Replace(".swf", ".png");
             Atlas = PackAtlas(sheetPath, exportDir, AtlasMaxSize, AtlasShapePadding);
+            t.Dispose();
 
             L.I($"Atlas has been successfully built: {sheetPath}", Atlas);
         }
@@ -311,6 +322,23 @@ namespace FTEditor.Importer
                     if (Mathf.Abs(a[i] - b[i]) > threshold)
                     return false;
                 return true;
+        }
+
+        readonly struct TimeLogger
+        {
+            readonly Stopwatch _sw;
+            readonly string _subject;
+
+            public TimeLogger(string subject)
+            {
+                _sw = Stopwatch.StartNew();
+                _subject = subject;
+            }
+
+            public void Dispose()
+            {
+                _sw.Stop();
+                L.I($"{_subject}: {_sw.ElapsedMilliseconds}ms");
             }
         }
     }

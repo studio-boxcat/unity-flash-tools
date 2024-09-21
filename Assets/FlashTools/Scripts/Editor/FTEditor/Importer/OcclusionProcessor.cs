@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -9,9 +11,10 @@ namespace FTEditor.Importer
         public static Dictionary<ushort, Texture2D> RemoveOccludedPixels(SwfFrameData[] frames, Dictionary<ushort, Texture2D> bitmaps)
         {
             var framebuffers = new Dictionary<Vector2Int, FramebufferPixel>[frames.Length];
+            var bitmapsData = bitmaps.ToDictionary(kv => kv.Key, kv => new TextureData(kv.Value));
 
             // Process each frame
-            for (var i = 0; i < frames.Length; i++)
+            Parallel.For(0, frames.Length, i =>
             {
                 // Initialize framebuffer & mask stack
                 var framebuffer = framebuffers[i] = new Dictionary<Vector2Int, FramebufferPixel>();
@@ -20,7 +23,7 @@ namespace FTEditor.Importer
                 foreach (var instance in frames[i].Instances)
                 {
                     // Get the bitmap for this instance
-                    var bitmap = bitmaps[instance.Bitmap];
+                    var bitmap = bitmapsData[instance.Bitmap];
 
                     // Process according to type
                     switch (instance.Type)
@@ -44,7 +47,7 @@ namespace FTEditor.Importer
                             break;
                     }
                 }
-            }
+            });
 
             // Create visibility maps for each bitmap
             var visibilityMaps = new Dictionary<ushort, bool[,]>();
@@ -67,33 +70,27 @@ namespace FTEditor.Importer
             }
 
             // Now, modify the bitmaps based on visibility maps
-            var resultBitmaps = new Dictionary<ushort, Texture2D>();
-            foreach (var (bitmapId, bitmap) in bitmaps)
+            Parallel.ForEach(bitmapsData, d =>
             {
+                var (bitmapId, bitmap) = d;
+                var (width, _, pixels) = bitmap;
+
                 var visibilityMap = visibilityMaps[bitmapId];
-                var newBitmap = new Texture2D(bitmap.width, bitmap.height, TextureFormat.RGBA32, false);
-
-                var pixels = bitmap.GetPixels();
-                var width = bitmap.width;
-                var height = bitmap.height;
-                for (var y = 0; y < height; y++)
-                for (var x = 0; x < width; x++)
+                for (var i = 0; i < pixels.Length; i++)
                 {
-                    var index = y * width + x;
-                    var pixel = pixels[index];
-                    if (!visibilityMap[x, y]) pixel.a = 0;
-                    newBitmap.SetPixel(x, y, pixel);
+                    var x = i % width;
+                    var y = i / width;
+                    if (!visibilityMap[x, y])
+                        pixels[i].a = 0;
                 }
+            });
 
-                newBitmap.Apply();
-                resultBitmaps[bitmapId] = newBitmap;
-            }
-
-            return resultBitmaps;
+            // Convert the modified bitmaps back to Texture2D
+            return bitmapsData.ToDictionary(kv => kv.Key, kv => kv.Value.ToTexture2D());
         }
 
         // Helper method to process an instance
-        static void ProcessInstance(SwfInstanceData instance, Texture2D bitmap, Dictionary<Vector2Int, FramebufferPixel> framebuffer, Mask mask)
+        static void ProcessInstance(SwfInstanceData instance, TextureData bitmap, Dictionary<Vector2Int, FramebufferPixel> framebuffer, Mask mask)
         {
             var tintAlpha = instance.TintAlpha;
             if (tintAlpha is 0) return; // Fully transparent instance, skip
@@ -101,11 +98,8 @@ namespace FTEditor.Importer
             var noAlphaTint = tintAlpha is 1;
             var matrix = SwfToUnitMatrix(instance.Matrix);
 
-            var bitmapPixels = bitmap.GetPixels();
-            var width = bitmap.width;
-            var height = bitmap.height;
-
             // For each pixel in the bitmap
+            var (width, height, bitmapPixels) = bitmap;
             for (var y = 0; y < height; y++)
             for (var x = 0; x < width; x++)
             {
@@ -130,8 +124,10 @@ namespace FTEditor.Importer
                 for (var ox = -2; ox <= 2; ox++)
                 for (var oy = -2; oy <= 2; oy++)
                 {
+                    var pos = framebufferPos + new Vector2Int(ox, oy);
+
                     // Check if pixel has same color as background.
-                    var hasBg = framebuffer.TryGetValue(framebufferPos, out var fbPixel);
+                    var hasBg = framebuffer.TryGetValue(pos, out var fbPixel);
                     if (replace
                         && hasBg
                         && fbPixel.IsSingle
@@ -141,10 +137,10 @@ namespace FTEditor.Importer
                     }
 
                     var single = !hasBg || replace;
-                    var pos = framebufferPos + new Vector2Int(ox, oy);
-                    framebuffer[framebufferPos] = single
-                        ? FramebufferPixel.Single(instance.Bitmap, pos, pixelColor)
-                        : fbPixel.Add(instance.Bitmap, pos);
+                    var pixelPos = new Vector2Int(x, y);
+                    framebuffer[pos] = single
+                        ? FramebufferPixel.Single(instance.Bitmap, pixelPos, pixelColor)
+                        : fbPixel.Add(instance.Bitmap, pixelPos);
                 }
             }
         }
@@ -169,12 +165,9 @@ namespace FTEditor.Importer
         }
 
         // Helper method to create a mask from an instance
-        static Mask CreateMask(SwfInstanceData instance, Texture2D bitmap, Mask parentMask)
+        static Mask CreateMask(SwfInstanceData instance, TextureData bitmap, Mask parentMask)
         {
-            var bitmapPixels = bitmap.GetPixels();
-            var width = bitmap.width;
-            var height = bitmap.height;
-
+            var (width, height, bitmapPixels) = bitmap;
             var pixels = new List<Vector2Int>(width * height);
             var matrix = SwfToUnitMatrix(instance.Matrix);
 
@@ -200,6 +193,35 @@ namespace FTEditor.Importer
             }
 
             return new Mask(new HashSet<Vector2Int>(pixels));
+        }
+
+        readonly struct TextureData
+        {
+            public readonly int Width;
+            public readonly int Height;
+            public readonly Color[] Data;
+
+            public TextureData(Texture2D tex)
+            {
+                Width = tex.width;
+                Height = tex.height;
+                Data = tex.GetPixels();
+            }
+
+            public void Deconstruct(out int width, out int height, out Color[] data)
+            {
+                width = Width;
+                height = Height;
+                data = Data;
+            }
+
+            public Texture2D ToTexture2D()
+            {
+                var tex = new Texture2D(Width, Height, TextureFormat.RGBA32, false);
+                tex.SetPixels(Data);
+                tex.Apply();
+                return tex;
+            }
         }
 
         // Classes to represent the framebuffer pixel and masks
