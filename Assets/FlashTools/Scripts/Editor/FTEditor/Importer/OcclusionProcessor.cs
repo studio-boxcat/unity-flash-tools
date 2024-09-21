@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using FTSwfTools.SwfTypes;
 using JetBrains.Annotations;
 using UnityEngine;
 
@@ -109,7 +110,7 @@ namespace FTEditor.Importer
                 if (pixelColor.a is 0)
                     continue;
 
-                var center = TransformPoint(x, y, matrix);
+                var center = matrix.MultiplyPoint(x, y); // Bitmap space -> Framebuffer space
                 var replace = noAlphaTint && pixelColor.a is 255; // Instances with alpha cannot occlude pixels behind
                 const int range = kernelSize / 2;
                 for (var dy = -range; dy <= range; dy++)
@@ -135,24 +136,11 @@ namespace FTEditor.Importer
             }
         }
 
-        // Bitmap space -> Framebuffer space
-        static Vector2 TransformPoint(float x, float y, Matrix4x4 m)
-        {
-            // Vector2Int version of Matrix4x4.MultiplyPoint
-            Vector2 v;
-            v.x = m.m00 * x + m.m01 * y + m.m03;
-            v.y = m.m10 * x + m.m11 * y + m.m13;
-            var num = 1f / (m.m30 * x + m.m31 * y + m.m33);
-            v.x *= num;
-            v.y *= num;
-            return v;
-        }
-
-        static Matrix4x4 SwfToUnitMatrix(Matrix4x4 m)
+        static SwfMatrix SwfToUnitMatrix(SwfMatrix m)
         {
             // Convert Swf matrix to Unity matrix
-            var scale = new Vector3(1f / ImportConfig.CustomScaleFactor, -1f / ImportConfig.CustomScaleFactor, 1f);
-            return Matrix4x4.Scale(scale) * m;
+            var scale = 1f / ImportConfig.CustomScaleFactor;
+            return SwfMatrix.Scale(scale, -scale) * m;
         }
 
         // Helper method to create a mask from an instance
@@ -175,7 +163,7 @@ namespace FTEditor.Importer
                 if (pixelColor.a is 0)
                     continue;
 
-                var center = TransformPoint(x, y, matrix);
+                var center = matrix.MultiplyPoint(x, y); // Bitmap space -> Framebuffer space
                 const int range = kernelSize / 2;
                 for (var dy = -range; dy <= range; dy++)
                 for (var dx = -range; dx <= range; dx++)

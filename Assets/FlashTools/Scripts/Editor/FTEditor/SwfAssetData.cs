@@ -93,7 +93,7 @@ namespace FTEditor {
 		public Types                 Type        = Types.Simple;
 		public Depth                 ClipDepth   = 0; // Stencil
 		public ushort                Bitmap      = 0;
-		public Matrix4x4             Matrix      = Matrix4x4.identity; // Bitmap space -> Swf space.
+		public SwfMatrix             Matrix      = SwfMatrix.identity; // Bitmap space -> Swf space.
 		public SwfBlendModeData      BlendMode   = SwfBlendModeData.normal;
 		public SwfColorTransData     ColorTrans  = SwfColorTransData.identity;
 		public float                 TintAlpha => ColorTrans.CalculateMul().a;

@@ -100,7 +100,7 @@ namespace FTEditor.Importer {
 			AddDisplayListToFrame(
 				library,
 				display_list,
-				Matrix4x4.identity,
+				SwfMatrix.identity,
 				SwfBlendModeData.normal,
 				SwfColorTransData.identity,
 				0,
@@ -116,7 +116,7 @@ namespace FTEditor.Importer {
 		static void AddDisplayListToFrame(
 			SwfLibrary            library,
 			SwfDisplayList        display_list,
-			Matrix4x4             parent_matrix,
+			SwfMatrix             parent_matrix,
 			SwfBlendModeData      parent_blend_mode,
 			SwfColorTransData     parent_color_transform,
 			ushort                parent_masked,

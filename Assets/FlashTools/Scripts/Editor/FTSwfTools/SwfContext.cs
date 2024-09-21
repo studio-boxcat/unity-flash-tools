@@ -16,8 +16,8 @@ namespace FTSwfTools {
 
 	class SwfLibraryShapeDefine : SwfLibraryDefine
 	{
-		public readonly (ushort, Matrix4x4)[] Bitmaps;
-		public SwfLibraryShapeDefine((ushort, Matrix4x4)[] bitmaps) => Bitmaps = bitmaps;
+		public readonly (ushort, SwfMatrix)[] Bitmaps;
+		public SwfLibraryShapeDefine((ushort, SwfMatrix)[] bitmaps) => Bitmaps = bitmaps;
 	}
 
 	class SwfLibraryBitmapDefine : SwfLibraryDefine {
@@ -63,7 +63,7 @@ namespace FTSwfTools {
 		public Depth             Depth;
 		public Depth             ClipDepth;
 		public bool              Visible;
-		public Matrix4x4         Matrix;
+		public SwfMatrix         Matrix;
 		public SwfBlendMode      BlendMode;
 		public SwfColorTransform ColorTransform;
 	}

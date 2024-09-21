@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using FTRuntime;
 using FTRuntime.Internal;
+using FTSwfTools.SwfTypes;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
@@ -275,11 +275,11 @@ namespace FTEditor.Importer
             }
             return;
 
-            static Mesh CreateMesh(SpriteData spriteData, Matrix4x4 matrix, float a)
+            static Mesh CreateMesh(SpriteData spriteData, SwfMatrix matrix, float a)
             {
                 matrix = InstanceBatcher.GetVertexMatrix(matrix);
                 var mesh = new Mesh();
-                mesh.vertices = spriteData.Poses.Select(pos => matrix.MultiplyPoint3x4(pos)).ToArray();
+                mesh.vertices = spriteData.Poses.Select(pos => (Vector3) matrix.MultiplyPoint(pos)).ToArray();
                 mesh.SetUVs(0, spriteData.UVs.Select(x => new Vector3(x.x, x.y, a)).ToArray());
                 mesh.SetTriangles(spriteData.Indices, 0);
                 mesh.UploadMeshData(false);
@@ -468,8 +468,8 @@ namespace FTEditor.Importer
                 var size = bitmapSizes[inst.Bitmap];
                 inst.Matrix =
                     inst.Matrix
-                    * Matrix4x4.Scale(new Vector3(1, -1, 1))
-                    * Matrix4x4.Translate(new Vector3(size.x / 2f, -size.y / 2f, 0));
+                    * SwfMatrix.Scale(1, -1)
+                    * SwfMatrix.Translate(size.x / 2f, -size.y / 2f);
             }
         }
     }

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FTSwfTools.SwfTypes;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -46,7 +47,7 @@ namespace FTEditor.Importer
             // Pos
             var matrix = GetVertexMatrix(inst.Matrix);
             foreach (var pos in spriteData.Poses)
-                _curPoses.Add(matrix.MultiplyPoint3x4(pos));
+                _curPoses.Add(matrix.MultiplyPoint(pos));
 
             // UVA
             var mul = inst.ColorTrans.CalculateMul();
@@ -66,8 +67,11 @@ namespace FTEditor.Importer
         }
 
         // Swf space -> view space.
-        public static Matrix4x4 GetVertexMatrix(Matrix4x4 m) =>
-            Matrix4x4.Scale(new Vector3(1.0f, -1.0f, 1.0f) / ImportConfig.PixelsPerUnit / ImportConfig.CustomScaleFactor) * m;
+        public static SwfMatrix GetVertexMatrix(SwfMatrix m)
+        {
+            const float scale = 1f / ImportConfig.PixelsPerUnit / ImportConfig.CustomScaleFactor;
+            return SwfMatrix.Scale(scale, -scale) * m;
+        }
 
         public RenderUnit[] Flush()
         {

@@ -19,7 +19,7 @@ namespace FTSwfTools.SwfTags {
 		public bool              HasBlendMode;
 		public Depth             Depth;
 		public ushort            CharacterId;
-		public Matrix4x4         Matrix;
+		public SwfMatrix         Matrix;
 		public SwfColorTransform ColorTransform;
 		public ushort            Ratio;
 		public Depth             ClipDepth;
@@ -58,7 +58,7 @@ namespace FTSwfTools.SwfTags {
 
 			tag.Matrix            = tag.HasMatrix
 				? SwfMatrix.Read(reader)
-				: Matrix4x4.identity;
+				: SwfMatrix.identity;
 
 			tag.ColorTransform    = tag.HasColorTransform
 				? SwfColorTransform.Read(reader, true)

@@ -1,11 +1,10 @@
 ﻿using FTSwfTools.SwfTypes;
-using UnityEngine;
 
 namespace FTSwfTools.SwfTags {
 	class PlaceObjectTag : SwfTagBase {
 		public ushort            CharacterId;
 		public Depth             Depth;
-		public Matrix4x4         Matrix;
+		public SwfMatrix         Matrix;
 		public SwfColorTransform ColorTransform;
 
 		public static PlaceObjectTag Create(SwfStreamReader reader) {

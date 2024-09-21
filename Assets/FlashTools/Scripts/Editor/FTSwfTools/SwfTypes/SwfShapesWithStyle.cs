@@ -1,8 +1,7 @@
 ﻿using System.Collections.Generic;
-using UnityEngine;
 
 namespace FTSwfTools.SwfTypes {
-	public struct SwfShapesWithStyle {
+	struct SwfShapesWithStyle {
 		public enum ShapeStyleType {
 			Shape,
 			Shape2,
@@ -13,7 +12,7 @@ namespace FTSwfTools.SwfTypes {
 		public struct FillStyle {
 			public SwfFillStyleType Type;
 			public ushort           BitmapId;
-			public Matrix4x4        BitmapMatrix;
+			public SwfMatrix        BitmapMatrix;
 
 			public override string ToString() => $"FillStyle. Type: {Type}, BitmapId: {BitmapId}, BitmapMatrix: {BitmapMatrix}";
 		}
