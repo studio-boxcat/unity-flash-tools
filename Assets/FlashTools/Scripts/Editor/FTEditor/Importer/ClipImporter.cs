@@ -182,7 +182,6 @@ namespace FTEditor.Importer
             // load swf and atlas
             var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
             var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
-
             var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
             var frames = symbol.Frames;
             FlipYAndAdjustPivotToCenter(frames, library.GetBitmaps().ToDictionary(x => x.Key, x => x.Value.Size));
@@ -236,13 +235,16 @@ namespace FTEditor.Importer
         void SpawnGameObject()
         {
             var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
-            var symbols = SwfParser.LoadSymbols(fileData.Tags, out _);
+            var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
             var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
-            var atlasDef = AtlasDef.FromTexture(Atlas);
+            var frames = symbol.Frames;
+            FlipYAndAdjustPivotToCenter(frames, library.GetBitmaps().ToDictionary(x => x.Key, x => x.Value.Size));
 
             var propBlock = new MaterialPropertyBlock();
             propBlock.SetTexture(SwfUtils.MainTexShaderProp, Atlas);
             propBlock.SetColor(SwfUtils.TintShaderProp, Color.white);
+
+            var atlasDef = AtlasDef.FromTexture(Atlas);
 
             var go = new GameObject(name);
 

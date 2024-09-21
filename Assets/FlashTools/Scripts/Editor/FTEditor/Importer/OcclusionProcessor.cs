@@ -1,4 +1,7 @@
+using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -10,6 +13,7 @@ namespace FTEditor.Importer
         public static void RemoveOccludedPixels(SwfFrameData[] frames, Dictionary<ushort, TextureData> bitmaps)
         {
             var framebuffers = new Dictionary<Vector2Int, FramebufferPixel>[frames.Length];
+            var maskBitmaps = new ConcurrentBag<ushort>();
 
             // Process each frame
             Parallel.For(0, frames.Length, i =>
@@ -38,6 +42,7 @@ namespace FTEditor.Importer
                         {
                             mask = CreateMask(instance, bitmap, parentMask: mask);
                             maskStack.Push(mask);
+                            maskBitmaps.Add(instance.Bitmap);
                             break;
                         }
 
@@ -51,25 +56,10 @@ namespace FTEditor.Importer
                 }
             });
 
-            // Create visibility maps for each bitmap
-            var visibilityMaps = new Dictionary<ushort, bool[,]>();
-            foreach (var (bitmapId, bitmap) in bitmaps)
-                visibilityMaps[bitmapId] = new bool[bitmap.Width, bitmap.Height];
 
-            foreach (var framebuffer in framebuffers)
-            foreach (var pixel in framebuffer.Values)
-            {
-                if (pixel.IsSingle)
-                {
-                    var p = pixel.SinglePosition;
-                    visibilityMaps[pixel.SingleBitmap][p.x, p.y] = true;
-                }
-                else
-                {
-                    foreach (var (bitmap, p) in pixel.BlendingBitmaps)
-                        visibilityMaps[bitmap][p.x, p.y] = true;
-                }
-            }
+            // Create visibility maps for each bitmap
+            var visibilityMaps = BuildVisibilityMap(
+                framebuffers, bitmaps, maskBitmaps.ToHashSet());
 
 
             // Now, modify the bitmaps based on visibility maps
@@ -79,7 +69,6 @@ namespace FTEditor.Importer
                 var (width, _, pixels) = bitmap;
 
                 var visibilityMap = visibilityMaps[bitmapId];
-                visibilityMap = ReduceOcclusionArtifacts(visibilityMap); // Expand visibility maps to avoid occlusion artifacts
 
                 for (var i = 0; i < pixels.Length; i++)
                 {
@@ -193,6 +182,53 @@ namespace FTEditor.Importer
             }
 
             return new Mask(new HashSet<Vector2Int>(pixels));
+        }
+
+        static Dictionary<ushort, bool[,]> BuildVisibilityMap(Dictionary<Vector2Int, FramebufferPixel>[] framebuffers, Dictionary<ushort, TextureData> bitmaps, HashSet<ushort> maskBitmaps)
+        {
+            var visibilityMaps = new Dictionary<ushort, bool[,]>();
+            foreach (var (bitmapId, bitmap) in bitmaps)
+            {
+                if (maskBitmaps.Contains(bitmapId)) continue;
+                visibilityMaps[bitmapId] = new bool[bitmap.Width, bitmap.Height];
+            }
+
+            foreach (var framebuffer in framebuffers)
+            foreach (var pixel in framebuffer.Values)
+            {
+                if (pixel.IsSingle)
+                {
+                    var p = pixel.SinglePosition;
+                    if (maskBitmaps.Contains(pixel.SingleBitmap)) continue;
+                    visibilityMaps[pixel.SingleBitmap][p.x, p.y] = true;
+                }
+                else
+                {
+                    foreach (var (bitmap, p) in pixel.BlendingBitmaps)
+                    {
+                        if (maskBitmaps.Contains(bitmap)) continue;
+                        visibilityMaps[bitmap][p.x, p.y] = true;
+                    }
+                }
+            }
+
+            // Expand visibility maps to avoid occlusion artifacts
+            visibilityMaps = visibilityMaps.ToDictionary(
+                x => x.Key,
+                x => ReduceOcclusionArtifacts(x.Value));
+
+            // Add mask bitmaps to visibility maps
+            // Mask bitmaps are always fully visible.
+            foreach (var maskBitmap in maskBitmaps)
+            {
+                var (width, height, _) = bitmaps[maskBitmap];
+                var visibilityMap = visibilityMaps[maskBitmap] = new bool[width, height];
+                for (var x = 0; x < width; x++)
+                for (var y = 0; y < height; y++)
+                    visibilityMap[x, y] = true;
+            }
+
+            return visibilityMaps;
         }
 
         static bool[,] ReduceOcclusionArtifacts(bool[,] visibilityMap)
