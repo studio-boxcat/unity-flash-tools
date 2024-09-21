@@ -228,6 +228,7 @@ namespace FTEditor.Importer
                     if (visibilityMap[nx, ny])
                     {
                         newVisibilityMap[x, y] = true;
+                        ox = range + 1; // Exit outer loop.
                         break;
                     }
                 }
