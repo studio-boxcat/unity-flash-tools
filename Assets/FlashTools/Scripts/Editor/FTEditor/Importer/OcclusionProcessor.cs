@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -233,7 +232,7 @@ namespace FTEditor.Importer
 
         static bool[,] ReduceOcclusionArtifacts(bool[,] visibilityMap)
         {
-            const int kernelSize = 7; // 7x7 kernel
+            const int kernelSize = 8;
 
             var width = visibilityMap.GetLength(0);
             var height = visibilityMap.GetLength(1);
