@@ -122,6 +122,53 @@ namespace FTEditor.Importer
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Atlas")]
+        void OptimizeAtlasSize()
+        {
+            var swfPath = GetSwfPath();
+            var sheetPath = swfPath.Replace(".swf", ".png");
+            var spriteFolder = swfPath.Replace(".swf", "_Sprites~");
+
+            var oldMaxSize = AtlasMaxSize;
+            var maxSize = AtlasMaxSize;
+            byte[] granularitySeries = { 64, 32, 16, 8, 4, 2, 1 };
+            foreach (var granularity in granularitySeries)
+            {
+                var testSize = maxSize;
+                var failedCount = 0;
+                while (true)
+                {
+                    testSize -= granularity;
+                    if (testSize <= 0) break;
+                    L.I($"Trying to pack atlas with size {testSize}...");
+
+                    var atlas = PackAtlas(sheetPath, spriteFolder, testSize, AtlasShapePadding);
+                    if (atlas is not null)
+                    {
+                        Atlas = atlas;
+                        maxSize = testSize;
+                        failedCount = 0;
+                        continue;
+                    }
+
+                    failedCount++;
+                    if (failedCount >= 10)
+                        break;
+                }
+            }
+
+            if (maxSize != oldMaxSize)
+            {
+                L.I($"Atlas size has been optimized: {oldMaxSize} → {maxSize}");
+                AtlasMaxSize = maxSize;
+                EditorUtility.SetDirty(this);
+            }
+            else
+            {
+                L.I("Atlas size is already optimized.");
+            }
+        }
+
+        [Button(ButtonSizes.Medium), EnableIf("Atlas")]
         void BakeClip()
         {
             // load swf and atlas
@@ -174,53 +221,6 @@ namespace FTEditor.Importer
 
                 // Load published texture
                 return AssetDatabase.LoadAssetAtPath<Texture2D>(dstPath);
-            }
-        }
-
-        [Button(ButtonSizes.Medium), EnableIf("Atlas")]
-        void OptimizeAtlasSize()
-        {
-            var swfPath = GetSwfPath();
-            var sheetPath = swfPath.Replace(".swf", ".png");
-            var spriteFolder = swfPath.Replace(".swf", "_Sprites~");
-
-            var oldMaxSize = AtlasMaxSize;
-            var maxSize = AtlasMaxSize;
-            byte[] granularitySeries = { 64, 32, 16, 8, 4, 2, 1 };
-            foreach (var granularity in granularitySeries)
-            {
-                var testSize = maxSize;
-                var failedCount = 0;
-                while (true)
-                {
-                    testSize -= granularity;
-                    if (testSize <= 0) break;
-                    L.I($"Trying to pack atlas with size {testSize}...");
-
-                    var atlas = PackAtlas(sheetPath, spriteFolder, testSize, AtlasShapePadding);
-                    if (atlas is not null)
-                    {
-                        Atlas = atlas;
-                        maxSize = testSize;
-                        failedCount = 0;
-                        continue;
-                    }
-
-                    failedCount++;
-                    if (failedCount >= 10)
-                        break;
-                }
-            }
-
-            if (maxSize != oldMaxSize)
-            {
-                L.I($"Atlas size has been optimized: {oldMaxSize} → {maxSize}");
-                AtlasMaxSize = maxSize;
-                EditorUtility.SetDirty(this);
-            }
-            else
-            {
-                L.I("Atlas size is already optimized.");
             }
         }
 
