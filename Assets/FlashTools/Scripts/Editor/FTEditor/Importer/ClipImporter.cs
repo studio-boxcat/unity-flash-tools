@@ -125,57 +125,15 @@ namespace FTEditor.Importer
         void OptimizeAtlasSize()
         {
             var swfPath = GetSwfPath();
-            var sheetPath = swfPath.Replace(".swf", ".png");
             var spriteFolder = swfPath.Replace(".swf", "_Sprites~");
 
-            var oldMaxSize = AtlasMaxSize;
-            var maxSize = AtlasMaxSize;
-            var triedSizes = new Dictionary<int, bool>();
-            byte[] granularitySeries = { 64, 32, 16, 8, 4, 2, 1 };
-            foreach (var granularity in granularitySeries)
+            if (AtlasOptimizer.Optimize(AtlasMaxSize, AtlasShapePadding, spriteFolder, out var newAtlasPath, out var newMaxSize))
             {
-                var testSize = maxSize;
-                var failedCount = 0;
-                while (true)
-                {
-                    testSize -= granularity;
-                    if (testSize <= 0) break;
-
-                    if (triedSizes.TryGetValue(testSize, out var prevResult))
-                    {
-                        if (prevResult is false) failedCount++;
-                        continue;
-                    }
-
-                    L.I($"Trying to pack atlas with size {testSize}...");
-
-                    var atlas = PackAtlas(sheetPath, spriteFolder, testSize, AtlasShapePadding);
-                    var success = atlas is not null;
-                    triedSizes.Add(testSize, success);
-
-                    if (success)
-                    {
-                        Atlas = atlas;
-                        maxSize = testSize;
-                        failedCount = 0;
-                        continue;
-                    }
-
-                    failedCount++;
-                    if (failedCount >= 10)
-                        break;
-                }
-            }
-
-            if (maxSize != oldMaxSize)
-            {
-                L.I($"Atlas size has been optimized: {oldMaxSize} → {maxSize}");
-                AtlasMaxSize = maxSize;
-                EditorUtility.SetDirty(this);
-            }
-            else
-            {
-                L.I("Atlas size is already optimized.");
+                var sheetPath = swfPath.Replace(".swf", ".png");
+                File.Copy(newAtlasPath!, sheetPath, true);
+                AssetDatabase.ImportAsset(sheetPath);
+                Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(sheetPath);
+                AtlasMaxSize = newMaxSize;
             }
         }
 
