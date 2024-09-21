@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -128,7 +129,7 @@ namespace FTEditor.Importer
                     var single = !hasBg || replace;
                     var pixelPos = new Vector2Int(x, y);
                     framebuffer[framebufferPos] = single
-                        ? FramebufferPixel.Single(instance.Bitmap, pixelPos)
+                        ? FramebufferPixel.CreateSingle(instance.Bitmap, pixelPos)
                         : fbPixel.Add(instance.Bitmap, pixelPos);
                 }
             }
@@ -205,17 +206,16 @@ namespace FTEditor.Importer
             {
                 if (pixel.IsSingle)
                 {
-                    var bitmap = pixel.SingleBitmap;
-                    var p = pixel.SinglePosition;
-                    if (maskBitmaps.Contains(bitmap)) continue;
-                    visibilityMaps[bitmap][p.x, p.y] = true;
+                    var p = pixel.Single;
+                    if (maskBitmaps.Contains(p.Bitmap)) continue;
+                    visibilityMaps[p.Bitmap][p.X, p.Y] = true;
                 }
                 else
                 {
-                    foreach (var (bitmap, p) in pixel.BlendingBitmaps)
+                    foreach (var p in pixel.Multiple)
                     {
-                        if (maskBitmaps.Contains(bitmap)) continue;
-                        visibilityMaps[bitmap][p.x, p.y] = true;
+                        if (maskBitmaps.Contains(p.Bitmap)) continue;
+                        visibilityMaps[p.Bitmap][p.X, p.Y] = true;
                     }
                 }
             }
@@ -284,43 +284,58 @@ namespace FTEditor.Importer
         // Classes to represent the framebuffer pixel and masks
         readonly struct FramebufferPixel
         {
-            public readonly ushort SingleBitmap;
-            public readonly Vector2Int SinglePosition;
-            public readonly (ushort, Vector2Int)[] BlendingBitmaps;
-
-            FramebufferPixel(ushort bitmap, Vector2Int position) : this()
+            [StructLayout(LayoutKind.Explicit)]
+            public struct Pixel
             {
-                SingleBitmap = bitmap;
-                SinglePosition = position;
+                [FieldOffset(0)]
+                public readonly ulong Data;
+                [FieldOffset(0)]
+                public readonly ushort Bitmap;
+                [FieldOffset(2)]
+                public readonly ushort X;
+                [FieldOffset(4)]
+                public readonly ushort Y;
+
+                public Pixel(ushort bitmap, Vector2Int position) : this()
+                {
+                    Bitmap = bitmap;
+                    X = (ushort) position.x;
+                    Y = (ushort) position.y;
+                }
             }
 
-            FramebufferPixel((ushort, Vector2Int)[] blendingBitmaps) : this() => BlendingBitmaps = blendingBitmaps;
+            public readonly Pixel Single;
+            public readonly Pixel[] Multiple;
 
-            public static FramebufferPixel Single(ushort bitmap, Vector2Int position) => new(bitmap, position);
+            FramebufferPixel(Pixel single) : this() => Single = single;
+            FramebufferPixel(Pixel[] multiple) : this() => Multiple = multiple;
 
-            public bool IsSingle => BlendingBitmaps is null;
+            public static FramebufferPixel CreateSingle(ushort bitmap, Vector2Int position) => new(new Pixel(bitmap, position));
+
+            public bool IsSingle => Multiple is null;
 
             public FramebufferPixel Add(ushort bitmap, Vector2Int position)
             {
-                if (BlendingBitmaps is null)
+                var p = new Pixel(bitmap, position);
+
+                if (Multiple is null)
                 {
-                    // If the new pixel is same as the existing one, return self
-                    if (SingleBitmap == bitmap && SinglePosition == position)
-                        return this;
-                    return new FramebufferPixel(new[] { (SingleBitmap, SinglePosition), (bitmap, position) });
+                    return Single.Data == p.Data
+                        ? this // If the new pixel is same as the existing one, return self
+                        : new FramebufferPixel(new[] { Single, p });
                 }
 
-                foreach (var (existingBitmap, existingPosition) in BlendingBitmaps)
+                foreach (var existing in Multiple)
                 {
                     // If the new pixel is same as an existing one, return self
-                    if (existingBitmap == bitmap && existingPosition == position)
+                    if (existing.Data == p.Data)
                         return this;
                 }
 
-                var oldLen = BlendingBitmaps.Length;
-                var bitmaps = new (ushort, Vector2Int)[oldLen + 1];
-                BlendingBitmaps.CopyTo(bitmaps, 0);
-                bitmaps[oldLen] = (bitmap, position);
+                var oldLen = Multiple.Length;
+                var bitmaps = new Pixel[oldLen + 1];
+                Multiple.CopyTo(bitmaps, 0);
+                bitmaps[oldLen] = p;
                 return new FramebufferPixel(bitmaps);
             }
         }
