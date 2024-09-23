@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using FTRuntime;
 using FTRuntime.Internal;
+using FTSwfTools;
 using FTSwfTools.SwfTypes;
 using Sirenix.OdinInspector;
 using UnityEditor;
@@ -47,12 +48,8 @@ namespace FTEditor.Importer
             L.I($"Building atlas for {SwfFile.name}...");
 
             // Parse swf
-            var t = new TimeLogger("SwfParser.Parse");
-            var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
-            var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
-            var frames = symbols.Single(x => x.Name is not SwfParser.stage_symbol).Frames;
+            var frames = ParseSwfFile(SwfFile, out var library);
             var instances = frames.SelectMany(x => x.Instances).ToArray();
-            t.Dispose();
 
             // Find used bitmaps
             var usedBitmaps = instances.Select(x => x.Bitmap).ToHashSet();
@@ -61,8 +58,8 @@ namespace FTEditor.Importer
                 .ToDictionary(x => x.Key, x => BitmapExporter.CreateData(x.Value));
 
             // Remove duplicate textures
-            t = new TimeLogger("Removing duplicate textures");
-            var duplicateTextures = AnalyzeDuplicateTextures(bitmaps, instances);
+            var t = new TimeLogger("Removing duplicate textures");
+            var duplicateTextures = DuplicateTextureFinder.Analyze(bitmaps, instances);
             foreach (var (bitmapA, bitmapB) in duplicateTextures) // Replace A with B
             {
                 foreach (var instData in instances)
@@ -140,19 +137,16 @@ namespace FTEditor.Importer
         void BakeClip()
         {
             // load swf and atlas
-            var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
-            var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
-            var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
-            var frames = symbol.Frames;
+            var frames = ParseSwfFile(SwfFile, frameRate: out var frameRate, out var library);
             FlipYAndAdjustPivotToCenter(frames, library.GetBitmaps().ToDictionary(x => x.Key, x => x.Value.Size));
 
             // bake
             var atlasDef = AtlasDef.FromTexture(Atlas);
-            var sequences = ClipBaker.Bake(symbol, atlasDef, out var meshes, out var materialGroups);
+            var sequences = ClipBaker.Bake(frames, atlasDef, out var meshes, out var materialGroups);
 
             // configure
             var asset = ClipAsset;
-            asset.FrameRate = fileData.FrameRate;
+            asset.FrameRate = frameRate;
             asset.Atlas = PublishTexture(Atlas);
             asset.Sequences = sequences;
             asset.MaterialGroups = materialGroups;
@@ -194,10 +188,7 @@ namespace FTEditor.Importer
         [Button(ButtonSizes.Medium), EnableIf("Atlas")]
         void SpawnGameObject()
         {
-            var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(SwfFile));
-            var symbols = SwfParser.LoadSymbols(fileData.Tags, out var library);
-            var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
-            var frames = symbol.Frames;
+            var frames = ParseSwfFile(SwfFile, out var library);
             FlipYAndAdjustPivotToCenter(frames, library.GetBitmaps().ToDictionary(x => x.Key, x => x.Value.Size));
 
             var propBlock = new MaterialPropertyBlock();
@@ -208,12 +199,12 @@ namespace FTEditor.Importer
 
             var go = new GameObject(name);
 
-            for (var index = 0; index < symbol.Frames.Length; index++)
+            for (var index = 0; index < frames.Length; index++)
             {
                 var frameGO = new GameObject(index.ToString("D3"), typeof(SortingGroup));
                 frameGO.transform.SetParent(go.transform, false);
 
-                var frame = symbol.Frames[index];
+                var frame = frames[index];
                 for (var i = 0; i < frame.Instances.Length; i++)
                 {
                     var inst = frame.Instances[i];
@@ -303,121 +294,22 @@ namespace FTEditor.Importer
             }
         }
 
-        static List<(ushort, ushort)> AnalyzeDuplicateTextures(Dictionary<ushort, TextureData> textures, SwfInstanceData[] instances)
+        static SwfFrameData[] ParseSwfFile(Object swfFile, out float frameRate, out SwfLibrary library)
         {
-            var duplicateTextures = FindDuplicateTextures(textures)
-                .Concat(FindDuplicateMaskTextures(textures, instances))
-                .ToList();
-
-            // Iterate until no chain of duplicates found. (1 -> 2, 2 -> 3 should be replaced with 1 -> 3)
-            while (true)
-            {
-                var replaced = false;
-
-                for (var i = 0; i < duplicateTextures.Count; i++)
-                {
-                    var (bitmapA, bitmapB1) = duplicateTextures[i];
-                    for (var j = 0; j < duplicateTextures.Count; j++)
-                    {
-                        if (i == j) continue;
-                        var (bitmapB2, bitmapC) = duplicateTextures[j];
-                        if (bitmapB1 != bitmapB2) continue;
-                        duplicateTextures[i] = (bitmapA, bitmapC);
-                        replaced = true;
-                        break;
-                    }
-                }
-
-                if (replaced is false)
-                    break;
-            }
-
-            return duplicateTextures;
+            var t = new TimeLogger("SwfParser.Parse");
+            var fileData = SwfParser.Parse(AssetDatabase.GetAssetPath(swfFile));
+            frameRate = fileData.FrameRate;
+            var symbols = SwfParser.LoadSymbols(fileData.Tags, out library);
+            var symbol = symbols.Single(x => x.Name is not SwfParser.stage_symbol);
+            var frames = symbol.Frames;
+            t.Dispose();
+            return frames;
         }
 
-        static IEnumerable<(ushort BitmapA, ushort BitmapB)> FindDuplicateTextures(Dictionary<ushort, TextureData> textures)
-        {
-            var textureList = textures.ToList();
-            for (var i = 0; i < textureList.Count; i++)
-            for (var j = i + 1; j < textureList.Count; j++)
-            {
-                var a = textureList[i];
-                var b = textureList[j];
-                if (ColorEquals(a.Value.Data, b.Value.Data))
-                    yield return (a.Key, b.Key);
-            }
-            yield break;
+        static SwfFrameData[] ParseSwfFile(Object swfFile, out SwfLibrary library)
+            => ParseSwfFile(swfFile, out _, out library);
 
-            static bool ColorEquals(Color32[] a, Color32[] b)
-            {
-                var len = a.Length;
-                for (var i = 0; i < len; i++)
-                {
-                    if (a[i].r != b[i].r) return false;
-                    if (a[i].g != b[i].g) return false;
-                    if (a[i].b != b[i].b) return false;
-                    if (a[i].a != b[i].a) return false;
-                }
-
-                return true;
-            }
-        }
-
-        static IEnumerable<(ushort MaskBitmap, ushort RenderBitmap)> FindDuplicateMaskTextures(
-            Dictionary<ushort, TextureData> textures, SwfInstanceData[] instances)
-        {
-            var renderBitmaps = instances.Where(x => x.Type is SwfInstanceData.Types.Simple or SwfInstanceData.Types.Masked).Select(x => x.Bitmap).ToHashSet();
-            var maskBitmaps = instances
-                .Where(x => x.Type is SwfInstanceData.Types.MaskIn or SwfInstanceData.Types.MaskOut)
-                .Select(x => x.Bitmap)
-                .Where(x => renderBitmaps.Contains(x) is false)
-                .ToHashSet();
-            L.I("Render bitmaps: " + string.Join(", ", renderBitmaps.Select(x => x.ToString("D4"))));
-            L.I("Mask bitmaps: " + string.Join(", ", maskBitmaps.Select(x => x.ToString("D4"))));
-
-            if (maskBitmaps.Count is 0)
-            {
-                L.I("No mask bitmaps found.");
-                yield break;
-            }
-
-            // find any texture exists with same alpha.
-            var renderBitmapAlphaDict = renderBitmaps.ToDictionary(x => x, x => textures[x].Data.Select(y => y.a).ToArray());
-            foreach (var maskBitmap in maskBitmaps)
-            {
-                var maskOnlyTexture = textures[maskBitmap];
-                var maskOnlyAlpha = maskOnlyTexture.Data.Select(x => x.a).ToArray();
-                var found = renderBitmapAlphaDict.FirstOrDefault(x => AlphaEquals(x.Value, maskOnlyAlpha));
-                if (found.Key is not 0)
-                {
-                    L.I($"Found duplicate mask texture: {maskBitmap:D4} -> {found.Key:D4}");
-                    yield return (maskBitmap, found.Key);
-                }
-            }
-            yield break;
-
-            static bool AlphaEquals(byte[] a, byte[] b)
-            {
-                const byte deltaThreshold = 100;
-                const byte avgThreshold = 3;
-
-                if (a.Length != b.Length)
-                    return false;
-
-                float deltaSum = 0;
-                for (var i = 0; i < a.Length; i++)
-                {
-                    var delta = Mathf.Abs(a[i] - b[i]);
-                    if (delta > deltaThreshold) return false;
-                    deltaSum += delta;
-                }
-
-                var avgDelta = deltaSum / a.Length;
-                return avgDelta < avgThreshold;
-            }
-        }
-
-        static void FlipYAndAdjustPivotToCenter(SwfFrameData[] frames, Dictionary<ushort, Vector2Int> bitmapSizes)
+        static void FlipYAndAdjustPivotToCenter(SwfFrameData[] frames, Dictionary<BitmapId, Vector2Int> bitmapSizes)
         {
             foreach (var swfFrameData in frames)
             foreach (var inst in swfFrameData.Instances)

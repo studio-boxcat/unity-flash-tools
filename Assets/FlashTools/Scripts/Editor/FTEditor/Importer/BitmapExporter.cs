@@ -1,13 +1,14 @@
 using System.Collections.Generic;
 using System.IO;
 using FTSwfTools.SwfTags;
+using FTSwfTools.SwfTypes;
 using UnityEngine;
 
 namespace FTEditor.Importer
 {
     static class BitmapExporter
     {
-        public static string GetSpriteName(ushort bitmapId) => $"{bitmapId:D4}.png";
+        public static string GetSpriteName(BitmapId bitmapId) => $"{bitmapId.ToName()}.png";
 
         public static TextureData CreateData(IBitmapData data)
         {
@@ -62,7 +63,7 @@ namespace FTEditor.Importer
             }
         }
 
-        public static void SaveAsPng(Dictionary<ushort, Texture2D> bitmaps, string dir)
+        public static void SaveAsPng(Dictionary<BitmapId, Texture2D> bitmaps, string dir)
         {
             if (Directory.Exists(dir))
                 Directory.Delete(dir, true);

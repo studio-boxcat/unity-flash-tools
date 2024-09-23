@@ -11,13 +11,13 @@ namespace FTSwfTools {
 	//
 
 	abstract class SwfLibraryDefine {
-		public string ExportName = string.Empty;
+		public string ExportName;
 	}
 
 	class SwfLibraryShapeDefine : SwfLibraryDefine
 	{
-		public readonly (ushort, SwfMatrix)[] Bitmaps;
-		public SwfLibraryShapeDefine((ushort, SwfMatrix)[] bitmaps) => Bitmaps = bitmaps;
+		public readonly (BitmapId, SwfMatrix)[] Bitmaps;
+		public SwfLibraryShapeDefine((BitmapId, SwfMatrix)[] bitmaps) => Bitmaps = bitmaps;
 	}
 
 	class SwfLibraryBitmapDefine : SwfLibraryDefine {
@@ -27,39 +27,38 @@ namespace FTSwfTools {
 
 	class SwfLibrarySpriteDefine : SwfLibraryDefine {
 		public readonly SwfTagBase[] ControlTags;
+
 		public SwfLibrarySpriteDefine(SwfTagBase[] controlTags) => ControlTags = controlTags;
 	}
 
 	class SwfLibrary {
-		readonly SortedDictionary<ushort, SwfLibraryDefine> _defines = new();
+		readonly SortedDictionary<DefineId, SwfLibraryDefine> _defines = new();
 
-		public SwfLibraryDefine this[ushort define_id] => _defines[define_id];
+		public SwfLibraryDefine this[DefineId define_id] => _defines[define_id];
 
-		public void Add(ushort define_id, SwfLibraryDefine define) => _defines.Add(define_id, define);
+		public void Add(DefineId define_id, SwfLibraryDefine define) => _defines.Add(define_id, define);
 
-		public SwfLibraryShapeDefine GetShapeDefine(ushort define_id) => (SwfLibraryShapeDefine) _defines[define_id];
-		public SwfLibrarySpriteDefine GetSpriteDefine(ushort define_id) => (SwfLibrarySpriteDefine) _defines[define_id];
+		public SwfLibraryShapeDefine GetShapeDefine(DefineId define_id) => (SwfLibraryShapeDefine) _defines[define_id];
+		public SwfLibrarySpriteDefine GetSpriteDefine(DefineId define_id) => (SwfLibrarySpriteDefine) _defines[define_id];
 
 		public IEnumerable<SwfLibrarySpriteDefine> GetSpriteDefines() => _defines.Values.OfType<SwfLibrarySpriteDefine>();
 
-		public Dictionary<ushort, IBitmapData> GetBitmaps()
+		public Dictionary<BitmapId, IBitmapData> GetBitmaps()
 		{
 			return _defines
 				.Where(p => p.Value is SwfLibraryBitmapDefine)
 				.ToDictionary(
-					p => p.Key,
+					p => (BitmapId) p.Key,
 					p => ((SwfLibraryBitmapDefine) p.Value).Data);
 		}
 	}
-
-	enum Depth : ushort { }
 
 	//
 	// SwfDisplayList
 	//
 
 	abstract class SwfDisplayInstance {
-		public ushort            Id;
+		public DefineId          Id;
 		public Depth             Depth;
 		public Depth             ClipDepth;
 		public bool              Visible;
@@ -72,6 +71,7 @@ namespace FTSwfTools {
 	}
 
 	class SwfDisplayBitmapInstance : SwfDisplayInstance {
+		public BitmapId Bitmap => (BitmapId) Id;
 	}
 
 	class SwfDisplaySpriteInstance : SwfDisplayInstance {

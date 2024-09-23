@@ -2,7 +2,7 @@
 
 namespace FTSwfTools.SwfTags {
 	class PlaceObjectTag : SwfTagBase {
-		public ushort            CharacterId;
+		public DefineId          CharacterId;
 		public Depth             Depth;
 		public SwfMatrix         Matrix;
 		public SwfColorTransform ColorTransform;
@@ -10,7 +10,7 @@ namespace FTSwfTools.SwfTags {
 		public static PlaceObjectTag Create(SwfStreamReader reader) {
 			return new PlaceObjectTag
 			{
-				CharacterId = reader.ReadUInt16(),
+				CharacterId = (DefineId) reader.ReadUInt16(),
 				Depth = (Depth) reader.ReadUInt16(),
 				Matrix = SwfMatrix.Read(reader),
 				ColorTransform = reader.IsEOF ? default : SwfColorTransform.Read(reader, false)

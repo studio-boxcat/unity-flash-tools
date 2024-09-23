@@ -4,43 +4,6 @@ using FTSwfTools.SwfTypes;
 using UnityEngine.Assertions;
 
 namespace FTEditor {
-	readonly struct SwfBlendModeData {
-		public enum Types : byte {
-			Normal,
-			Layer,
-			Multiply,
-			Screen,
-			Lighten,
-			Add,
-			Subtract,
-		}
-		public readonly Types type;
-
-		SwfBlendModeData(Types type) => this.type = type;
-
-		public static SwfBlendModeData normal => new(Types.Normal);
-
-		public static SwfBlendModeData operator*(SwfBlendModeData a, SwfBlendMode b)
-			=> a.type is (Types.Normal or Types.Layer) ? ((SwfBlendModeData) b) : a;
-
-		public static explicit operator SwfBlendModeData(SwfBlendMode value)
-		{
-			var t = value.Value switch
-			{
-				SwfBlendMode.Mode.Normal => Types.Normal,
-				SwfBlendMode.Mode.Layer => Types.Layer,
-				SwfBlendMode.Mode.Multiply => Types.Multiply,
-				SwfBlendMode.Mode.Screen => Types.Screen,
-				SwfBlendMode.Mode.Lighten => Types.Lighten,
-				SwfBlendMode.Mode.Add => Types.Add,
-				SwfBlendMode.Mode.Subtract => Types.Subtract,
-				_ => throw new System.Exception("Unsupported blend mode: " + value.Value)
-			};
-
-			return new SwfBlendModeData(t);
-		}
-	}
-
 	readonly struct SwfColorTransData
 	{
 		public readonly int Depth;
@@ -92,14 +55,14 @@ namespace FTEditor {
 		}
 		public Types                 Type        = Types.Simple;
 		public Depth                 ClipDepth   = 0; // Stencil
-		public ushort                Bitmap      = 0;
+		public BitmapId              Bitmap      = 0;
 		public SwfMatrix             Matrix      = SwfMatrix.identity; // Bitmap space -> Swf space.
-		public SwfBlendModeData      BlendMode   = SwfBlendModeData.normal;
+		public SwfBlendMode          BlendMode   = SwfBlendMode.Normal;
 		public SwfColorTransData     ColorTrans  = SwfColorTransData.identity;
 		public float                 TintAlpha => ColorTrans.CalculateMul().a;
 
 		public MaterialKey GetMaterialKey()
-			=> new(Type, BlendMode.type, ClipDepth);
+			=> new(Type, BlendMode, ClipDepth);
 
 		public static SwfInstanceData MaskOut(SwfInstanceData mask)
 		{

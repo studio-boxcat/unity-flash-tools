@@ -12,7 +12,7 @@ namespace FTSwfTools.SwfTags {
 		public bool              HasCharacter;
 		public bool              Move;
 		public Depth             Depth;
-		public ushort            CharacterId;
+		public DefineId          CharacterId;
 		public SwfMatrix         Matrix;
 		public SwfColorTransform ColorTransform;
 		public Depth             ClipDepth;
@@ -30,8 +30,8 @@ namespace FTSwfTools.SwfTags {
 			tag.Depth             = (Depth)reader.ReadUInt16();
 
 			tag.CharacterId       = tag.HasCharacter
-				? reader.ReadUInt16()
-				: (ushort)0;
+				? (DefineId) reader.ReadUInt16()
+				: 0;
 
 			tag.Matrix            = tag.HasMatrix
 				? SwfMatrix.Read(reader)

@@ -101,7 +101,7 @@ namespace FTEditor.Importer {
 				library,
 				display_list,
 				SwfMatrix.identity,
-				SwfBlendModeData.normal,
+				SwfBlendMode.Normal,
 				SwfColorTransData.identity,
 				0,
 				0,
@@ -117,7 +117,7 @@ namespace FTEditor.Importer {
 			SwfLibrary            library,
 			SwfDisplayList        display_list,
 			SwfMatrix             parent_matrix,
-			SwfBlendModeData      parent_blend_mode,
+			SwfBlendMode          parent_blend_mode,
 			SwfColorTransData     parent_color_transform,
 			ushort                parent_masked,
 			Depth                 parent_mask,
@@ -138,7 +138,7 @@ namespace FTEditor.Importer {
 				var child_type = ResolveInstType(parent_mask, inst.ClipDepth, masked);
 				var child_depth = ResolveClipDepth(parent_mask, inst.ClipDepth, masked);
 				var child_matrix          = parent_matrix          * inst.Matrix;
-				var child_blend_mode      = parent_blend_mode      * inst.BlendMode;
+				var child_blend_mode      = parent_blend_mode.Composite(inst.BlendMode);
 				var child_color_transform = parent_color_transform * inst.ColorTransform;
 
 				switch ( inst ) {
@@ -172,7 +172,7 @@ namespace FTEditor.Importer {
 					var inst_data = new SwfInstanceData{
 						Type       = child_type,
 						ClipDepth  = child_depth,
-						Bitmap     = b.Id,
+						Bitmap     = b.Bitmap,
 						Matrix     = child_matrix,
 						BlendMode  = child_blend_mode,
 						ColorTrans = child_color_transform};

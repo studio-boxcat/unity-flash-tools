@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using FTSwfTools.SwfTypes;
 using UnityEditor;
 using UnityEngine;
 
@@ -37,6 +38,6 @@ namespace FTEditor.Importer
             return new AtlasDef(data);
         }
 
-        public SpriteData this[ushort id] => _data[id];
+        public SpriteData this[BitmapId id] => _data[(int) id];
     }
 }

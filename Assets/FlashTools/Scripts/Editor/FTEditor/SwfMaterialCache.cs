@@ -5,7 +5,7 @@ using UnityEditor;
 
 using System.IO;
 using System.Collections.Generic;
-using FTSwfTools;
+using FTSwfTools.SwfTypes;
 using JetBrains.Annotations;
 
 namespace FTEditor {
@@ -85,20 +85,10 @@ namespace FTEditor {
 
 		static void SetMaterialProperties(
 			Material               material,
-			SwfBlendModeData.Types blend_mode,
+			SwfBlendMode           blend_mode,
 			Depth                  stencil_id)
 		{
-			var (blendOp, srcBlend, dstBlend) = blend_mode switch
-			{
-				SwfBlendModeData.Types.Normal => (BlendOp: BlendOp.Add, SrcBlend: BlendMode.One, DstBlend: BlendMode.OneMinusSrcAlpha),
-				SwfBlendModeData.Types.Layer => (BlendOp: BlendOp.Add, SrcBlend: BlendMode.One, DstBlend: BlendMode.OneMinusSrcAlpha),
-				SwfBlendModeData.Types.Multiply => (BlendOp: BlendOp.Add, SrcBlend: BlendMode.DstColor, DstBlend: BlendMode.OneMinusSrcAlpha),
-				SwfBlendModeData.Types.Screen => (BlendOp: BlendOp.Add, SrcBlend: BlendMode.OneMinusDstColor, DstBlend: BlendMode.One),
-				SwfBlendModeData.Types.Lighten => (BlendOp: BlendOp.Max, SrcBlend: BlendMode.One, DstBlend: BlendMode.OneMinusSrcAlpha),
-				SwfBlendModeData.Types.Add => (BlendOp: BlendOp.Add, SrcBlend: BlendMode.One, DstBlend: BlendMode.One),
-				SwfBlendModeData.Types.Subtract => (BlendOp: BlendOp.ReverseSubtract, SrcBlend: BlendMode.One, DstBlend: BlendMode.One),
-				_ => throw new UnityException($"SwfMaterialCache. Incorrect blend mode=> {blend_mode}"),
-			};
+			var (blendOp, srcBlend, dstBlend) = blend_mode.GetMaterialiProperties();
 			material.SetFloat("_BlendOp", (int)blendOp);
 			material.SetFloat("_SrcBlend", (int)srcBlend);
 			material.SetFloat("_DstBlend", (int)dstBlend);

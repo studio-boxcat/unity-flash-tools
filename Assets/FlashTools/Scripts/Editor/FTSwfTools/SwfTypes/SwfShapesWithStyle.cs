@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 
 namespace FTSwfTools.SwfTypes {
-	struct SwfShapesWithStyle {
+	readonly struct SwfShapesWithStyle {
 		public enum ShapeStyleType {
 			Shape,
 			Shape2,
@@ -9,54 +9,57 @@ namespace FTSwfTools.SwfTypes {
 			Shape4
 		}
 
-		public struct FillStyle {
-			public SwfFillStyleType Type;
-			public ushort           BitmapId;
-			public SwfMatrix        BitmapMatrix;
+		public readonly struct FillStyle {
+			public readonly SwfFillStyleType Type;
+			public readonly BitmapId         BitmapId;
+			public readonly SwfMatrix        BitmapMatrix;
+
+			public FillStyle(SwfFillStyleType type, BitmapId bitmapId, SwfMatrix bitmapMatrix)
+			{
+				Type = type;
+				BitmapId = bitmapId;
+				BitmapMatrix = bitmapMatrix;
+			}
 
 			public override string ToString() => $"FillStyle. Type: {Type}, BitmapId: {BitmapId}, BitmapMatrix: {BitmapMatrix}";
 		}
 
-		public List<FillStyle> FillStyles;
+		public readonly FillStyle[] FillStyles;
 
-		public static SwfShapesWithStyle identity => new() {FillStyles = new List<FillStyle>()};
+		public SwfShapesWithStyle(FillStyle[] fillStyles) => FillStyles = fillStyles;
 
 		public static SwfShapesWithStyle Read(SwfStreamReader reader, ShapeStyleType style_type) {
-			var shapes = identity;
+			List<FillStyle> fillStyles;
+
 			switch ( style_type ) {
 			case ShapeStyleType.Shape:
-				shapes.FillStyles = ReadFillStyles(reader, false, false);
+				fillStyles = ReadFillStyles(reader, false);
 				SkipLineStyles(reader, false, false, false);
-				ReadShapeRecords(reader, shapes.FillStyles, false, false, false);
+				ReadShapeRecords(reader, fillStyles, false, false, false);
 				break;
 			case ShapeStyleType.Shape2:
-				shapes.FillStyles = ReadFillStyles(reader, true, false);
+				fillStyles = ReadFillStyles(reader, true);
 				SkipLineStyles(reader, true, false, false);
-				ReadShapeRecords(reader, shapes.FillStyles, true, false, false);
+				ReadShapeRecords(reader, fillStyles, true, false, false);
 				break;
 			case ShapeStyleType.Shape3:
-				shapes.FillStyles = ReadFillStyles(reader, true, true);
+				fillStyles = ReadFillStyles(reader, true);
 				SkipLineStyles(reader, true, true, false);
-				ReadShapeRecords(reader, shapes.FillStyles, true, true, false);
+				ReadShapeRecords(reader, fillStyles, true, true, false);
 				break;
 			case ShapeStyleType.Shape4:
-				shapes.FillStyles = ReadFillStyles(reader, true, true);
+				fillStyles = ReadFillStyles(reader, true);
 				SkipLineStyles(reader, true, true, true);
-				ReadShapeRecords(reader, shapes.FillStyles, true, true, true);
+				ReadShapeRecords(reader, fillStyles, true, true, true);
 				break;
 			default:
-				throw new System.Exception(string.Format(
-					"Unsupported ShapeStyleType: {0}", style_type));
+				throw new System.Exception($"Unsupported ShapeStyleType: {style_type}");
 			}
-			return shapes;
+
+			return new SwfShapesWithStyle(fillStyles.ToArray());
 		}
 
-		public override string ToString() {
-			return string.Format(
-				"SwfShapesWithStyle. " +
-				"FillStyles: {0}",
-				FillStyles.Count);
-		}
+		public override string ToString() => $"SwfShapesWithStyle. FillStyles: {FillStyles.Length}";
 
 		// ---------------------------------------------------------------------
 		//
@@ -65,17 +68,19 @@ namespace FTSwfTools.SwfTypes {
 		// ---------------------------------------------------------------------
 
 		static List<FillStyle> ReadFillStyles(
-			SwfStreamReader reader, bool allow_big_array, bool with_alpha)
+			SwfStreamReader reader, bool allow_big_array)
 		{
+			const BitmapId invalid = (BitmapId) ushort.MaxValue;
+
 			ushort count = reader.ReadByte();
-			if ( allow_big_array && count == 255 ) {
+			if ( allow_big_array && count == 255 )
 				count = reader.ReadUInt16();
-			}
+
 			var styles = new List<FillStyle>(count);
 			for ( var i = 0; i < count; ++i )
 			{
-				var style = ReadFillStyle(reader, with_alpha);
-				if (style.BitmapId == ushort.MaxValue)
+				var style = ReadFillStyle(reader);
+				if (style.BitmapId is invalid)
 				{
 					L.W("ReadFillStyles: Unsupported bitmap id");
 					continue;
@@ -89,62 +94,15 @@ namespace FTSwfTools.SwfTypes {
 		// FillStyle
 		// -----------------------------
 
-		static FillStyle ReadFillStyle(SwfStreamReader reader, bool with_alpha) {
-			var fill_style  = new FillStyle();
-			fill_style.Type = SwfFillStyleType.Read(reader);
-			if ( fill_style.Type.IsSolidType ) {
-				SwfColor.Read(reader, with_alpha);
-			}
-			if ( fill_style.Type.IsGradientType ) {
-				SwfMatrix.Read(reader); // GradientMatrix
-				switch ( fill_style.Type.Value ) {
-				case SwfFillStyleType.Type.LinearGradient:
-				case SwfFillStyleType.Type.RadialGradient:
-					SkipGradient(reader, with_alpha); // Gradient
-					break;
-				case SwfFillStyleType.Type.FocalGradient:
-					SkipFocalGradient(reader, with_alpha); // FocalGradient
-					break;
-				}
-			}
-			if ( fill_style.Type.IsBitmapType ) {
-				fill_style.BitmapId     = reader.ReadUInt16();
-				fill_style.BitmapMatrix = SwfMatrix.Read(reader);
-			} else {
-				throw new System.Exception(
-					"Imported .swf file contains vector graphics. " +
-					"You should use Tools/FlashExport.jsfl script for prepare .fla file");
-			}
-			return fill_style;
-		}
+		static FillStyle ReadFillStyle(SwfStreamReader reader) {
+			var type = SwfFillStyleUtils.Read(reader);
+			if (!type.IsBitmapType())
+				throw new System.Exception("Imported .swf file contains solid color fill style. You should use Tools/FlashExport.jsfl script for prepare .fla file");
 
-		// -----------------------------
-		// Gradient
-		// -----------------------------
-
-		static void SkipGradient(SwfStreamReader reader, bool with_alpha) {
-			reader.ReadUnsignedBits(2); // SpreadMode
-			reader.ReadUnsignedBits(2); // InterpolationMode
-			var count = reader.ReadUnsignedBits(4);
-			for ( var i = 0; i < count; ++i ) {
-				reader.ReadByte(); // Ratio
-				SwfColor.Read(reader, with_alpha);
-			}
-		}
-
-		// -----------------------------
-		// FocalGradient
-		// -----------------------------
-
-		static void SkipFocalGradient(SwfStreamReader reader, bool with_alpha) {
-			reader.ReadUnsignedBits(2); // SpreadMode
-			reader.ReadUnsignedBits(2); // InterpolationMode
-			var count = reader.ReadUnsignedBits(4);
-			for ( var i = 0; i < count; ++i ) {
-				reader.ReadByte(); // Ratio
-				SwfColor.Read(reader, with_alpha);
-			}
-			reader.ReadFixedPoint_8_8(); // FocalPoint
+			return new FillStyle(
+				type,
+				(BitmapId) reader.ReadUInt16(),
+				SwfMatrix.Read(reader));
 		}
 
 		// ---------------------------------------------------------------------
@@ -193,7 +151,7 @@ namespace FTSwfTools.SwfTypes {
 				reader.ReadFixedPoint_8_8(); // MiterLimitFactor
 			}
 			if ( has_fill_flag ) {
-				ReadFillStyle(reader, true); // FillStyle
+				ReadFillStyle(reader); // FillStyle
 			} else {
 				SwfColor.Read(reader, true);
 			}
@@ -215,9 +173,7 @@ namespace FTSwfTools.SwfTypes {
 				reader, fill_styles,
 				ref fill_style_bits, ref line_style_bits,
 				allow_big_array, with_alpha, line2_type) )
-			{
-				continue;
-			}
+			{ }
 		}
 
 		static bool ReadShapeRecord(
@@ -245,30 +201,30 @@ namespace FTSwfTools.SwfTypes {
 					!state_fill_style0 && !state_fill_style1 && !state_move_to;
 				if ( is_end_shape_record ) {
 					return true;
-				} else {
-					if ( state_move_to ) {
-						var move_bits = reader.ReadUnsignedBits(5);
-						reader.ReadSignedBits(move_bits); // move_delta_x
-						reader.ReadSignedBits(move_bits); // move_delta_y
-					}
-					if ( state_fill_style0 ) {
-						reader.ReadUnsignedBits(fill_style_bits); // fill_style_0
-					}
-					if ( state_fill_style1 ) {
-						reader.ReadUnsignedBits(fill_style_bits); // fill_style_1
-					}
-					if ( state_line_style ) {
-						reader.ReadUnsignedBits(line_style_bits); // line_style
-					}
-					if ( state_new_styles ) {
-						reader.AlignToByte();
-						fill_styles.AddRange(ReadFillStyles(reader, allow_big_array, with_alpha));
-						SkipLineStyles(reader, allow_big_array, with_alpha, line2_type);
-						fill_style_bits = reader.ReadUnsignedBits(4);
-						line_style_bits = reader.ReadUnsignedBits(4);
-					}
-					return false;
 				}
+
+				if ( state_move_to ) {
+					var move_bits = reader.ReadUnsignedBits(5);
+					reader.ReadSignedBits(move_bits); // move_delta_x
+					reader.ReadSignedBits(move_bits); // move_delta_y
+				}
+				if ( state_fill_style0 ) {
+					reader.ReadUnsignedBits(fill_style_bits); // fill_style_0
+				}
+				if ( state_fill_style1 ) {
+					reader.ReadUnsignedBits(fill_style_bits); // fill_style_1
+				}
+				if ( state_line_style ) {
+					reader.ReadUnsignedBits(line_style_bits); // line_style
+				}
+				if ( state_new_styles ) {
+					reader.AlignToByte();
+					fill_styles.AddRange(ReadFillStyles(reader, allow_big_array));
+					SkipLineStyles(reader, allow_big_array, with_alpha, line2_type);
+					fill_style_bits = reader.ReadUnsignedBits(4);
+					line_style_bits = reader.ReadUnsignedBits(4);
+				}
+				return false;
 			}
 		}
 

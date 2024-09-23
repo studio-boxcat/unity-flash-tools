@@ -41,22 +41,16 @@ namespace FTSwfTools {
 
 			case FrameLabelTag t: executer.Visit(t, displayList); break;
 
-			case ExportAssetsTag t:
+			case NameTag t:
 			{
-				foreach ( var asset_tag in t.AssetTags )
-					executer.Library[asset_tag.Tag].ExportName = asset_tag.Name.Trim();
-				break;
-			}
-			case SymbolClassTag t:
-			{
-				foreach ( var symbol_tag in t.SymbolTags )
-					executer.Library[symbol_tag.Tag].ExportName = symbol_tag.Name.Trim();
+				foreach ( var n in t.Names )
+					executer.Library[n.Tag].ExportName = n.Name;
 				break;
 			}
 
 			case DefineShapeTagBase t:
 			{
-				var bitmap_styles = t.Shapes.FillStyles.Where(p => p.Type.IsBitmapType);
+				var bitmap_styles = t.Shapes.FillStyles.Where(p => p.Type.IsBitmapType());
 				var define = new SwfLibraryShapeDefine(bitmap_styles.Select(p => (p.BitmapId, p.BitmapMatrix)).ToArray());
 				executer.Library.Add(t.ShapeId, define);
 				break;
@@ -106,7 +100,7 @@ namespace FTSwfTools {
 			new_inst.ClipDepth      = 0;
 			new_inst.Visible        = true;
 			new_inst.Matrix         = tag.Matrix;
-			new_inst.BlendMode      = SwfBlendMode.identity;
+			new_inst.BlendMode      = SwfBlendMode.Normal;
 			new_inst.ColorTransform = tag.ColorTransform;
 			dl.Instances.Add(new_inst.Depth, new_inst);
 		}
@@ -125,7 +119,7 @@ namespace FTSwfTools {
 				new_inst.ClipDepth      = tag.HasClipDepth      ? tag.ClipDepth      : (old_inst?.ClipDepth ?? 0);
 				new_inst.Visible        = true;
 				new_inst.Matrix         = tag.HasMatrix         ? tag.Matrix         : (old_inst?.Matrix ?? SwfMatrix.identity);
-				new_inst.BlendMode      = SwfBlendMode.identity;
+				new_inst.BlendMode      = SwfBlendMode.Normal;
 				new_inst.ColorTransform = tag.HasColorTransform ? tag.ColorTransform : (old_inst?.ColorTransform ?? default);
 				dl.Instances.Add(new_inst.Depth, new_inst);
 			} else if ( tag.Move ) { // move character
@@ -149,7 +143,7 @@ namespace FTSwfTools {
 				new_inst.ClipDepth      = tag.HasClipDepth      ? tag.ClipDepth      : old_inst?.ClipDepth ?? 0;
 				new_inst.Visible        = tag.HasVisible        ? tag.Visible        : (old_inst == null || old_inst.Visible);
 				new_inst.Matrix         = tag.HasMatrix         ? tag.Matrix         : old_inst?.Matrix ?? SwfMatrix.identity;
-				new_inst.BlendMode      = tag.HasBlendMode      ? tag.BlendMode      : old_inst?.BlendMode ?? SwfBlendMode.identity;
+				new_inst.BlendMode      = tag.HasBlendMode      ? tag.BlendMode      : old_inst?.BlendMode ?? SwfBlendMode.Normal;
 				new_inst.ColorTransform = tag.HasColorTransform ? tag.ColorTransform : old_inst?.ColorTransform ?? default;
 				dl.Instances.Add(new_inst.Depth, new_inst);
 			} else if ( tag.Move ) { // move character

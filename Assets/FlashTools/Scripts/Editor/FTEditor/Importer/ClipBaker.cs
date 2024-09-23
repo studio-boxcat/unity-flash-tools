@@ -27,23 +27,23 @@ namespace FTEditor.Importer {
 	}
 
 	static class ClipBaker {
-		public static SwfClipAsset.Sequence[] Bake(SwfSymbolData symbol, AtlasDef atlasDef,
+		public static SwfClipAsset.Sequence[] Bake(SwfFrameData[] frames, AtlasDef atlasDef,
 			out Mesh[] meshes,
 			out SwfClipAsset.MaterialGroup[] materialGroups)
 		{
-			var bakedSequences = BakeSequenceDef(symbol, atlasDef);
+			var bakedSequences = BakeSequenceDef(frames, atlasDef);
 			return BuildSequences(bakedSequences, out meshes, out materialGroups);
 		}
 
-		static SequenceDef[] BakeSequenceDef(SwfSymbolData symbol, AtlasDef atlasDef)
+		static SequenceDef[] BakeSequenceDef(SwfFrameData[] frameData, AtlasDef atlasDef)
 		{
-			var frames = new FrameDef[symbol.Frames.Length];
-			Parallel.For(0, symbol.Frames.Length,
-				i => frames[i] = BakeFrame(symbol.Frames[i], atlasDef));
+			var frames = new FrameDef[frameData.Length];
+			Parallel.For(0, frameData.Length,
+				i => frames[i] = BakeFrame(frameData[i], atlasDef));
 
 			var sb = new SequenceBuilder();
-			for (var index = 0; index < symbol.Frames.Length; index++)
-				sb.Feed(symbol.Frames[index], frames[index]);
+			for (var index = 0; index < frameData.Length; index++)
+				sb.Feed(frameData[index], frames[index]);
 			return sb.Flush();
 
 			static FrameDef BakeFrame(SwfFrameData frame, AtlasDef atlasDef)

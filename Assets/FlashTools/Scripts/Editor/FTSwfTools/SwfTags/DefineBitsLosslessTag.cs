@@ -9,11 +9,11 @@ namespace FTSwfTools.SwfTags {
 	}
 
 	interface IDefineBitsLosslessTag : IBitmapData {
-		public ushort CharacterId { get; }
+		public DefineId CharacterId { get; }
 	}
 
 	class DefineBitsLosslessTag : SwfTagBase, IDefineBitsLosslessTag {
-		public ushort CharacterId { get; private set; }
+		public DefineId CharacterId { get; private set; }
 		public byte   BitmapFormat;
 		public ushort BitmapWidth;
 		public ushort BitmapHeight;
@@ -22,7 +22,7 @@ namespace FTSwfTools.SwfTags {
 
 		public static DefineBitsLosslessTag Create(SwfStreamReader reader) {
 			var tag          = new DefineBitsLosslessTag();
-			tag.CharacterId  = reader.ReadUInt16();
+			tag.CharacterId  = (DefineId) reader.ReadUInt16();
 			tag.BitmapFormat = reader.ReadByte();
 			tag.BitmapWidth  = reader.ReadUInt16();
 			tag.BitmapHeight = reader.ReadUInt16();

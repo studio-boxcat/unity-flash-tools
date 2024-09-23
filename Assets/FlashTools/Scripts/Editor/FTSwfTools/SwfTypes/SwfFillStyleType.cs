@@ -1,44 +1,39 @@
 ﻿namespace FTSwfTools.SwfTypes {
-	public struct SwfFillStyleType {
-		public enum Type {
-			SolidColor,
-			LinearGradient,
-			RadialGradient,
-			FocalGradient,
-			RepeatingBitmap,
-			ClippedBitmap,
-			NonSmoothedRepeatingBitmap,
-			NonSmoothedClippedBitmap
-		}
+	enum SwfFillStyleType : byte {
+		SolidColor,
+		LinearGradient,
+		RadialGradient,
+		FocalGradient,
+		RepeatingBitmap,
+		ClippedBitmap,
+		NonSmoothedRepeatingBitmap,
+		NonSmoothedClippedBitmap
+	}
 
-		public Type Value;
-
-		public static SwfFillStyleType Read(SwfStreamReader reader) {
-			var type_id = reader.ReadByte();
-			return new SwfFillStyleType{
-				Value = TypeFromByte(type_id)};
-		}
-
-		public override string ToString() => "SwfFillStyleType. " + $"Type: {Value}";
-
-		public bool IsSolidType => Value == Type.SolidColor;
-		public bool IsBitmapType => Value is Type.RepeatingBitmap or Type.ClippedBitmap or Type.NonSmoothedRepeatingBitmap or Type.NonSmoothedClippedBitmap;
-		public bool IsGradientType => Value is Type.LinearGradient or Type.RadialGradient or Type.FocalGradient;
-
-		static Type TypeFromByte(byte type_id)
+	static class SwfFillStyleUtils
+	{
+		public static SwfFillStyleType Read(SwfStreamReader reader)
 		{
-			return type_id switch
+			var value = reader.ReadByte();
+			return value switch
 			{
-				0x00 => Type.SolidColor,
-				0x10 => Type.LinearGradient,
-				0x12 => Type.RadialGradient,
-				0x13 => Type.FocalGradient,
-				0x40 => Type.RepeatingBitmap,
-				0x41 => Type.ClippedBitmap,
-				0x42 => Type.NonSmoothedRepeatingBitmap,
-				0x43 => Type.NonSmoothedClippedBitmap,
-				_ => throw new System.Exception($"Incorrect fill stype type id: {type_id}")
+				0x00 => SwfFillStyleType.SolidColor,
+				0x10 => SwfFillStyleType.LinearGradient,
+				0x12 => SwfFillStyleType.RadialGradient,
+				0x13 => SwfFillStyleType.FocalGradient,
+				0x40 => SwfFillStyleType.RepeatingBitmap,
+				0x41 => SwfFillStyleType.ClippedBitmap,
+				0x42 => SwfFillStyleType.NonSmoothedRepeatingBitmap,
+				0x43 => SwfFillStyleType.NonSmoothedClippedBitmap,
+				_ => throw new System.Exception($"Incorrect fill stype type id: {value}")
 			};
 		}
+
+		public static bool IsSolidType(this SwfFillStyleType value)
+			=> value is SwfFillStyleType.SolidColor;
+		public static bool IsGradientType(this SwfFillStyleType value)
+			=> value is SwfFillStyleType.LinearGradient or SwfFillStyleType.RadialGradient or SwfFillStyleType.FocalGradient;
+		public static bool IsBitmapType(this SwfFillStyleType value)
+			=> value is SwfFillStyleType.RepeatingBitmap or SwfFillStyleType.ClippedBitmap or SwfFillStyleType.NonSmoothedRepeatingBitmap or SwfFillStyleType.NonSmoothedClippedBitmap;
 	}
 }

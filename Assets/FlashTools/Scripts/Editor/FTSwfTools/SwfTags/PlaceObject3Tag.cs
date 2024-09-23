@@ -18,7 +18,7 @@ namespace FTSwfTools.SwfTags {
 		public bool              HasCacheAsBitmap;
 		public bool              HasBlendMode;
 		public Depth             Depth;
-		public ushort            CharacterId;
+		public DefineId          CharacterId;
 		public SwfMatrix         Matrix;
 		public SwfColorTransform ColorTransform;
 		public ushort            Ratio;
@@ -53,8 +53,8 @@ namespace FTSwfTools.SwfTags {
 				: string.Empty;
 
 			tag.CharacterId       = tag.HasCharacter
-				? reader.ReadUInt16()
-				: (ushort)0;
+				? (DefineId) reader.ReadUInt16()
+				: 0;
 
 			tag.Matrix            = tag.HasMatrix
 				? SwfMatrix.Read(reader)
@@ -81,8 +81,8 @@ namespace FTSwfTools.SwfTags {
 				: SwfSurfaceFilters.identity;
 
 			tag.BlendMode         = tag.HasBlendMode
-				? SwfBlendMode.Read(reader)
-				: SwfBlendMode.identity;
+				? SwfBlendModeUtils.Read(reader)
+				: SwfBlendMode.Normal;
 
 			tag.BitmapCache       = tag.HasCacheAsBitmap && (0 != reader.ReadByte());
 

@@ -1,22 +1,22 @@
 using System;
-using FTSwfTools;
+using FTSwfTools.SwfTypes;
 
 namespace FTEditor
 {
     readonly struct MaterialKey
     {
         public readonly SwfInstanceData.Types Type;
-        public readonly SwfBlendModeData.Types BlendMode;
+        public readonly SwfBlendMode BlendMode;
         public readonly Depth ClipDepth;
 
-        public MaterialKey(SwfInstanceData.Types type, SwfBlendModeData.Types blendMode, Depth clipDepth)
+        public MaterialKey(SwfInstanceData.Types type, SwfBlendMode blendMode, Depth clipDepth)
         {
             Type = type;
             BlendMode = blendMode;
             ClipDepth = clipDepth;
         }
 
-        public void Deconstruct(out SwfInstanceData.Types type, out SwfBlendModeData.Types blendMode, out Depth clipDepth)
+        public void Deconstruct(out SwfInstanceData.Types type, out SwfBlendMode blendMode, out Depth clipDepth)
         {
             type = Type;
             blendMode = BlendMode;

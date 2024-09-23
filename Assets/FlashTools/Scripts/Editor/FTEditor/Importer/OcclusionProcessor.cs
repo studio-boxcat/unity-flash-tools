@@ -11,10 +11,10 @@ namespace FTEditor.Importer
 {
     static class OcclusionProcessor
     {
-        public static void RemoveOccludedPixels(SwfFrameData[] frames, Dictionary<ushort, TextureData> bitmaps)
+        public static void RemoveOccludedPixels(SwfFrameData[] frames, Dictionary<BitmapId, TextureData> bitmaps)
         {
             var framebuffers = new Dictionary<Vector2Int, FramebufferPixel>[frames.Length];
-            var maskBitmaps = new ConcurrentBag<ushort>();
+            var maskBitmaps = new ConcurrentBag<BitmapId>();
 
             // Process each frame
             var t = new TimeLogger("Processing frames");
@@ -180,9 +180,9 @@ namespace FTEditor.Importer
             return new Mask(new HashSet<Vector2Int>(pixels));
         }
 
-        static Dictionary<ushort, bool[,]> BuildVisibilityMap(Dictionary<Vector2Int, FramebufferPixel>[] framebuffers, Dictionary<ushort, TextureData> bitmaps, HashSet<ushort> maskBitmaps)
+        static Dictionary<BitmapId, bool[,]> BuildVisibilityMap(Dictionary<Vector2Int, FramebufferPixel>[] framebuffers, Dictionary<BitmapId, TextureData> bitmaps, HashSet<BitmapId> maskBitmaps)
         {
-            var visibilityMaps = new Dictionary<ushort, bool[,]>();
+            var visibilityMaps = new Dictionary<BitmapId, bool[,]>();
             foreach (var (bitmapId, bitmap) in bitmaps)
             {
                 if (maskBitmaps.Contains(bitmapId)) continue;
@@ -278,13 +278,13 @@ namespace FTEditor.Importer
                 [FieldOffset(0)]
                 public readonly ulong Data;
                 [FieldOffset(0)]
-                public readonly ushort Bitmap;
+                public readonly BitmapId Bitmap;
                 [FieldOffset(2)]
                 public readonly ushort X;
                 [FieldOffset(4)]
                 public readonly ushort Y;
 
-                public Pixel(ushort bitmap, ushort x, ushort y) : this()
+                public Pixel(BitmapId bitmap, ushort x, ushort y) : this()
                 {
                     Bitmap = bitmap;
                     X = x;

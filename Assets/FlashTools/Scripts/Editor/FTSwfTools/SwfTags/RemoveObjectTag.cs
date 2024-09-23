@@ -1,4 +1,6 @@
-﻿namespace FTSwfTools.SwfTags {
+﻿using FTSwfTools.SwfTypes;
+
+namespace FTSwfTools.SwfTags {
 	class RemoveObjectTagBase : SwfTagBase {
 		public Depth Depth;
 	}
