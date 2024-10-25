@@ -145,6 +145,7 @@ namespace FTEditor.Importer
             var sequences = ClipBaker.Bake(frames, atlasDef, out var meshes, out var materialGroups);
 
             // configure
+            CreateClipAssetIfNotExists(ref ClipAsset, this);
             var asset = ClipAsset;
             asset.FrameRate = frameRate;
             asset.Atlas = PublishTexture(Atlas);
@@ -163,6 +164,19 @@ namespace FTEditor.Importer
             // update scene
             SwfEditorUtils.UpdateSceneSwfClips(asset);
             return;
+
+            static void CreateClipAssetIfNotExists(ref SwfClipAsset clipAsset, Object refObject)
+            {
+                if (clipAsset != null) return;
+
+                var refPath = AssetDatabase.GetAssetPath(refObject);
+                var createPath = refPath.Replace(Path.GetExtension(refPath), "_ClipAsset.asset");
+                createPath = AssetDatabase.GenerateUniqueAssetPath(createPath);
+
+                clipAsset = CreateInstance<SwfClipAsset>();
+                AssetDatabase.CreateAsset(clipAsset, createPath);
+            }
+
 
             static Texture2D PublishTexture(Texture2D src)
             {
