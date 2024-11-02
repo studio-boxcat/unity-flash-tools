@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using FTRuntime.Internal;
 using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;
-using UnityEngine;
 
 namespace FTSwfTools {
 

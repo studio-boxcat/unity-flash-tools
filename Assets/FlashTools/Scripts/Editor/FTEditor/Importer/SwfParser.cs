@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
+using FTRuntime.Internal;
 using FTSwfTools;
 using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;

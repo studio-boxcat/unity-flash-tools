@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using FTSwfTools.SwfTypes;
+using FTRuntime.Internal;
 using UnityEngine;
 using UnityEngine.Assertions;
 

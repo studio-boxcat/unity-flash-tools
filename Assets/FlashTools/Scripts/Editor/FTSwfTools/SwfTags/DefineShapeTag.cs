@@ -13,7 +13,7 @@ namespace FTSwfTools.SwfTags {
 			return new DefineShapeTag
 			{
 				ShapeId = (DefineId) reader.ReadUInt16(),
-				ShapeBounds = SwfRect.Read(reader),
+				ShapeBounds = reader.ReadRect(),
 				Shapes = SwfShapesWithStyle.Read(reader, SwfShapesWithStyle.ShapeStyleType.Shape)
 			};
 		}
@@ -24,7 +24,7 @@ namespace FTSwfTools.SwfTags {
 			return new DefineShape2Tag
 			{
 				ShapeId = (DefineId) reader.ReadUInt16(),
-				ShapeBounds = SwfRect.Read(reader),
+				ShapeBounds = reader.ReadRect(),
 				Shapes = SwfShapesWithStyle.Read(reader, SwfShapesWithStyle.ShapeStyleType.Shape2)
 			};
 		}
@@ -35,7 +35,7 @@ namespace FTSwfTools.SwfTags {
 			return new DefineShape3Tag
 			{
 				ShapeId = (DefineId) reader.ReadUInt16(),
-				ShapeBounds = SwfRect.Read(reader),
+				ShapeBounds = reader.ReadRect(),
 				Shapes = SwfShapesWithStyle.Read(reader, SwfShapesWithStyle.ShapeStyleType.Shape3)
 			};
 		}
@@ -48,8 +48,8 @@ namespace FTSwfTools.SwfTags {
 		public static DefineShape4Tag Create(SwfStreamReader reader) {
 			var tag         = new DefineShape4Tag();
 			tag.ShapeId     = (DefineId) reader.ReadUInt16();
-			tag.ShapeBounds = SwfRect.Read(reader);
-			tag.EdgeBounds  = SwfRect.Read(reader);
+			tag.ShapeBounds = reader.ReadRect();
+			tag.EdgeBounds  = reader.ReadRect();
 			tag.Flags       = reader.ReadByte();
 			tag.Shapes      = SwfShapesWithStyle.Read(reader, SwfShapesWithStyle.ShapeStyleType.Shape4);
 			return tag;

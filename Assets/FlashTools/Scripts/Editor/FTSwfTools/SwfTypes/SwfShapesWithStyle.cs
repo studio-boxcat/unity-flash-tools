@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using FTRuntime.Internal;
 
 namespace FTSwfTools.SwfTypes {
 	readonly struct SwfShapesWithStyle {
@@ -102,7 +103,7 @@ namespace FTSwfTools.SwfTypes {
 			return new FillStyle(
 				type,
 				(BitmapId) reader.ReadUInt16(),
-				SwfMatrix.Read(reader));
+				reader.ReadMatrix());
 		}
 
 		// ---------------------------------------------------------------------

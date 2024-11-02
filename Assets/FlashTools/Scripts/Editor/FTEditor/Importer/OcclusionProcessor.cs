@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using FTRuntime.Internal;
 using FTSwfTools.SwfTypes;
 using JetBrains.Annotations;
 using UnityEngine;

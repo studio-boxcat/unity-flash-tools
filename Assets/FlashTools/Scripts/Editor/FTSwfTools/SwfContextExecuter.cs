@@ -1,5 +1,6 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
+using FTRuntime.Internal;
 using FTSwfTools.SwfTags;
 using FTSwfTools.SwfTypes;
 using UnityEngine;

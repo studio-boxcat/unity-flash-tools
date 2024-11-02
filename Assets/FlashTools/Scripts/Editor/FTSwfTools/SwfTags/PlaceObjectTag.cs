@@ -1,4 +1,5 @@
-﻿using FTSwfTools.SwfTypes;
+﻿using FTRuntime.Internal;
+using FTSwfTools.SwfTypes;
 
 namespace FTSwfTools.SwfTags {
 	class PlaceObjectTag : SwfTagBase {
@@ -12,7 +13,7 @@ namespace FTSwfTools.SwfTags {
 			{
 				CharacterId = (DefineId) reader.ReadUInt16(),
 				Depth = (Depth) reader.ReadUInt16(),
-				Matrix = SwfMatrix.Read(reader),
+				Matrix = reader.ReadMatrix(),
 				ColorTransform = reader.IsEOF ? default : SwfColorTransform.Read(reader, false)
 			};
 		}

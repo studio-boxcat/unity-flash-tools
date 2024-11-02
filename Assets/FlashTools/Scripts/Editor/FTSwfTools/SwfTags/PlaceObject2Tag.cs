@@ -1,5 +1,5 @@
-﻿using FTSwfTools.SwfTypes;
-using UnityEngine;
+﻿using FTRuntime.Internal;
+using FTSwfTools.SwfTypes;
 
 namespace FTSwfTools.SwfTags {
 	class PlaceObject2Tag : SwfTagBase {
@@ -34,7 +34,7 @@ namespace FTSwfTools.SwfTags {
 				: 0;
 
 			tag.Matrix            = tag.HasMatrix
-				? SwfMatrix.Read(reader)
+				? reader.ReadMatrix()
 				: SwfMatrix.identity;
 
 			tag.ColorTransform    = tag.HasColorTransform

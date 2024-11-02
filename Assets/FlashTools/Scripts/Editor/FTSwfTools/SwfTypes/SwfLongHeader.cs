@@ -10,7 +10,7 @@ namespace FTSwfTools.SwfTypes {
 		public static SwfLongHeader Read(SwfStreamReader reader) {
 			return new SwfLongHeader{
 				ShortHeader = SwfShortHeader.Read(reader),
-				FrameSize   = SwfRect.Read(reader),
+				FrameSize   = reader.ReadRect(),
 				FrameRate   = reader.ReadFixedPoint_8_8(),
 				FrameCount  = reader.ReadUInt16()};
 		}

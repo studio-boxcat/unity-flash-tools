@@ -1,4 +1,4 @@
-﻿using FTSwfTools;
+﻿using FTRuntime.Internal;
 using UnityEngine;
 using FTSwfTools.SwfTypes;
 using UnityEngine.Assertions;
