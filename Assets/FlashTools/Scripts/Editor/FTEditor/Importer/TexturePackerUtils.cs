@@ -17,7 +17,7 @@ namespace FTEditor.Importer
                 "--algorithm Polygon " +
                 "--trim-mode Polygon " +
                 "--trim-margin 0 " +
-                "--tracer-tolerance 80 " +
+                "--tracer-tolerance 200 " +
                 "--extrude 0 " +
                 $"--shape-padding {shapePadding} " +
                 "--pack-mode Best " +
