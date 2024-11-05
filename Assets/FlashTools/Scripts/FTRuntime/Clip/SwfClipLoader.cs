@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -13,7 +13,7 @@ namespace FTRuntime
         {
             public AssetBundle Bundle;
             public SwfClip Clip;
-            public Action<SwfClip> Complete;
+            [CanBeNull] public Action<SwfClip> Completed;
         }
 
         static readonly Dictionary<string, State> _states = new();
@@ -54,7 +54,7 @@ namespace FTRuntime
             }
         }
 
-        public static void Load(string name, [NotNull] Action<SwfClip> onComplete)
+        public static void Load(string name, [CanBeNull] Action<SwfClip> completed)
         {
             L.I($"Load: {name} (async)");
 
@@ -62,16 +62,16 @@ namespace FTRuntime
             {
                 if (state.Clip is not null)
                 {
-                    onComplete(state.Clip);
+                    completed?.Invoke(state.Clip);
                     return;
                 }
 
                 L.W($"Request for {name} is in progress.");
-                state.Complete += onComplete;
+                state.Completed += completed;
                 return;
             }
 
-            state = new State { Complete = onComplete };
+            state = new State { Completed = completed };
             _states.Add(name, state);
             var op = AssetBundle.LoadFromFileAsync(GetPath(name));
             op.completed += _processLoadedBundle ??= ProcessLoadedBundle;
@@ -98,8 +98,8 @@ namespace FTRuntime
                 clip.Init(state.Bundle);
             }
 
-            state.Complete.Invoke(clip);
-            state.Complete = null;
+            state.Completed?.Invoke(clip);
+            state.Completed = null;
         }
 
         static StringBuilder _pathBuilder;
