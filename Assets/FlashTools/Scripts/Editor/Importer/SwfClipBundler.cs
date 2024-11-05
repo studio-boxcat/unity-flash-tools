@@ -3,6 +3,7 @@ using System.Linq;
 using FTRuntime;
 using UnityEditor;
 using UnityEngine.Assertions;
+using AssetBundleBuild = UnityEditor.AssetBundleBuild;
 
 namespace FTEditor.Importer
 {
@@ -66,16 +67,11 @@ namespace FTEditor.Importer
             {
                 Assert.IsFalse(string.IsNullOrEmpty(ci.BundleName), "BundleName is empty");
 
-                var assets = new UnityEngine.Object[] { ci.Clip, ci.Atlas, ci.Mesh }
-                    .Where(x => x is not null)
-                    .Select(AssetDatabase.GetAssetPath)
-                    .ToArray();
-
                 return new AssetBundleBuild
                 {
                     assetBundleName = ci.BundleName,
-                    assetNames = assets,
-                    addressableNames = new[] { ci.BundleName, null, null } // override clip name to bundle name
+                    assetNames = new[] { AssetDatabase.GetAssetPath(ci.Clip) },
+                    addressableNames = new[] { ci.BundleName } // override clip name to bundle name
                 };
             }
         }
