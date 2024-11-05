@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace FTRuntime
 {
@@ -13,6 +14,7 @@ namespace FTRuntime
     // strong type
     public enum SwfSequenceId : uint { }
 
+    [Preserve]
     public partial class SwfClip : ScriptableObject
     {
         public byte FrameRate = 8; // FramePerSecond

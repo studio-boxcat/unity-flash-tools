@@ -1,10 +1,11 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.Scripting;
 
 namespace FTRuntime
 {
-    [Serializable]
+    [Serializable, Preserve]
     public struct SwfSequence
     {
         [DisplayAsString] public SwfSequenceId Id;

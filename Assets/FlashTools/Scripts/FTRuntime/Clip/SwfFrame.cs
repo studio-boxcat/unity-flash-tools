@@ -1,9 +1,10 @@
 using System;
 using Sirenix.OdinInspector;
+using UnityEngine.Scripting;
 
 namespace FTRuntime
 {
-    [Serializable]
+    [Serializable, Preserve]
     public struct SwfFrame
     {
         [ListDrawerSettings(IsReadOnly = true)]
