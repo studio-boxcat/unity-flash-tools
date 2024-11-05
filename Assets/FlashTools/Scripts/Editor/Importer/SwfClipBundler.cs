@@ -2,6 +2,7 @@ using System.IO;
 using System.Linq;
 using FTRuntime;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.Assertions;
 using AssetBundleBuild = UnityEditor.AssetBundleBuild;
 
@@ -24,6 +25,9 @@ namespace FTEditor.Importer
 
         static void BundleAllPlatforms(SwfClipImporter[] target)
         {
+            foreach (var ci in target)
+                ci.hideFlags = HideFlags.DontUnloadUnusedAsset; // prevent unloading during build.
+
             Bundle(target, BuildTarget.iOS);
             Bundle(target, BuildTarget.Android);
         }
@@ -45,7 +49,7 @@ namespace FTEditor.Importer
 
             // build asset bundles.
             L.I($"Building {target.Length} bundles to {outDir}...\n" +
-                $"builds: {string.Join(", ", target.Select(x => x.name))}");
+                $"builds={string.Join(", ", target.Select(x => x.name))}, target={buildTarget}");
             var builds = target.Select(ToBuildScheme).ToArray();
             var manifest = BuildPipeline.BuildAssetBundles(outDir, builds,
                 BuildAssetBundleOptions.DisableLoadAssetByFileNameWithExtension,
