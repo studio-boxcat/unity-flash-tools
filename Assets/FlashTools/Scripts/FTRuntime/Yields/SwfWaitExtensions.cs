@@ -11,7 +11,7 @@
 		/// <returns>Yield instruction for wait animation stop event</returns>
 		/// <param name="ctrl">The controller</param>
 		public static SwfWaitStopPlaying WaitForStopPlaying(
-			this SwfClipPhasor ctrl)
+			this SwfPhasor ctrl)
 		{
 			return new SwfWaitStopPlaying(ctrl);
 		}
@@ -20,7 +20,7 @@
 		/// <returns>Yield instruction for wait animation play event</returns>
 		/// <param name="ctrl">The controller</param>
 		public static SwfWaitPlayStopped WaitForPlayStopped(
-			this SwfClipPhasor ctrl)
+			this SwfPhasor ctrl)
 		{
 			return new SwfWaitPlayStopped(ctrl);
 		}
@@ -36,7 +36,7 @@
 		/// <param name="ctrl">The clip controller</param>
 		/// <param name="rewind">If set to <c>true</c> rewind animation to begin frame</param>
 		public static SwfWaitStopPlaying PlayAndWaitStop(
-			this SwfClipPhasor ctrl, bool rewind)
+			this SwfPhasor ctrl, bool rewind)
 		{
 			ctrl.Play(rewind);
 			return WaitForStopPlaying(ctrl);
@@ -47,7 +47,7 @@
 		/// <param name="ctrl">The clip controller</param>
 		/// <param name="sequence">The new sequence</param>
 		public static SwfWaitStopPlaying PlayAndWaitStop(
-			this SwfClipPhasor ctrl, string sequence)
+			this SwfPhasor ctrl, SwfSequenceId sequence)
 		{
 			ctrl.Play(sequence);
 			return WaitForStopPlaying(ctrl);
@@ -64,7 +64,7 @@
 		/// <param name="ctrl">The clip controller</param>
 		/// <param name="frame">The new current frame</param>
 		public static SwfWaitStopPlaying GotoAndPlayAndWaitStop(
-			this SwfClipPhasor ctrl, int frame)
+			this SwfPhasor ctrl, ushort frame)
 		{
 			ctrl.GotoAndPlay(frame);
 			return WaitForStopPlaying(ctrl);
@@ -76,7 +76,7 @@
 		/// <param name="sequence">The new sequence</param>
 		/// <param name="frame">The new current frame</param>
 		public static SwfWaitStopPlaying GotoAndPlayAndWaitStop(
-			this SwfClipPhasor ctrl, string sequence, int frame)
+			this SwfPhasor ctrl, SwfSequenceId sequence, ushort frame)
 		{
 			ctrl.GotoAndPlay(sequence, frame);
 			return WaitForStopPlaying(ctrl);
@@ -93,7 +93,7 @@
 		/// <param name="ctrl">The clip controller</param>
 		/// <param name="rewind">If set to <c>true</c> rewind animation to begin frame</param>
 		public static SwfWaitPlayStopped StopAndWaitPlay(
-			this SwfClipPhasor ctrl, bool rewind)
+			this SwfPhasor ctrl, bool rewind)
 		{
 			ctrl.Stop(rewind);
 			return WaitForPlayStopped(ctrl);
@@ -104,7 +104,7 @@
 		/// <param name="ctrl">The clip controller</param>
 		/// <param name="sequence">The new sequence</param>
 		public static SwfWaitPlayStopped StopAndWaitPlay(
-			this SwfClipPhasor ctrl, string sequence)
+			this SwfPhasor ctrl, SwfSequenceId sequence)
 		{
 			ctrl.Stop(sequence);
 			return WaitForPlayStopped(ctrl);
@@ -121,7 +121,7 @@
 		/// <param name="ctrl">The clip controller</param>
 		/// <param name="frame">The new current frame</param>
 		public static SwfWaitPlayStopped GotoAndStopAndWaitPlay(
-			this SwfClipPhasor ctrl, int frame)
+			this SwfPhasor ctrl, ushort frame)
 		{
 			ctrl.GotoAndStop(frame);
 			return WaitForPlayStopped(ctrl);
@@ -133,7 +133,7 @@
 		/// <param name="sequence">The new sequence</param>
 		/// <param name="frame">The new current frame</param>
 		public static SwfWaitPlayStopped GotoAndStopAndWaitPlay(
-			this SwfClipPhasor ctrl, string sequence, int frame)
+			this SwfPhasor ctrl, SwfSequenceId sequence, ushort frame)
 		{
 			ctrl.GotoAndStop(sequence, frame);
 			return WaitForPlayStopped(ctrl);

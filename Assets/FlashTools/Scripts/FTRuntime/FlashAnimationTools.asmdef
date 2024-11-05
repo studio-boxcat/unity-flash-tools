@@ -1,8 +1,4 @@
 {
     "name": "FlashAnimationTools",
-    "references": [],
-    "optionalUnityReferences": [],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false
+    "allowUnsafeCode": true
 }

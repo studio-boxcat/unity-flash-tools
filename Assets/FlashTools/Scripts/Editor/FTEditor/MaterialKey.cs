@@ -1,5 +1,5 @@
-using System;
-using FTSwfTools.SwfTypes;
+using System.Collections.Generic;
+using FTSwfTools;
 
 namespace FTEditor
 {
@@ -23,8 +23,26 @@ namespace FTEditor
             clipDepth = ClipDepth;
         }
 
-        public bool Equals(MaterialKey other) => Type == other.Type && BlendMode == other.BlendMode && ClipDepth == other.ClipDepth;
-        public override bool Equals(object obj) => obj is MaterialKey other && Equals(other);
-        public override int GetHashCode() => HashCode.Combine((int) Type, (int) BlendMode, (int) ClipDepth);
+        public bool Equals(MaterialKey other)
+            => Type == other.Type && BlendMode == other.BlendMode && ClipDepth == other.ClipDepth;
+
+        public static bool operator ==(MaterialKey a, MaterialKey b) => a.Equals(b);
+        public static bool operator !=(MaterialKey a, MaterialKey b) => !a.Equals(b);
+
+        public static bool Equals(MaterialKey[] a, MaterialKey[] b)
+        {
+            if (a.Length != b.Length) return false;
+            for (var i = 0; i < a.Length; i++)
+                if (a[i] != b[i])
+                    return false;
+            return true;
+        }
+
+        public class Comparer : IEqualityComparer<MaterialKey>
+        {
+            public static readonly Comparer Instance = new();
+            public bool Equals(MaterialKey x, MaterialKey y) => x.Equals(y);
+            public int GetHashCode(MaterialKey obj) => obj.GetHashCode();
+        }
     }
 }

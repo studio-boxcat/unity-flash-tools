@@ -14,7 +14,7 @@ namespace FTEditor {
 		//
 		// ---------------------------------------------------------------------
 
-		public static void DoWithMixedValue(bool mixed, System.Action act) {
+		public static void DoWithMixedValue(bool mixed, Action act) {
 			var last_show_mixed_value = EditorGUI.showMixedValue;
 			EditorGUI.showMixedValue = mixed;
 			try {
@@ -24,16 +24,7 @@ namespace FTEditor {
 			}
 		}
 
-		public static void DoWithEnabledGUI(bool enabled, System.Action act) {
-			EditorGUI.BeginDisabledGroup(!enabled);
-			try {
-				act();
-			} finally {
-				EditorGUI.EndDisabledGroup();
-			}
-		}
-
-		public static void DoRightHorizontalGUI(System.Action act) {
+		public static void DoRightHorizontalGUI(Action act) {
 			GUILayout.BeginHorizontal();
 			GUILayout.FlexibleSpace();
 			try {
@@ -43,7 +34,7 @@ namespace FTEditor {
 			}
 		}
 
-		public static void DoCenterHorizontalGUI(System.Action act) {
+		public static void DoCenterHorizontalGUI(Action act) {
 			GUILayout.BeginHorizontal();
 			GUILayout.FlexibleSpace();
 			try {
@@ -79,13 +70,13 @@ namespace FTEditor {
 			}
 		}
 
-		public static void UpdateSceneSwfClips(SwfClipAsset asset)
+		public static void UpdateSceneSwfClips(SwfClip clip)
 		{
-			var clips = Object.FindObjectsByType<SwfClip>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-				.Where (p => p && p.clip && p.clip == asset)
+			var views = Object.FindObjectsByType<SwfView>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+				.Where (p => p && p.clip && p.clip == clip)
 				.ToList();
-			foreach (var clip in clips)
-				clip.Internal_UpdateAllProperties();
+			foreach (var view in views)
+				view.Editor_OnClipChanges();
 		}
 	}
 }

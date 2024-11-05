@@ -7,12 +7,13 @@
 
 struct swf_appdata_t {
 	float4 vertex    : POSITION;
-	half3 uva        : TEXCOORD0;
+	half2 uv         : TEXCOORD0;
+	fixed4 a         : TEXCOORD1;
 };
 
 struct swf_mask_appdata_t {
 	float4 vertex    : POSITION;
-	half3 uva        : TEXCOORD0;
+	half2 uv         : TEXCOORD0;
 };
 
 struct swf_v2f_t {
@@ -33,17 +34,17 @@ struct swf_mask_v2f_t {
 inline swf_v2f_t swf_vert(swf_appdata_t IN) {
 	swf_v2f_t OUT;
 	OUT.vertex    = UnityObjectToClipPos(IN.vertex);
-	OUT.uv.x      = IN.uva.x;
-	OUT.uv.y      = IN.uva.y;
-	OUT.a         = IN.uva.z;
+	OUT.uv.x      = IN.uv.x;
+	OUT.uv.y      = IN.uv.y;
+	OUT.a         = IN.a.x;
 	return OUT;
 }
 
 inline swf_mask_v2f_t swf_mask_vert(swf_mask_appdata_t IN) {
 	swf_mask_v2f_t OUT;
 	OUT.vertex    = UnityObjectToClipPos(IN.vertex);
-	OUT.uv.x      = IN.uva.x;
-	OUT.uv.y      = IN.uva.y;
+	OUT.uv.x      = IN.uv.x;
+	OUT.uv.y      = IN.uv.y;
 	return OUT;
 }
 

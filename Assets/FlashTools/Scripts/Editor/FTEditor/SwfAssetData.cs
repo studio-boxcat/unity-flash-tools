@@ -1,6 +1,7 @@
-﻿using FTRuntime.Internal;
+﻿using FTRuntime;
+using FTSwfTools;
+using JetBrains.Annotations;
 using UnityEngine;
-using FTSwfTools.SwfTypes;
 using UnityEngine.Assertions;
 
 namespace FTEditor {
@@ -46,47 +47,62 @@ namespace FTEditor {
 		}
 	}
 
-	class SwfInstanceData {
+	readonly struct SwfInstanceData {
 		public enum Types : byte {
 			Simple,
 			Masked,
 			MaskIn,
 			MaskOut
 		}
-		public Types                 Type        = Types.Simple;
-		public Depth                 ClipDepth   = 0; // Stencil
-		public BitmapId              Bitmap      = 0;
-		public SwfMatrix             Matrix      = SwfMatrix.identity; // Bitmap space -> Swf space.
-		public SwfBlendMode          BlendMode   = SwfBlendMode.Normal;
-		public SwfColorTransData     ColorTrans  = SwfColorTransData.identity;
+
+		public readonly Types                 Type;
+		public readonly Depth                 ClipDepth; // Stencil
+		public readonly BitmapId              Bitmap;
+		public readonly SwfMatrix             Matrix; // Bitmap space -> Swf space.
+		public readonly SwfBlendMode          BlendMode;
+		public readonly SwfColorTransData     ColorTrans;
 		public float                 TintAlpha => ColorTrans.CalculateMul().a;
+
+		public SwfInstanceData(Types type, Depth clipDepth, BitmapId bitmap, SwfMatrix matrix, SwfBlendMode blendMode, SwfColorTransData colorTrans)
+		{
+			Type = type;
+			ClipDepth = clipDepth;
+			Bitmap = bitmap;
+			Matrix = matrix;
+			BlendMode = blendMode;
+			ColorTrans = colorTrans;
+		}
 
 		public MaterialKey GetMaterialKey()
 			=> new(Type, BlendMode, ClipDepth);
 
-		public static SwfInstanceData MaskOut(SwfInstanceData mask)
-		{
-			return new SwfInstanceData
-			{
-				Type = Types.MaskOut,
-				ClipDepth = 0,
-				Bitmap     = mask.Bitmap,
-				Matrix     = mask.Matrix,
-				BlendMode  = mask.BlendMode,
-				ColorTrans = mask.ColorTrans,
-			};
-		}
+		[MustUseReturnValue]
+		public SwfInstanceData WithMatrix( SwfMatrix matrix) =>
+			new(Type, ClipDepth, Bitmap, matrix, BlendMode, ColorTrans);
+
+		[MustUseReturnValue]
+		public SwfInstanceData WithBitmap(BitmapId bitmap) =>
+			new(Type, ClipDepth, bitmap, Matrix, BlendMode, ColorTrans);
+
+		public static SwfInstanceData MaskOut(SwfInstanceData mask) =>
+			new(Types.MaskOut, 0, mask.Bitmap, mask.Matrix, mask.BlendMode, mask.ColorTrans);
+
+		public bool Equals(SwfInstanceData other) =>
+			Type == other.Type
+			&& ClipDepth == other.ClipDepth
+			&& Bitmap == other.Bitmap
+			&& Matrix.Equals(other.Matrix)
+			&& BlendMode == other.BlendMode
+			&& ColorTrans.Equals(other.ColorTrans);
 	}
 
 	readonly struct SwfFrameData {
 		public readonly string            Anchor;
-		public readonly string[]          Labels;
 		public readonly SwfInstanceData[] Instances;
 
-		public SwfFrameData(string anchor, string[] labels, SwfInstanceData[] instances)
+		public SwfFrameData(string anchor, SwfInstanceData[] instances)
 		{
 			Anchor = anchor;
-			Labels = labels;
 			Instances = instances;
 		}
 	}
