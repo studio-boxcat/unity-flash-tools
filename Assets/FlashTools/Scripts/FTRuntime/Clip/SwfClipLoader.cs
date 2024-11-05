@@ -34,7 +34,6 @@ namespace FTRuntime
                 {
                     var clip = (SwfClip) state.Bundle.LoadAsset(name);
                     state.Clip = clip;
-                    clip.Init(state.Bundle);
                     return clip;
                 }
             }
@@ -47,7 +46,6 @@ namespace FTRuntime
             {
                 var bundle = AssetBundle.LoadFromFile(GetPath(name));
                 var clip = (SwfClip) bundle.LoadAsset(name);
-                clip.Init(bundle);
                 state.Bundle = bundle;
                 state.Clip = clip;
                 return clip;
@@ -91,17 +89,12 @@ namespace FTRuntime
         {
             var clip = (SwfClip) ((AssetBundleRequest) op).asset;
             var state = _states[clip.name];
-
-            if (state.Clip is null)
-            {
-                state.Clip = clip;
-                clip.Init(state.Bundle);
-            }
-
+            state.Clip ??= clip;
             state.Completed?.Invoke(clip);
             state.Completed = null;
         }
 
+        const string _subdir = "clips";
         static StringBuilder _pathBuilder;
         static int _pathBaseLength;
 
@@ -109,7 +102,12 @@ namespace FTRuntime
         {
             if (_pathBuilder is null)
             {
-                _pathBuilder = new StringBuilder(Application.streamingAssetsPath).Append("/SwfClips/");
+#if UNITY_EDITOR
+                _pathBuilder = new StringBuilder(GetBuildDir(UnityEditor.BuildTarget.iOS));
+#else
+                _pathBuilder = new StringBuilder(Application.streamingAssetsPath).Append("/" + _subdir + "/");
+#endif
+
                 _pathBaseLength = _pathBuilder.Length;
             }
 
@@ -133,6 +131,16 @@ namespace FTRuntime
                     }
                     _states.Clear();
                 }
+            };
+        }
+
+        internal static string GetBuildDir(UnityEditor.BuildTarget buildTarget)
+        {
+            return buildTarget switch
+            {
+                UnityEditor.BuildTarget.iOS => "proj-ios/Data/Raw/" + _subdir + "/",
+                UnityEditor.BuildTarget.Android => "proj-android/unityLibrary/src/main/assets/" + _subdir + "/",
+                _ => throw new NotSupportedException($"Unsupported build target: {buildTarget}"),
             };
         }
 #endif

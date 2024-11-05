@@ -1,4 +1,6 @@
 using System.Collections.Generic;
+using System.IO;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -31,6 +33,22 @@ namespace FTEditor
             }
 
             return true;
+        }
+
+        public static void GetOrCreateAsset<T>(ref T asset, Object refObject, string name) where T : Object, new()
+        {
+            if (asset != null)
+                return;
+
+            var path = Path.GetDirectoryName(AssetDatabase.GetAssetPath(refObject)) + "/" + name;
+            if (File.Exists(path))
+            {
+                asset = AssetDatabase.LoadAssetAtPath<T>(path);
+                return;
+            }
+
+            asset = new T();
+            AssetDatabase.CreateAsset(asset, path);
         }
     }
 }

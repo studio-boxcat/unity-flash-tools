@@ -15,7 +15,7 @@ namespace FTRuntime
     public enum SwfSequenceId : uint { }
 
     [Preserve]
-    public partial class SwfClip : ScriptableObject
+    public class SwfClip : ScriptableObject
     {
         public byte FrameRate = 8; // FramePerSecond
         [SerializeField, Required, AssetsOnly]
@@ -24,12 +24,8 @@ namespace FTRuntime
         public SwfFrame[] Frames;
         [ListDrawerSettings(IsReadOnly = true)]
         public SwfSequence[] Sequences;
-        public ushort MeshCount;
-
-        MeshCatalog _meshes;
-
-        public void Init(AssetBundle bundle)
-            => _meshes = new MeshCatalog(bundle, MeshCount);
+        [SerializeField, Required, AssetsOnly]
+        public Mesh Mesh;
 
         public SwfFrame GetFrame(SwfFrameId id)
             => Frames[(int) id];
@@ -44,11 +40,6 @@ namespace FTRuntime
         }
 
         public void BuildMesh(SwfFrameId frame, Mesh mesh)
-        {
-#if UNITY_EDITOR
-            Editor_LoadMeshCatalog();
-#endif
-            MeshBuilder.Build(GetFrame(frame), _meshes, mesh);
-        }
+            => MeshBuilder.Build(GetFrame(frame), Mesh, mesh);
     }
 }

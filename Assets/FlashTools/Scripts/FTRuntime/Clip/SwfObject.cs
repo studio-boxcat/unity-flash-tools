@@ -7,12 +7,12 @@ namespace FTRuntime
     public struct SwfObject
     {
         [DisplayAsString]
-        public MeshId MeshIndex;
+        public ushort MeshIndex;
         public SwfMatrix Matrix;
         [DisplayAsString]
         public byte Alpha;
 
-        public SwfObject(MeshId meshIndex, SwfMatrix matrix, byte alpha)
+        public SwfObject(ushort meshIndex, SwfMatrix matrix, byte alpha)
         {
             MeshIndex = meshIndex;
             Matrix = matrix;

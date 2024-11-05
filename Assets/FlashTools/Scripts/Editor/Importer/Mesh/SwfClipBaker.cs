@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using FTRuntime;
+using FTSwfTools;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -8,25 +9,27 @@ namespace FTEditor.Importer
 {
     static class SwfClipBaker
     {
-        public static void Bake(SwfFrameData[] data, Mesh[] objMeshes, MeshId[] bitmapToMesh, out SwfFrame[] frames, out SwfSequence[] sequences)
+        public static void Bake(SwfFrameData[] data, Mesh catalogMesh, MeshId[] bitmapToMesh, out SwfFrame[] frames, out SwfSequence[] sequences)
         {
-            frames = BuildFrames(data, objMeshes, bitmapToMesh, out var frameMap, out var materialGroups);
+            frames = BuildFrames(data, catalogMesh, bitmapToMesh, out var frameMap, out var materialGroups);
             sequences = BuildSequences(data, frameMap, materialGroups);
         }
 
         static SwfFrame[] BuildFrames( // returns: asset frames
             SwfFrameData[] data,
-            Mesh[] objMeshes, // asset frame index -> mesh
+            Mesh catalogMesh, // asset frame index -> mesh
             MeshId[] bitmapToMesh, // BitmapId -> MeshId
             out Dictionary<int, SwfFrameId> frameMap, // swf frame index -> asset frame index
             out MaterialGroupIndex[] materialGroups) // asset frame index -> material group index
         {
             // get index counts.
-            var indexCounts = new ushort[objMeshes.Length];
-            for (var i = 0; i < objMeshes.Length; i++)
+            var meshCount = catalogMesh.subMeshCount;
+            var indexCounts = new ushort[meshCount];
+            for (var i = 0; i < meshCount; i++)
             {
-                if (objMeshes[i] == null) continue;
-                indexCounts[i] = (ushort) objMeshes[i].GetIndexCount(0);
+                var indexCount = catalogMesh.GetSubMesh(i).indexCount;
+                Assert.AreNotEqual(0, indexCount, "Index count must not be zero");
+                indexCounts[i] = (ushort) indexCount;
             }
 
             // build frames.

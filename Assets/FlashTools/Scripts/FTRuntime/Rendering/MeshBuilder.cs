@@ -33,7 +33,7 @@ namespace FTRuntime
             });
         }
 
-        internal static void Build(SwfFrame frame, MeshCatalog meshCatalog, Mesh mesh)
+        internal static void Build(SwfFrame frame, Mesh catalogMesh, Mesh mesh)
         {
             Assert.AreEqual(VertexAttributeFormat.Float32, mesh.GetVertexAttributeFormat(VertexAttribute.Position), "Position format mismatch");
             Assert.AreEqual(3, mesh.GetVertexAttributeDimension(VertexAttribute.Position), "Position dimension mismatch");
@@ -52,14 +52,16 @@ namespace FTRuntime
             for (var i = 0; i < objCount; i++)
             {
                 var obj = objs[i];
-                var objMesh = meshCatalog[obj.MeshIndex];
-                Assert.IsNotNull(objMesh, $"Mesh {obj.MeshIndex} is not found");
+                var subMeshIndex = (int) obj.MeshIndex;
                 cis[i] = new CombineInstance
                 {
-                    mesh = objMesh,
+                    mesh = catalogMesh,
                     transform = (Matrix4x4) obj.Matrix,
+                    subMeshIndex = subMeshIndex,
                 };
-                AlphaBuffer.Append(obj.Alpha, objMesh.vertexCount);
+
+                var desc = catalogMesh.GetSubMesh(subMeshIndex);
+                AlphaBuffer.Append(obj.Alpha, desc.vertexCount);
             }
             mesh.CombineMeshes(cis, true, true);
 

@@ -2,11 +2,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using FTRuntime;
 using FTSwfTools;
 using JetBrains.Annotations;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Assertions;
+using UnityEngine.Rendering;
 
 namespace FTEditor.Importer
 {
@@ -64,83 +67,110 @@ namespace FTEditor.Importer
             return true;
         }
 
-        public static Mesh[] MigrateSpriteToMesh(string atlasPath, string outputDir, out MeshId[] bitmapToMesh)
+        public static void MigrateSpriteToMesh(string atlasPath, Mesh mesh, out MeshId[] bitmapToMesh)
         {
-            // create output directory
-            if (!Directory.Exists(outputDir))
-                Directory.CreateDirectory(outputDir);
-
             // assign mesh id
             var sprites = AssetDatabase.LoadAllAssetsAtPath(atlasPath)
                 .OfType<Sprite>()
                 .Select(x => (Bitmap: (BitmapId) int.Parse(x.name), Sprite: x))
                 .OrderBy(x => (int) x.Bitmap)
                 .ToArray();
-            DeleteFrom(outputDir, (MeshId) sprites.Length); // remove old meshes
 
-            // create meshes
-            var meshCount = sprites.Length;
-            var meshes = new Mesh[meshCount];
-            for (var i = 0; i < meshCount; i++) // mesh index
+            // collect vertices & indices
+            var meshVertices = new List<VertexData>();
+            var meshIndices = new List<ushort>();
+            var subMeshIndices = new List<SubMeshDescriptor>();
+            foreach (var (_, sprite) in sprites)
             {
-                var mesh = CreateOrGetMesh(outputDir, (MeshId) i);
-                SpriteMeshFactory.Set(sprites[i].Sprite, mesh);
-                meshes[i] = mesh;
+                var last = meshIndices.Count;
+                var count = Append(sprite, meshVertices, meshIndices);
+                Assert.AreNotEqual(0, count);
+                subMeshIndices.Add(new SubMeshDescriptor(last, count));
             }
 
+            // build mesh
+            MeshBuilder.SetVertexLayout(mesh, meshVertices.Count);
+            mesh.SetVertexBufferData(meshVertices, 0, 0, meshVertices.Count, stream: 0);
+            mesh.SetIndices(meshIndices.ToArray(), MeshTopology.Triangles, 0, calculateBounds: false);
+            mesh.SetSubMeshes(subMeshIndices);
+            EditorUtility.SetDirty(mesh);
+
             // delete .tpsheet & sub-asset sprites
-            var dataPath = atlasPath.Replace(".png", ".tpsheet");
-            AssetDatabase.DeleteAsset(dataPath);
+            File.Delete(atlasPath.Replace(".png", ".tpsheet"));
             foreach (var (_, sprite) in sprites)
                 AssetDatabase.RemoveObjectFromAsset(sprite);
-
-            // configure texture
-            var ti = (TextureImporter) AssetImporter.GetAtPath(atlasPath);
-            ti.textureType = TextureImporterType.Default;
-            ti.filterMode = FilterMode.Bilinear;
-            ti.alphaIsTransparency = true;
-            ti.mipmapEnabled = false;
 
             // build bitmap to mesh map
             var maxBitmapId = (int) sprites[^1].Bitmap;
             bitmapToMesh = new MeshId[maxBitmapId + 1];
-            for (var i = 0; i < meshCount; i++)
+            for (var i = 0; i < sprites.Length; i++)
             {
                 var bitmap = (int) sprites[i].Bitmap;
                 bitmapToMesh[bitmap] = (MeshId) i;
             }
 
-            return meshes;
+            return;
 
-
-            static Mesh CreateOrGetMesh(string root, MeshId id)
+            static int Append(
+                Sprite sprite,
+                List<VertexData> outVertices,
+                List<ushort> outIndices)
             {
-                var name = id.ToName();
-                var path = $"{root}/{name}.asset";
-                var mesh = AssetDatabase.LoadAssetAtPath<Mesh>(path);
-                if (mesh is not null) return mesh;
+                var inIndices = sprite.triangles;
+                var offset = outVertices.Count;
+                for (var i = 0; i < inIndices.Length; i++)
+                    outIndices.Add((ushort) (inIndices[i] + offset));
+                VertexData.Append(sprite, outVertices);
+                return inIndices.Length;
+            }
+        }
 
-                mesh = MeshBuilder.CreateEmpty(false);
-                AssetDatabase.CreateAsset(mesh, path);
-                return mesh;
+        [StructLayout(LayoutKind.Sequential)]
+        struct VertexData
+        {
+            // XXX: Mesh.CombineMeshes() requires position to be Vector3.
+            public Vector3 Position;
+            public ushort U; // Float16
+            public ushort V; // Float16
+
+            VertexData(Vector3 position, Vector2 uv)
+            {
+                Position = position;
+                U = f16(uv.x);
+                V = f16(uv.y);
+                return;
+
+                static unsafe ushort f16(float x)
+                {
+                    const int infinity_32 = 255 << 23;
+                    const uint msk = 0x7FFFF000u;
+
+                    uint ux = asuint(x);
+                    uint uux = ux & msk;
+                    uint h = asuint(min(asfloat(uux) * 1.92592994e-34f, 260042752.0f)) + 0x1000 >> 13; // Clamp to signed infinity if overflowed
+                    h = select(h, select(0x7c00u, 0x7e00u, (int) uux > infinity_32), (int) uux >= infinity_32); // NaN->qNaN and Inf->Inf
+                    return (ushort) (h | (ux & ~msk) >> 16);
+
+                    static float min(float x, float y) => float.IsNaN(y) || x < y ? x : y;
+                    static uint asuint(float x) => *(uint*) &x;
+                    static uint select(uint falseValue, uint trueValue, bool test) => test ? trueValue : falseValue;
+                    static float asfloat(uint x) => *(float*) &x;
+                }
             }
 
-            static void DeleteFrom(string root, MeshId start)
+            public static void Append(Sprite sprite, List<VertexData> verts)
             {
-                var toDelete = Directory.GetFiles(root, "*.asset")
-                    .Where(x =>
-                    {
-                        var name = Path.GetFileNameWithoutExtension(x);
-                        if (name == "00") return false; // skip SwfClip asset
-                        var id = MeshIdUtils.ToIndex(name);
-                        return id >= start;
-                    })
-                    .ToArray();
-
-                var errors = new List<string>();
-                AssetDatabase.DeleteAssets(toDelete, errors);
-                foreach (var error in errors)
-                    L.E("Failed to delete mesh: " + error);
+                var poses = sprite.vertices;
+                var uvs = sprite.uv;
+                var count = poses.Length;
+                for (var i = 0; i < count; ++i)
+                {
+                    // Sometimes the UVs are out of range.
+                    Assert.IsTrue((uvs[i].x is >= -0.00001f and <= 1.00001f) && (uvs[i].y is >= -0.00001f and <= 1.00001f),
+                        $"Invalid UV: {uvs[i]}");
+                    var p = poses[i] * ImportConfig.PixelsPerUnit; // Scale to Unity units
+                    verts.Add(new VertexData(p, uvs[i]));
+                }
             }
         }
     }

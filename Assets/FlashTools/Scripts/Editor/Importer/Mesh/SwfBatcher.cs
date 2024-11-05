@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using FTRuntime;
+using FTSwfTools;
 using UnityEngine;
 using UnityEngine.Assertions;
 
@@ -39,7 +40,7 @@ namespace FTEditor.Importer
             var a = (byte) Mathf.RoundToInt(mul.a * 0xFF);
 
             // Add object
-            var meshId = bitmapToMesh[(int) inst.Bitmap];
+            var meshId = (ushort) bitmapToMesh[(int) inst.Bitmap];
             _curObjects.Add(new SwfObject(meshId, matrix, a));
         }
 
@@ -110,7 +111,7 @@ namespace FTEditor.Importer
             {
                 var count = 0u;
                 foreach (var obj in objs)
-                    count += indexCounts[obj.MeshIndex.ToPrimitive()];
+                    count += indexCounts[obj.MeshIndex];
                 Assert.IsTrue(count <= ushort.MaxValue, "Index count is too large");
                 return (ushort) count;
             }

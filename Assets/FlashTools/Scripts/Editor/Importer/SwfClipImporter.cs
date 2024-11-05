@@ -5,7 +5,6 @@ using FTSwfTools;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Assertions;
 using UnityEngine.Serialization;
 using Object = UnityEngine.Object;
 
@@ -34,7 +33,7 @@ namespace FTEditor.Importer
 
         [BoxGroup("Intermediates")]
         [SerializeField, Required, AssetsOnly, ListDrawerSettings(IsReadOnly = true)]
-        public Mesh[] Meshes;
+        public Mesh Mesh;
         [BoxGroup("Intermediates"), ListDrawerSettings(IsReadOnly = true)]
         public BitmapRedirect[] BitmapRedirects; // From -> To
         [BoxGroup("Intermediates"), ListDrawerSettings(IsReadOnly = true, ShowIndexLabels = true)]
@@ -80,14 +79,12 @@ namespace FTEditor.Importer
 
             // Export bitmaps
             t = new TimeLogger("BitmapExporter.SaveAsPng");
-            var outDir = ResolveOutDir();
-            var spriteDir = outDir + "/Sprites~";
+            var (atlasPath, spriteDir) = ResolveAtlasDirs();
             BitmapExporter.SaveAsPng(textures, spriteDir);
             t.Dispose();
 
             // Pack atlas
             t = new TimeLogger("Build");
-            var atlasPath = outDir + "/01.png";
             Atlas = AtlasBuilder.PackAtlas(atlasPath, spriteDir, AtlasMaxSize, AtlasShapePadding);
             if (Atlas == null)
             {
@@ -104,7 +101,8 @@ namespace FTEditor.Importer
 
             // Migrate sprite to mesh
             t = new TimeLogger("MigrateSpriteToMesh");
-            Meshes = AtlasBuilder.MigrateSpriteToMesh(atlasPath, outDir, out BitmapToMesh);
+            Utils.GetOrCreateAsset(ref Mesh, Atlas, "02.asset");
+            AtlasBuilder.MigrateSpriteToMesh(atlasPath, Mesh, out BitmapToMesh);
             t.Dispose();
 
             L.I($"Atlas has been successfully built: {atlasPath}", Atlas);
@@ -113,16 +111,22 @@ namespace FTEditor.Importer
         [Button(ButtonSizes.Medium), EnableIf("Atlas")]
         void OptimizeAtlasSize()
         {
-            var outDir = ResolveOutDir();
-            var spriteDir = outDir + "/Sprites~";
-            var atlasPath = outDir + "/01.png";
-
+            var (atlasPath, spriteDir) = ResolveAtlasDirs();
             var result = AtlasOptimizer.Optimize(AtlasMaxSize, AtlasShapePadding, spriteDir, atlasPath, out var newMaxSize);
             if (result is false) return;
 
             Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPath);
             AtlasMaxSize = newMaxSize;
-            Meshes = AtlasBuilder.MigrateSpriteToMesh(atlasPath, outDir, out BitmapToMesh);
+            Utils.GetOrCreateAsset(ref Mesh, Atlas, "02.asset");
+            AtlasBuilder.MigrateSpriteToMesh(atlasPath, Mesh, out BitmapToMesh);
+        }
+
+        (string AtlasPath, string SpriteDir) ResolveAtlasDirs()
+        {
+            var outDir = ResolveOutDir();
+            var spriteDir = outDir + "/Sprites~";
+            var atlasPath = outDir + "/01.png";
+            return (atlasPath, spriteDir);
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Atlas")]
@@ -132,17 +136,16 @@ namespace FTEditor.Importer
             var data = ParseSwfFile(SwfFile, frameRate: out var frameRate, out var library);
             BitmapRedirector.Process(data, BitmapRedirects);
             FlipYAndAdjustPivotToCenter(data, library.GetBitmaps().ToDictionary(x => x.Key, x => x.Value.Size));
-            SwfClipBaker.Bake(data, Meshes, BitmapToMesh, out var frames, out var sequences);
+            SwfClipBaker.Bake(data, Mesh, BitmapToMesh, out var frames, out var sequences);
 
             // configure
-            CreateClipAssetIfNotExists(ref Clip, this);
+            CreateClipAssetIfNotExists(ref Clip, Atlas);
             var asset = Clip;
             asset.FrameRate = frameRate;
             asset.Atlas = Atlas;
             asset.Frames = frames;
             asset.Sequences = sequences;
-            asset.MeshCount = (ushort) Meshes.Length;
-            Assert.IsTrue(asset.MeshCount < byte.MaxValue, "Too many meshes");
+            asset.Mesh = Mesh;
             SwfEditorUtils.DestroySubAssetsOfType(asset, typeof(Mesh)); // Legacy
 
             // save
@@ -155,44 +158,15 @@ namespace FTEditor.Importer
             return;
 
             static void CreateClipAssetIfNotExists(ref SwfClip clipAsset, Object refObject)
-            {
-                if (clipAsset != null) return;
-
-                clipAsset = CreateInstance<SwfClip>();
-                AssetDatabase.CreateAsset(clipAsset, $"{ResolveOutDir(refObject)}/00.asset");
-            }
+                => Utils.GetOrCreateAsset(ref clipAsset, refObject, "00.asset");
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Clip")]
-        void Bundle()
-        {
-            Assert.IsFalse(string.IsNullOrEmpty(BundleName), "BundleName is empty");
-
-            var assets = new List<Object> { Clip, Atlas };
-            assets.AddRange(Meshes);
-
-            var addressableNames = assets.Select(x => x.name).ToArray();
-            addressableNames[0] = BundleName; // override clip name to bundle name
-
-            var build = new AssetBundleBuild
-            {
-                assetBundleName = BundleName,
-                assetNames = assets.Select(AssetDatabase.GetAssetPath).ToArray(),
-                addressableNames = addressableNames,
-            };
-
-            var manifest = BuildPipeline.BuildAssetBundles(
-                "Assets/StreamingAssets/SwfClips",
-                new[] { build },
-                BuildAssetBundleOptions.DisableLoadAssetByFileNameWithExtension,
-                BuildTarget.iOS);
-
-            L.I($"manifest: dep={string.Join(", ", manifest.GetAllDependencies(BundleName))}");
-            Assert.AreEqual(0, manifest.GetAllDependencies(BundleName).Length);
-        }
+        void Bundle() => SwfClipBundler.Bundle(this);
 
         void ISelfValidator.Validate(SelfValidationResult result)
         {
+            // swf file
             if (SwfFile != null)
             {
                 var path = AssetDatabase.GetAssetPath(SwfFile);
@@ -200,15 +174,22 @@ namespace FTEditor.Importer
                     result.AddError("SwfFile must be a .swf file");
             }
 
+            // atlas
+            {
+                var ti = (TextureImporter) AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(Atlas));
+                if (ti.textureType != TextureImporterType.Default)
+                    result.AddError("Atlas must be a default texture type");
+                if (AtlasMaxSize == 2048)
+                    result.AddError("Atlas has never been optimized.");
+            }
+
+            // bundle name
             foreach (var c in BundleName)
             {
                 if (c is >= 'a' and <= 'z' or >= '0' and <= '9') continue;
                 result.AddError("BundleName must be lower case");
                 break;
             }
-
-            if (AtlasMaxSize == 2048)
-                result.AddError("Atlas has never been optimized.");
         }
 
         static SwfFrameData[] ParseSwfFile(Object swfFile, out byte frameRate, out SwfLibrary library)

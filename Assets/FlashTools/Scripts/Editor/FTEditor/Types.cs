@@ -4,6 +4,8 @@ namespace FTSwfTools
 
     enum BitmapId : ushort { }
 
+    enum MeshId : ushort { }
+
     enum Depth : ushort { }
 
     struct SwfVec4Int
