@@ -139,7 +139,7 @@ namespace FTEditor.Importer
             SwfClipBaker.Bake(data, Mesh, BitmapToMesh, out var frames, out var sequences);
 
             // configure
-            CreateClipAssetIfNotExists(ref Clip, Atlas);
+            Utils.GetOrCreateAsset(ref Clip, Atlas, BundleName + ".asset");
             var asset = Clip;
             asset.FrameRate = frameRate;
             asset.Atlas = Atlas;
@@ -155,10 +155,6 @@ namespace FTEditor.Importer
 
             // update scene
             SwfEditorUtils.UpdateSceneSwfClips(asset);
-            return;
-
-            static void CreateClipAssetIfNotExists(ref SwfClip clipAsset, Object refObject)
-                => Utils.GetOrCreateAsset(ref clipAsset, refObject, "00.asset");
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Clip")]
@@ -184,6 +180,12 @@ namespace FTEditor.Importer
             }
 
             // bundle name
+            if (Clip != null)
+            {
+                if (Clip.name != BundleName)
+                    result.AddError("Clip name must be equal to BundleName");
+            }
+
             foreach (var c in BundleName)
             {
                 if (c is >= 'a' and <= 'z' or >= '0' and <= '9') continue;
