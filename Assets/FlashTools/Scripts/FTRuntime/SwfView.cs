@@ -60,6 +60,7 @@ namespace FTRuntime
         public void SetClip(SwfClip clip, SwfSequenceId sequenceId, ushort frame = 0)
         {
             Assert.IsNotNull(clip);
+            Assert.AreNotEqual(default, sequenceId, "Invalid sequenceId: " + sequenceId);
 
             _clip = clip;
             frameRate = _clip.FrameRate;
