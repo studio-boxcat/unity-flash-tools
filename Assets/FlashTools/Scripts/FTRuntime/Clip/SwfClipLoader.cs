@@ -11,9 +11,61 @@ namespace FTRuntime
     {
         class State
         {
-            public AssetBundle Bundle;
-            public SwfClip Clip;
+            [NotNull] public object Current; // SwfClip or AssetBundleRequest or AssetBundleCreateRequest
+            [CanBeNull] public AssetBundle Bundle; // For unloading.
             [CanBeNull] public Action<SwfClip> Completed;
+
+            public State(SwfClip clip, AssetBundle bundle)
+            {
+                Current = clip;
+                Bundle = bundle;
+            }
+
+            public State(AssetBundleCreateRequest req, Action<SwfClip> completed)
+            {
+                Current = req;
+                Completed = completed;
+            }
+
+            public SwfClip CompleteImmediately()
+            {
+                if (Current is SwfClip clip)
+                {
+                    Assert.IsNotNull(clip, "Clip is destroyed.");
+                    return clip;
+                }
+
+                if (Current is AssetBundleRequest br)
+                {
+                    // Note that accessing asset before isDone is true will stall the loading process.
+                    // https://docs.unity3d.com/ScriptReference/AssetBundleRequest-asset.html
+                    clip = (SwfClip) br.asset;
+                    Current = clip;
+                    return clip;
+                }
+
+                // Note that accessing asset before isDone is true will stall the loading process.
+                // https://docs.unity3d.com/ScriptReference/AssetBundleCreateRequest-assetBundle.html
+                // no need to invoke Completed callback as unity will do it.
+                Bundle = ((AssetBundleCreateRequest) Current).assetBundle;
+                clip = Bundle!.LoadAsset<SwfClip>(Bundle.name);
+                Current = clip;
+                return clip;
+            }
+
+            public void AddCompleted(Action<SwfClip> completed)
+            {
+                if (Current is SwfClip clip)
+                {
+                    completed(clip);
+                    return;
+                }
+
+                if (Completed is not null)
+                    Completed += completed;
+                else
+                    Completed = completed;
+            }
         }
 
         static readonly Dictionary<string, State> _states = new();
@@ -23,56 +75,27 @@ namespace FTRuntime
             L.I($"Load: {name}");
 
             if (_states.TryGetValue(name, out var state))
-            {
-                if (state.Clip is not null)
-                {
-                    Assert.IsNotNull(state.Clip, "Clip is destroyed.");
-                    return state.Clip;
-                }
+                return state.CompleteImmediately();
 
-                if (state.Bundle is not null)
-                {
-                    var clip = (SwfClip) state.Bundle.LoadAsset(name);
-                    state.Clip = clip;
-                    return clip;
-                }
-            }
-            else
-            {
-                state = new State();
-                _states.Add(name, state);
-            }
-
-            {
-                var bundle = AssetBundle.LoadFromFile(GetPath(name));
-                var clip = (SwfClip) bundle.LoadAsset(name);
-                state.Bundle = bundle;
-                state.Clip = clip;
-                return clip;
-            }
+            var bundle = AssetBundle.LoadFromFile(GetPath(name));
+            var clip = (SwfClip) bundle.LoadAsset(name);
+            _states.Add(name, new State(clip, bundle));
+            return clip;
         }
 
-        public static void Load(string name, [CanBeNull] Action<SwfClip> completed)
+        public static void LoadAsync(string name, [CanBeNull] Action<SwfClip> completed)
         {
-            L.I($"Load: {name} (async)");
+            L.I($"LoadAsync: {name}");
 
             if (_states.TryGetValue(name, out var state))
             {
-                if (state.Clip is not null)
-                {
-                    completed?.Invoke(state.Clip);
-                    return;
-                }
-
-                L.W($"Request for {name} is in progress.");
-                state.Completed += completed;
+                state.AddCompleted(completed);
                 return;
             }
 
-            state = new State { Completed = completed };
-            _states.Add(name, state);
-            var op = AssetBundle.LoadFromFileAsync(GetPath(name));
-            op.completed += _processLoadedBundle ??= ProcessLoadedBundle;
+            var r = AssetBundle.LoadFromFileAsync(GetPath(name));
+            _states.Add(name, new State(r, completed)); // set _states before registering callback. callback could be invoked immediately.
+            r.completed += _processLoadedBundle ??= ProcessLoadedBundle;
         }
 
         static Action<AsyncOperation> _processLoadedBundle;
@@ -80,8 +103,11 @@ namespace FTRuntime
         {
             var bundle = ((AssetBundleCreateRequest) op).assetBundle;
             var name = bundle.name; // asset name = bundle name
-            _states[name].Bundle = bundle;
-            bundle.LoadAssetAsync<SwfClip>(name).completed += _processLoadedAsset ??= ProcessLoadedAsset;
+            var r = bundle.LoadAssetAsync<SwfClip>(name);
+            var state = _states[name]; // setup state before registering callback. callback could be invoked immediately.
+            state.Current = r;
+            state.Bundle = bundle;
+            r.completed += _processLoadedAsset ??= ProcessLoadedAsset;
         }
 
         static Action<AsyncOperation> _processLoadedAsset;
@@ -89,9 +115,10 @@ namespace FTRuntime
         {
             var clip = (SwfClip) ((AssetBundleRequest) op).asset;
             var state = _states[clip.name];
-            state.Clip ??= clip;
-            state.Completed?.Invoke(clip);
+            state.Current = clip;
+            var callback = state.Completed; // to ensure re-entrance.
             state.Completed = null;
+            callback?.Invoke(clip);
         }
 
         const string _subdir = "clips";
@@ -126,8 +153,8 @@ namespace FTRuntime
                     L.I("Unload all bundles");
                     foreach (var state in _states.Values)
                     {
-                        if (state.Bundle != null)
-                            state.Bundle.Unload(true);
+                        state.CompleteImmediately(); // wait for bundle to be loaded.
+                        state.Bundle!.Unload(true);
                     }
                     _states.Clear();
                 }
