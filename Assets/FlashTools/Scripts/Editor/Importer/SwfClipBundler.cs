@@ -75,7 +75,7 @@ namespace FTEditor.Importer
                 {
                     assetBundleName = ci.BundleName,
                     assetNames = new[] { AssetDatabase.GetAssetPath(ci.Clip) },
-                    addressableNames = new[] { ci.BundleName } // override clip name to bundle name
+                    addressableNames = new[] { ci.Clip.name }
                 };
             }
         }
