@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Text;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace FTRuntime
 {
@@ -31,7 +30,8 @@ namespace FTRuntime
             {
                 if (Current is SwfClip clip)
                 {
-                    Assert.IsNotNull(clip, "Clip is destroyed.");
+                    // XXX: Clip could be destroyed after play mode exit.
+                    // Assert.IsNotNull(clip, "Clip is destroyed.");
                     return clip;
                 }
 
@@ -154,7 +154,8 @@ namespace FTRuntime
                     foreach (var state in _states.Values)
                     {
                         state.CompleteImmediately(); // wait for bundle to be loaded.
-                        state.Bundle!.Unload(true);
+                        if (state.Bundle != null)
+                            state.Bundle.Unload(true);
                     }
                     _states.Clear();
                 }
