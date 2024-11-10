@@ -159,7 +159,7 @@ namespace FTEditor.Importer
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Clip")]
-        void Bundle() => AssetBundleBuilder.BundleAsSingleAssetBundle(Clip, BundleName);
+        void Bundle() => AssetBundleBuilder.BundleAsSingleAssetBundle(this);
 
         void ISelfValidator.Validate(SelfValidationResult result)
         {
