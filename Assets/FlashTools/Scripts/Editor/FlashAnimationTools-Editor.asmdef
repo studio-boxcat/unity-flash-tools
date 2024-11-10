@@ -1,13 +1,9 @@
 {
-    "name": "FlashAnimationTools-Editor",
-    "references": [
-        "FlashAnimationTools",
-        "Bundler"
-    ],
-    "optionalUnityReferences": [],
-    "includePlatforms": [
-        "Editor"
-    ],
-    "excludePlatforms": [],
-    "allowUnsafeCode": true
+  "name": "FlashAnimationTools-Editor",
+  "references": [
+    "FlashAnimationTools",
+    "Boxcat.Bundler"
+  ],
+  "includePlatforms": ["Editor"],
+  "allowUnsafeCode": true
 }
