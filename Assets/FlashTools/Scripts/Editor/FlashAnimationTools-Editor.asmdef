@@ -1,7 +1,8 @@
 {
     "name": "FlashAnimationTools-Editor",
     "references": [
-        "FlashAnimationTools"
+        "FlashAnimationTools",
+        "Bundler"
     ],
     "optionalUnityReferences": [],
     "includePlatforms": [

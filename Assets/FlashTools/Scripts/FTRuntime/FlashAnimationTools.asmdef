@@ -1,4 +1,5 @@
 {
-    "name": "FlashAnimationTools",
-    "allowUnsafeCode": true
+  "name": "FlashAnimationTools",
+  "allowUnsafeCode": true,
+  "references": ["Bundler"]
 }

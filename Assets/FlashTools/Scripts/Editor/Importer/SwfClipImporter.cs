@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Bundler;
 using FTRuntime;
 using FTSwfTools;
 using Sirenix.OdinInspector;
@@ -10,7 +11,7 @@ using Object = UnityEngine.Object;
 
 namespace FTEditor.Importer
 {
-    class SwfClipImporter : ScriptableObject, ISelfValidator
+    class SwfClipImporter : ScriptableObject, ISelfValidator, ISingleAssetBundleTarget
     {
         [SerializeField, Required, AssetsOnly]
         public Object SwfFile;
@@ -158,7 +159,7 @@ namespace FTEditor.Importer
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Clip")]
-        void Bundle() => SwfClipBundler.Bundle(this);
+        void Bundle() => AssetBundleBuilder.BundleAsSingleAssetBundle(Clip, BundleName);
 
         void ISelfValidator.Validate(SelfValidationResult result)
         {
@@ -213,5 +214,8 @@ namespace FTEditor.Importer
                 }
             }
         }
+
+        string ISingleAssetBundleTarget.BundleName => BundleName;
+        Object ISingleAssetBundleTarget.Asset => Clip;
     }
 }
