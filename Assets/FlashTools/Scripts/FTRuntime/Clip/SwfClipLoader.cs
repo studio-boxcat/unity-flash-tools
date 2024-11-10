@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using JetBrains.Annotations;
 using UnityEngine;
+using UnityEngine.Assertions;
 
 namespace FTRuntime
 {
@@ -48,6 +49,10 @@ namespace FTRuntime
                 // https://docs.unity3d.com/ScriptReference/AssetBundleCreateRequest-assetBundle.html
                 // no need to invoke Completed callback as unity will do it.
                 Bundle = ((AssetBundleCreateRequest) Current).assetBundle;
+#if UNITY_EDITOR
+                Assert.IsNotNull(Bundle, "Failed to load bundle. This could happen on exiting play mode.");
+#endif
+
                 clip = Bundle!.LoadAsset<SwfClip>(Bundle.name);
                 Current = clip;
                 return clip;
@@ -147,18 +152,30 @@ namespace FTRuntime
         {
             UnityEditor.EditorApplication.playModeStateChanged += change =>
             {
-                if (change is UnityEditor.PlayModeStateChange.EnteredEditMode
-                    or UnityEditor.PlayModeStateChange.ExitingEditMode)
+                if (change is not
+                    (UnityEditor.PlayModeStateChange.EnteredEditMode
+                    or UnityEditor.PlayModeStateChange.ExitingEditMode))
                 {
-                    L.I("Unload all bundles");
-                    foreach (var state in _states.Values)
+                    return;
+                }
+
+                L.I("Unload all bundles");
+                foreach (var state in _states.Values)
+                {
+                    try
                     {
                         state.CompleteImmediately(); // wait for bundle to be loaded.
                         if (state.Bundle != null)
                             state.Bundle.Unload(true);
                     }
-                    _states.Clear();
+                    catch (Exception e)
+                    {
+                        // Exception could be thrown when exiting play mode.
+                        L.E(e);
+                    }
                 }
+                _states.Clear();
+                L.I("Unloaded all bundles");
             };
         }
 
