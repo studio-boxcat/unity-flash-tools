@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-using Bundler;
+using Boxcat.Bundler;
 using FTRuntime;
 using FTSwfTools;
 using Sirenix.OdinInspector;
