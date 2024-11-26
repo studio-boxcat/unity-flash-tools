@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Boxcat.Bundler;
+using Boxcat.Bundler.Editor;
 using FTRuntime;
 using FTSwfTools;
 using Sirenix.OdinInspector;
@@ -11,7 +12,7 @@ using Object = UnityEngine.Object;
 
 namespace FTEditor.Importer
 {
-    class SwfClipImporter : ScriptableObject, ISelfValidator, ISingleAssetBundleTarget
+    class SwfClipImporter : ScriptableObject, ISelfValidator, IBundleTarget
     {
         [SerializeField, Required, AssetsOnly]
         public Object SwfFile;
@@ -181,18 +182,8 @@ namespace FTEditor.Importer
             }
 
             // bundle name
-            if (Clip != null)
-            {
-                if (Clip.name != BundleName)
-                    result.AddError("Clip name must be equal to BundleName");
-            }
-
-            foreach (var c in BundleName)
-            {
-                if (c is >= 'a' and <= 'z' or >= '0' and <= '9') continue;
-                result.AddError("BundleName must be lower case");
-                break;
-            }
+            if (BundlerUtils.VerifyBundleKey(BundleName) is false)
+                result.AddError("Invalid bundle name: " + BundleName);
         }
 
         static SwfFrameData[] ParseSwfFile(Object swfFile, out byte frameRate, out SwfLibrary library)
@@ -215,7 +206,8 @@ namespace FTEditor.Importer
             }
         }
 
-        string ISingleAssetBundleTarget.BundleName => BundleName;
-        Object ISingleAssetBundleTarget.Asset => Clip;
+        AssetBundleKey IBundleTarget.BundleKey => BundlerUtils.ParseBundleName(BundleName);
+        IEnumerable<(Object Asset, AssetIndex AssetIndex)> IBundleTarget.GetAssets()
+            => new (Object, AssetIndex)[] { (Clip, SwfClip.AssetIndex) };
     }
 }

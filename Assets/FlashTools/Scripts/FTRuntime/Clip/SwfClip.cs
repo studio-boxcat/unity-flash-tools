@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Boxcat.Bundler;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Scripting;
@@ -41,5 +42,7 @@ namespace FTRuntime
 
         public void BuildMesh(SwfFrameId frame, Mesh mesh)
             => MeshBuilder.Build(GetFrame(frame), Mesh, mesh);
+
+        public const AssetIndex AssetIndex = 0;
     }
 }

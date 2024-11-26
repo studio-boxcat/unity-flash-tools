@@ -2,7 +2,8 @@
   "name": "FlashAnimationTools-Editor",
   "references": [
     "FlashAnimationTools",
-    "Boxcat.Bundler"
+    "Boxcat.Bundler",
+    "Boxcat.Bundler.Editor"
   ],
   "includePlatforms": ["Editor"],
   "allowUnsafeCode": true
