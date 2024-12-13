@@ -1,4 +1,4 @@
-namespace FTSwfTools
+namespace FTEditor
 {
     enum DefineId : ushort { }
 

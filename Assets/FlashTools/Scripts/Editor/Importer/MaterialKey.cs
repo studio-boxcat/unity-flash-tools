@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using FTSwfTools;
 
-namespace FTEditor
+namespace FTEditor.Importer
 {
     readonly struct MaterialKey
     {

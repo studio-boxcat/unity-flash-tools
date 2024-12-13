@@ -1,4 +1,6 @@
-﻿namespace FTSwfTools.SwfTags
+﻿using FTEditor;
+
+namespace FTSwfTools.SwfTags
 {
     class NameTag : SwfTagBase
     {

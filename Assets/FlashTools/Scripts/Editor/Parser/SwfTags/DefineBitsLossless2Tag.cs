@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using FTEditor;
+using UnityEngine;
 
 namespace FTSwfTools {
 	class DefineBitsLossless2Tag : SwfTagBase, IDefineBitsLosslessTag {

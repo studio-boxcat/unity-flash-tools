@@ -5,7 +5,8 @@ using FTSwfTools;
 using UnityEngine;
 using UnityEditor;
 
-namespace FTEditor {
+namespace FTEditor.Importer
+{
 	static class SwfMaterialCache {
 		static readonly Dictionary<string, Shader> _shaderCache = new();
 

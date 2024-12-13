@@ -1,4 +1,6 @@
-﻿namespace FTSwfTools {
+﻿using FTEditor;
+
+namespace FTSwfTools {
 	class RemoveObjectTagBase : SwfTagBase {
 		public Depth Depth;
 	}

@@ -1,4 +1,5 @@
-﻿using FTRuntime;
+﻿using FTEditor;
+using FTRuntime;
 
 namespace FTSwfTools {
 	class PlaceObject2Tag : SwfTagBase {

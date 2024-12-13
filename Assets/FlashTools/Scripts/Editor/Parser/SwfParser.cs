@@ -3,6 +3,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.IO;
 using FTEditor;
+using FTEditor.Importer;
 using FTRuntime;
 
 namespace FTSwfTools {

@@ -4,7 +4,7 @@ using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace FTEditor {
+namespace FTEditor.Importer {
 	readonly struct SwfColorTransData
 	{
 		public readonly int Depth;
