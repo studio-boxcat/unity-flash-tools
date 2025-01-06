@@ -5,7 +5,7 @@ using FTRuntime;
 using FTSwfTools.SwfTags;
 
 namespace FTSwfTools {
-	class SwfContextExecuter {
+	internal class SwfContextExecuter {
 		public readonly SwfLibrary   Library;
 		public int                   CurrentTag;
 
@@ -29,7 +29,7 @@ namespace FTSwfTools {
 			return false;
 		}
 
-		static void Visit(SwfContextExecuter executer, SwfTagBase tag, SwfDisplayList displayList)
+		private static void Visit(SwfContextExecuter executer, SwfTagBase tag, SwfDisplayList displayList)
 		{
 			switch (tag)
 			{
@@ -93,7 +93,7 @@ namespace FTSwfTools {
 			}
 		}
 
-		void ApplyPlaceObjectTag(PlaceObjectTag tag, SwfDisplayList dl) {
+		private void ApplyPlaceObjectTag(PlaceObjectTag tag, SwfDisplayList dl) {
 			var new_inst = CreateDisplayInstanceFromDefine(Library[tag.CharacterId]);
 			new_inst.Id             = tag.CharacterId;
 			new_inst.Depth          = tag.Depth;
@@ -105,7 +105,7 @@ namespace FTSwfTools {
 			dl.Instances.Add(new_inst.Depth, new_inst);
 		}
 
-		void ApplyPlaceObjectTag(PlaceObject2Tag tag, SwfDisplayList dl) {
+		private void ApplyPlaceObjectTag(PlaceObject2Tag tag, SwfDisplayList dl) {
 			if ( tag.HasCharacter ) {
 				SwfDisplayInstance old_inst = null;
 				if ( tag.Move ) { // replace character
@@ -130,7 +130,7 @@ namespace FTSwfTools {
 			}
 		}
 
-		void ApplyPlaceObjectTag(PlaceObject3Tag tag, SwfDisplayList dl) {
+		private void ApplyPlaceObjectTag(PlaceObject3Tag tag, SwfDisplayList dl) {
 			if ( tag.HasCharacter ) {
 				SwfDisplayInstance old_inst = null;
 				if ( tag.Move ) { // replace character
@@ -156,7 +156,7 @@ namespace FTSwfTools {
 			}
 		}
 
-		static SwfDisplayInstance CreateDisplayInstanceFromDefine(SwfLibraryDefine def)
+		private static SwfDisplayInstance CreateDisplayInstanceFromDefine(SwfLibraryDefine def)
 		{
 			return def switch
 			{
@@ -182,7 +182,7 @@ namespace FTSwfTools {
 		//
 		//
 
-		void ChildrenNextFrameLooped(SwfDisplayList dl) {
+		private void ChildrenNextFrameLooped(SwfDisplayList dl) {
 			var sprites = dl.Instances.Values
 				.OfType<SwfDisplaySpriteInstance>();
 			foreach ( var sprite in sprites ) {

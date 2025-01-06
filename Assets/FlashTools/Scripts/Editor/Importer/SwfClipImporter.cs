@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 
 namespace FTEditor.Importer
 {
-    class SwfClipImporter : ScriptableObject, ISelfValidator, IBundleTarget
+    internal class SwfClipImporter : ScriptableObject, ISelfValidator, IBundleTarget
     {
         [SerializeField, Required, AssetsOnly]
         public Object SwfFile;
@@ -42,12 +42,12 @@ namespace FTEditor.Importer
         public MeshId[] BitmapToMesh; // BitmapId -> MeshId
 
 
-        static string ResolveOutDir(Object refObj) => AssetDatabase.GetAssetPath(refObj)[..^6]; // .asset
-        string ResolveOutDir() => ResolveOutDir(this);
+        private static string ResolveOutDir(Object refObj) => AssetDatabase.GetAssetPath(refObj)[..^6]; // .asset
+        private string ResolveOutDir() => ResolveOutDir(this);
 
 
         [Button(ButtonSizes.Medium), PropertySpace(8, 0)]
-        void BuildAtlas()
+        private void BuildAtlas()
         {
             L.I($"Building atlas for {SwfFile.name}...");
 
@@ -111,7 +111,7 @@ namespace FTEditor.Importer
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Atlas")]
-        void OptimizeAtlasSize()
+        private void OptimizeAtlasSize()
         {
             var (atlasPath, spriteDir) = ResolveAtlasDirs();
             var result = AtlasOptimizer.Optimize(AtlasMaxSize, AtlasShapePadding, spriteDir, atlasPath, out var newMaxSize);
@@ -123,7 +123,7 @@ namespace FTEditor.Importer
             AtlasBuilder.MigrateSpriteToMesh(atlasPath, Mesh, out BitmapToMesh);
         }
 
-        (string AtlasPath, string SpriteDir) ResolveAtlasDirs()
+        private (string AtlasPath, string SpriteDir) ResolveAtlasDirs()
         {
             var outDir = ResolveOutDir();
             var spriteDir = outDir + "/Sprites~";
@@ -132,7 +132,7 @@ namespace FTEditor.Importer
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Atlas")]
-        void BakeClip()
+        private void BakeClip()
         {
             // load swf & bake
             var data = ParseSwfFile(SwfFile, frameRate: out var frameRate, out var library);
@@ -160,7 +160,7 @@ namespace FTEditor.Importer
         }
 
         [Button(ButtonSizes.Medium), EnableIf("Clip")]
-        void Bundle() => AssetBundleBuilder.BundleAsSingleAssetBundle(this);
+        private void Bundle() => AssetBundleBuilder.BundleAsSingleAssetBundle(this);
 
         void ISelfValidator.Validate(SelfValidationResult result)
         {
@@ -186,10 +186,10 @@ namespace FTEditor.Importer
                 result.AddError("Invalid bundle name: " + BundleName);
         }
 
-        static SwfFrameData[] ParseSwfFile(Object swfFile, out byte frameRate, out SwfLibrary library)
+        private static SwfFrameData[] ParseSwfFile(Object swfFile, out byte frameRate, out SwfLibrary library)
             => SwfParser.Load(AssetDatabase.GetAssetPath(swfFile), out frameRate, out library);
 
-        static void FlipYAndAdjustPivotToCenter(SwfFrameData[] frames, Dictionary<BitmapId, Vector2Int> bitmapSizes)
+        private static void FlipYAndAdjustPivotToCenter(SwfFrameData[] frames, Dictionary<BitmapId, Vector2Int> bitmapSizes)
         {
             foreach (var frame in frames)
             {

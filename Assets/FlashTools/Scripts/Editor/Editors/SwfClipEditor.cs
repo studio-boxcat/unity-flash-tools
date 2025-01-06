@@ -8,10 +8,10 @@ using UnityEngine;
 namespace FTEditor.Editors
 {
     [CustomEditor(typeof(SwfClip)), CanEditMultipleObjects]
-    class SwfClipAssetEditor : OdinEditor
+    internal class SwfClipAssetEditor : OdinEditor
     {
-        List<SwfClip> _clips = new();
-        SwfClipPreview _preview = null;
+        private List<SwfClip> _clips = new();
+        private SwfClipPreview _preview = null;
 
         protected override void OnEnable()
         {
@@ -32,14 +32,14 @@ namespace FTEditor.Editors
         public override void OnPreviewSettings() => _preview?.OnPreviewSettings();
         public override void OnPreviewGUI(Rect r, GUIStyle background) => _preview?.OnPreviewGUI(r, background);
 
-        void SetupPreviews()
+        private void SetupPreviews()
         {
             ShutdownPreviews();
             _preview = new SwfClipPreview();
             _preview.Initialize(targets.Where(x => x != null && x is SwfClip).ToArray());
         }
 
-        void ShutdownPreviews()
+        private void ShutdownPreviews()
         {
             if (_preview is null) return;
             _preview.Shutdown();

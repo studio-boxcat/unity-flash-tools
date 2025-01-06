@@ -7,10 +7,10 @@ using UnityEditor;
 
 namespace FTEditor.Importer
 {
-	static class SwfMaterialCache {
-		static readonly Dictionary<string, Shader> _shaderCache = new();
+	internal static class SwfMaterialCache {
+		private static readonly Dictionary<string, Shader> _shaderCache = new();
 
-		static Shader GetShaderByFileName(string filename) {
+		private static Shader GetShaderByFileName(string filename) {
 			if (_shaderCache.TryGetValue(filename, out var shader))
 				return shader;
 
@@ -20,8 +20,8 @@ namespace FTEditor.Importer
 			return shader;
 		}
 
-		const string _materialDir = "Packages/com.boxcat.flashtools/Materials/Generated";
-		static readonly Dictionary<MaterialKey, Material> _materialCache = new(MaterialKey.Comparer.Instance);
+		private const string _materialDir = "Packages/com.boxcat.flashtools/Materials/Generated";
+		private static readonly Dictionary<MaterialKey, Material> _materialCache = new(MaterialKey.Comparer.Instance);
 
 		public static Material Load(MaterialKey key)
 		{

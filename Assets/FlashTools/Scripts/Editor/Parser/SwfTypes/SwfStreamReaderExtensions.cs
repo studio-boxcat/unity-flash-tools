@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace FTSwfTools
 {
-    static class SwfStreamReaderExtensions
+    internal static class SwfStreamReaderExtensions
     {
         public static Rect ReadRect(this SwfStreamReader reader)
         {

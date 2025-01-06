@@ -1,5 +1,5 @@
 ﻿namespace FTSwfTools {
-	class ProtectTag : SwfTagBase {
+	internal class ProtectTag : SwfTagBase {
 		public string MD5Password;
 
 		public static ProtectTag Create(SwfStreamReader reader) {

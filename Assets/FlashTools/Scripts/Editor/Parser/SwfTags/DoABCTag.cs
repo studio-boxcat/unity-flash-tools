@@ -1,5 +1,5 @@
 ﻿namespace FTSwfTools {
-	class DoABCTag : SwfTagBase {
+	internal class DoABCTag : SwfTagBase {
 		public bool   ExecuteImmediately;
 		public string Name;
 		public byte[] ABCBytes;

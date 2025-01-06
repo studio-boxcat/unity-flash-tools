@@ -6,7 +6,7 @@ using Sirenix.OdinInspector;
 namespace FTEditor.Importer
 {
     [Serializable, InlineProperty]
-    struct BitmapRedirect
+    internal struct BitmapRedirect
     {
         [HideLabel, HorizontalGroup, DisplayAsString]
         public BitmapId From;
@@ -26,7 +26,7 @@ namespace FTEditor.Importer
         }
     }
 
-    static class BitmapRedirector
+    internal static class BitmapRedirector
     {
         public static void Process(SwfFrameData[] frames, BitmapRedirect[] map)
         {

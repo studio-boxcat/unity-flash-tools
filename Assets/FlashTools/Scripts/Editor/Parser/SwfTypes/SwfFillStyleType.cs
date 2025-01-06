@@ -1,5 +1,5 @@
 ﻿namespace FTSwfTools {
-	enum SwfFillStyleType : byte {
+	internal enum SwfFillStyleType : byte {
 		SolidColor,
 		LinearGradient,
 		RadialGradient,
@@ -10,7 +10,7 @@
 		NonSmoothedClippedBitmap
 	}
 
-	static class SwfFillStyleUtils
+	internal static class SwfFillStyleUtils
 	{
 		public static SwfFillStyleType Read(SwfStreamReader reader)
 		{

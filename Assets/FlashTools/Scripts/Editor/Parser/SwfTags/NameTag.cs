@@ -2,7 +2,7 @@
 
 namespace FTSwfTools.SwfTags
 {
-    class NameTag : SwfTagBase
+    internal class NameTag : SwfTagBase
     {
         public readonly struct NameData
         {
@@ -18,7 +18,7 @@ namespace FTSwfTools.SwfTags
 
         public readonly NameData[] Names;
 
-        NameTag(NameData[] names) => Names = names;
+        private NameTag(NameData[] names) => Names = names;
 
         public static NameTag Create(SwfStreamReader reader)
         {

@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace FTEditor.Importer
 {
-    static class OcclusionProcessor
+    internal static class OcclusionProcessor
     {
         public static void RemoveOccludedPixels(SwfFrameData[] frames, Dictionary<BitmapId, TextureData> bitmaps)
         {
@@ -89,7 +89,7 @@ namespace FTEditor.Importer
         }
 
         // Helper method to process an instance
-        static void ProcessInstance(SwfInstanceData instance, TextureData bitmap, Dictionary<Vector2Int, FramebufferPixel> framebuffer, Mask mask)
+        private static void ProcessInstance(SwfInstanceData instance, TextureData bitmap, Dictionary<Vector2Int, FramebufferPixel> framebuffer, Mask mask)
         {
             const int kernelSize = 3; // 3x3 kernel
 
@@ -137,7 +137,7 @@ namespace FTEditor.Importer
             }
         }
 
-        static SwfMatrix SwfToUnitMatrix(SwfMatrix m)
+        private static SwfMatrix SwfToUnitMatrix(SwfMatrix m)
         {
             // Convert Swf matrix to Unity matrix
             var scale = 1f / ImportConfig.CustomScaleFactor;
@@ -145,7 +145,7 @@ namespace FTEditor.Importer
         }
 
         // Helper method to create a mask from an instance
-        static Mask CreateMask(SwfInstanceData instance, TextureData bitmap, Mask parentMask)
+        private static Mask CreateMask(SwfInstanceData instance, TextureData bitmap, Mask parentMask)
         {
             const int kernelSize = 3; // 3x3 kernel
 
@@ -181,7 +181,7 @@ namespace FTEditor.Importer
             return new Mask(new HashSet<Vector2Int>(pixels));
         }
 
-        static Dictionary<BitmapId, bool[,]> BuildVisibilityMap(Dictionary<Vector2Int, FramebufferPixel>[] framebuffers, Dictionary<BitmapId, TextureData> bitmaps, HashSet<BitmapId> maskBitmaps)
+        private static Dictionary<BitmapId, bool[,]> BuildVisibilityMap(Dictionary<Vector2Int, FramebufferPixel>[] framebuffers, Dictionary<BitmapId, TextureData> bitmaps, HashSet<BitmapId> maskBitmaps)
         {
             var visibilityMaps = new Dictionary<BitmapId, bool[,]>();
             foreach (var (bitmapId, bitmap) in bitmaps)
@@ -228,7 +228,7 @@ namespace FTEditor.Importer
             return visibilityMaps;
         }
 
-        static bool[,] ReduceOcclusionArtifacts(bool[,] visibilityMap)
+        private static bool[,] ReduceOcclusionArtifacts(bool[,] visibilityMap)
         {
             const int kernelSize = 12;
 
@@ -271,7 +271,7 @@ namespace FTEditor.Importer
         }
 
         // Classes to represent the framebuffer pixel and masks
-        readonly struct FramebufferPixel
+        private readonly struct FramebufferPixel
         {
             [StructLayout(LayoutKind.Explicit)]
             public struct Pixel
@@ -297,7 +297,7 @@ namespace FTEditor.Importer
             public readonly Pixel[] Multiple;
 
             public FramebufferPixel(Pixel single) : this() => Single = single;
-            FramebufferPixel(Pixel[] multiple) : this() => Multiple = multiple;
+            private FramebufferPixel(Pixel[] multiple) : this() => Multiple = multiple;
 
             public bool IsSingle => Multiple is null;
 
@@ -325,9 +325,10 @@ namespace FTEditor.Importer
             }
         }
 
-        readonly struct Mask
+        private readonly struct Mask
         {
-            [CanBeNull] readonly HashSet<Vector2Int> _pixels;
+            [CanBeNull]
+            private readonly HashSet<Vector2Int> _pixels;
 
             public Mask(HashSet<Vector2Int> pixels) => _pixels = pixels;
 

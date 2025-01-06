@@ -1,5 +1,5 @@
 ﻿namespace FTSwfTools {
-	class SetBackgroundColorTag : SwfTagBase {
+	internal class SetBackgroundColorTag : SwfTagBase {
 		public SwfColor BackgroundColor;
 
 		public static SetBackgroundColorTag Create(SwfStreamReader reader) {

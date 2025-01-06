@@ -2,7 +2,7 @@
 using FTRuntime;
 
 namespace FTSwfTools {
-	class PlaceObjectTag : SwfTagBase {
+	internal class PlaceObjectTag : SwfTagBase {
 		public DefineId          CharacterId;
 		public Depth             Depth;
 		public SwfMatrix         Matrix;

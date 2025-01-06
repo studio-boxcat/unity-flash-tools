@@ -1,5 +1,5 @@
 ﻿namespace FTSwfTools {
-	class EnableTelemetryTag : SwfTagBase {
+	internal class EnableTelemetryTag : SwfTagBase {
 		public byte[] SHA256PasswordHash;
 
 		public static EnableTelemetryTag Create(SwfStreamReader reader) {

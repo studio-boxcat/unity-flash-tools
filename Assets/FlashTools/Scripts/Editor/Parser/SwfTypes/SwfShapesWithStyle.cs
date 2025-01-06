@@ -3,7 +3,7 @@ using FTEditor;
 using FTRuntime;
 
 namespace FTSwfTools {
-	readonly struct SwfShapesWithStyle {
+	internal readonly struct SwfShapesWithStyle {
 		public enum ShapeStyleType {
 			Shape,
 			Shape2,
@@ -69,7 +69,7 @@ namespace FTSwfTools {
 		//
 		// ---------------------------------------------------------------------
 
-		static List<FillStyle> ReadFillStyles(
+		private static List<FillStyle> ReadFillStyles(
 			SwfStreamReader reader, bool allow_big_array)
 		{
 			const BitmapId invalid = (BitmapId) ushort.MaxValue;
@@ -96,7 +96,7 @@ namespace FTSwfTools {
 		// FillStyle
 		// -----------------------------
 
-		static FillStyle ReadFillStyle(SwfStreamReader reader) {
+		private static FillStyle ReadFillStyle(SwfStreamReader reader) {
 			var type = SwfFillStyleUtils.Read(reader);
 			if (!type.IsBitmapType())
 				throw new System.Exception("Imported .swf file contains solid color fill style. You should use Tools/FlashExport.jsfl script for prepare .fla file");
@@ -113,7 +113,7 @@ namespace FTSwfTools {
 		//
 		// ---------------------------------------------------------------------
 
-		static void SkipLineStyles(
+		private static void SkipLineStyles(
 			SwfStreamReader reader, bool allow_big_array, bool with_alpha, bool line2_type)
 		{
 			ushort count = reader.ReadByte();
@@ -133,12 +133,12 @@ namespace FTSwfTools {
 		// LineStyles
 		// -----------------------------
 
-		static void SkipLineStyle(SwfStreamReader reader, bool with_alpha) {
+		private static void SkipLineStyle(SwfStreamReader reader, bool with_alpha) {
 			reader.ReadUInt16(); // Width
 			SwfColor.Read(reader, with_alpha);
 		}
 
-		static void SkipLine2Style(SwfStreamReader reader) {
+		private static void SkipLine2Style(SwfStreamReader reader) {
 			reader.ReadUInt16();          // Width
 			reader.ReadUnsignedBits(2);   // StartCapStyle
 			var join_style    = reader.ReadUnsignedBits(2);
@@ -165,7 +165,7 @@ namespace FTSwfTools {
 		//
 		// ---------------------------------------------------------------------
 
-		static void ReadShapeRecords(
+		private static void ReadShapeRecords(
 			SwfStreamReader reader, List<FillStyle> fill_styles,
 			bool allow_big_array, bool with_alpha, bool line2_type)
 		{
@@ -178,7 +178,7 @@ namespace FTSwfTools {
 			{ }
 		}
 
-		static bool ReadShapeRecord(
+		private static bool ReadShapeRecord(
 			SwfStreamReader reader, List<FillStyle> fill_styles,
 			ref uint fill_style_bits, ref uint line_style_bits,
 			bool allow_big_array, bool with_alpha, bool line2_type)
@@ -230,7 +230,7 @@ namespace FTSwfTools {
 			}
 		}
 
-		static void SkipStraigtEdgeShapeRecord(SwfStreamReader reader) {
+		private static void SkipStraigtEdgeShapeRecord(SwfStreamReader reader) {
 			var num_bits          = reader.ReadUnsignedBits(4) + 2;
 			var general_line_flag = reader.ReadBit();
 			var vert_line_flag = general_line_flag ? false : reader.ReadBit();
@@ -242,7 +242,7 @@ namespace FTSwfTools {
 			}
 		}
 
-		static void SkipCurvedEdgeShapeRecord(SwfStreamReader reader) {
+		private static void SkipCurvedEdgeShapeRecord(SwfStreamReader reader) {
 			var num_bits = reader.ReadUnsignedBits(4) + 2;
 			reader.ReadSignedBits(num_bits); // control_delta_x
 			reader.ReadSignedBits(num_bits); // control_delta_y

@@ -6,7 +6,7 @@ using UnityEngine.Assertions;
 
 namespace FTEditor
 {
-    static class Utils
+    internal static class Utils
     {
         public static byte ToByte(this float value)
         {

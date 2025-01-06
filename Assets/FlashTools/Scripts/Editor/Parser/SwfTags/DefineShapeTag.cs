@@ -2,13 +2,13 @@
 using UnityEngine;
 
 namespace FTSwfTools {
-	class DefineShapeTagBase : SwfTagBase {
+	internal class DefineShapeTagBase : SwfTagBase {
 		public DefineId           ShapeId;
 		public Rect               ShapeBounds;
 		public SwfShapesWithStyle Shapes;
 	}
 
-	class DefineShapeTag : DefineShapeTagBase {
+	internal class DefineShapeTag : DefineShapeTagBase {
 		public static DefineShapeTag Create(SwfStreamReader reader) {
 			return new DefineShapeTag
 			{
@@ -19,7 +19,7 @@ namespace FTSwfTools {
 		}
 	}
 
-	class DefineShape2Tag : DefineShapeTagBase {
+	internal class DefineShape2Tag : DefineShapeTagBase {
 		public static DefineShape2Tag Create(SwfStreamReader reader) {
 			return new DefineShape2Tag
 			{
@@ -30,7 +30,7 @@ namespace FTSwfTools {
 		}
 	}
 
-	class DefineShape3Tag : DefineShapeTagBase {
+	internal class DefineShape3Tag : DefineShapeTagBase {
 		public static DefineShape3Tag Create(SwfStreamReader reader) {
 			return new DefineShape3Tag
 			{
@@ -41,7 +41,7 @@ namespace FTSwfTools {
 		}
 	}
 
-	class DefineShape4Tag : DefineShapeTagBase {
+	internal class DefineShape4Tag : DefineShapeTagBase {
 		public Rect               EdgeBounds;
 		public byte               Flags;
 

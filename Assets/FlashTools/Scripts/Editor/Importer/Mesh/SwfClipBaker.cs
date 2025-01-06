@@ -7,7 +7,7 @@ using UnityEngine.Assertions;
 
 namespace FTEditor.Importer
 {
-    static class SwfClipBaker
+    internal static class SwfClipBaker
     {
         public static void Bake(SwfFrameData[] data, Mesh catalogMesh, MeshId[] bitmapToMesh, out SwfFrame[] frames, out SwfSequence[] sequences)
         {
@@ -15,7 +15,7 @@ namespace FTEditor.Importer
             sequences = BuildSequences(data, frameMap, materialGroups);
         }
 
-        static SwfFrame[] BuildFrames( // returns: asset frames
+        private static SwfFrame[] BuildFrames( // returns: asset frames
             SwfFrameData[] data,
             Mesh catalogMesh, // asset frame index -> mesh
             MeshId[] bitmapToMesh, // BitmapId -> MeshId
@@ -96,7 +96,7 @@ namespace FTEditor.Importer
             }
         }
 
-        static SwfSequence[] BuildSequences(
+        private static SwfSequence[] BuildSequences(
             SwfFrameData[] frameData,
             Dictionary<int, SwfFrameId> frameMap, // swf frame index -> asset frame index
             MaterialGroupIndex[] materialGroups) // asset frame index -> material group index

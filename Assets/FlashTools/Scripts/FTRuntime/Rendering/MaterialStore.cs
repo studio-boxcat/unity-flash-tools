@@ -12,22 +12,23 @@ namespace FTRuntime
 
     public class MaterialStore : ScriptableObject // Resources
     {
-        [NonSerialized] static MaterialStore _instance;
+        [NonSerialized]
+        private static MaterialStore _instance;
         public static MaterialStore Instance => _instance ??= Resources.Load<MaterialStore>("SwfMaterialStore");
 
         public static Material[] Get(MaterialGroupIndex index) => Instance[index];
 
         [Serializable, InlineProperty]
-        struct MaterialGroup
+        private struct MaterialGroup
         {
             [ListDrawerSettings(IsReadOnly = true)]
             public Material[] Materials;
         }
 
         [SerializeField, ListDrawerSettings(IsReadOnly = true, ShowFoldout = true)]
-        MaterialGroup[] _groups;
+        private MaterialGroup[] _groups;
 
-        Material[] this[MaterialGroupIndex index] => _groups[(int) index].Materials;
+        private Material[] this[MaterialGroupIndex index] => _groups[(int) index].Materials;
 
 #if UNITY_EDITOR
         public MaterialGroupIndex Put(Material[] materials)

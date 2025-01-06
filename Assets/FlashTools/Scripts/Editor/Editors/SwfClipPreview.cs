@@ -5,9 +5,9 @@ using UnityEngine.Rendering;
 using MeshBuilder = FTRuntime.MeshBuilder;
 
 namespace FTEditor.Editors {
-	class SwfClipPreview : ObjectPreview {
-		int                   _sequence     = 0;
-		PreviewRenderUtility  _previewUtils = null;
+	internal class SwfClipPreview : ObjectPreview {
+		private int                   _sequence     = 0;
+		private PreviewRenderUtility  _previewUtils = null;
 
 		// ---------------------------------------------------------------------
 		//
@@ -82,7 +82,7 @@ namespace FTEditor.Editors {
 			}
 		}
 
-		MaterialPropertyBlock _mpb;
+		private MaterialPropertyBlock _mpb;
 
 		public override void OnPreviewGUI(Rect r, GUIStyle background)
 		{

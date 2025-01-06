@@ -11,10 +11,10 @@ namespace FTRuntime {
 
 		[FormerlySerializedAs("_clip")]
 		[SerializeField, Required, ChildGameObjectsOnly]
-		SwfView _view      = null;
-		bool    _isPlaying = false;
-		bool    _isVisible = false;
-		float   _frameTimer = 0.0f;
+		private SwfView _view      = null;
+		private bool    _isPlaying = false;
+		private bool    _isVisible = false;
+		private float   _frameTimer = 0.0f;
 
 		// ---------------------------------------------------------------------
 		//
@@ -39,13 +39,13 @@ namespace FTRuntime {
 		// ---------------------------------------------------------------------
 
 		[SerializeField]
-		bool _autoPlay = true;
+		private bool _autoPlay = true;
 
 		[SerializeField]
-		PlayModes _playMode = PlayModes.Forward;
+		private PlayModes _playMode = PlayModes.Forward;
 
 		[SerializeField]
-		LoopModes _loopMode = LoopModes.Loop;
+		private LoopModes _loopMode = LoopModes.Loop;
 
 		// ---------------------------------------------------------------------
 		//
@@ -248,17 +248,17 @@ namespace FTRuntime {
 		//
 		// ---------------------------------------------------------------------
 
-		void OnEnable() {
+		private void OnEnable() {
 			if ( autoPlay && Application.isPlaying ) {
 				Play(false);
 			}
 		}
 
-		void OnDisable() {
+		private void OnDisable() {
 			Stop(false);
 		}
 
-		void LateUpdate()
+		private void LateUpdate()
 		{
 			Assert.IsNotNull(View, "Clip is destroyed.");
 
@@ -293,7 +293,7 @@ namespace FTRuntime {
 			}
 		}
 
-		void OnBecameVisible() => _isVisible = true;
-		void OnBecameInvisible() => _isVisible = false;
+		private void OnBecameVisible() => _isVisible = true;
+		private void OnBecameInvisible() => _isVisible = false;
 	}
 }

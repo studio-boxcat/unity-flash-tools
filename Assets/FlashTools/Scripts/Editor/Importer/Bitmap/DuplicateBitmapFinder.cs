@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace FTEditor.Importer
 {
-    static class DuplicateBitmapFinder
+    internal static class DuplicateBitmapFinder
     {
         public static BitmapRedirect[] Analyze(Dictionary<BitmapId, TextureData> textures, SwfInstanceData[] instances)
         {
@@ -17,7 +17,7 @@ namespace FTEditor.Importer
             return duplicates.ToArray();
         }
 
-        static void FindDuplicateColorTextures(Dictionary<BitmapId, TextureData> textures, List<BitmapRedirect> yield)
+        private static void FindDuplicateColorTextures(Dictionary<BitmapId, TextureData> textures, List<BitmapRedirect> yield)
         {
             var textureList = textures.ToList();
             for (var i = 0; i < textureList.Count; i++)
@@ -31,7 +31,7 @@ namespace FTEditor.Importer
         }
 
         // (BitmapId MaskBitmap, BitmapId ColorBitmap)
-        static void FindDuplicateMaskTextures(
+        private static void FindDuplicateMaskTextures(
             Dictionary<BitmapId, TextureData> textures, SwfInstanceData[] instances, List<BitmapRedirect> yield)
         {
             var colorBitmaps = instances

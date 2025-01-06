@@ -3,10 +3,10 @@ using FTRuntime;
 
 namespace FTEditor
 {
-    readonly struct TimeLogger
+    internal readonly struct TimeLogger
     {
-        readonly Stopwatch _sw;
-        readonly string _subject;
+        private readonly Stopwatch _sw;
+        private readonly string _subject;
 
         public TimeLogger(string subject)
         {

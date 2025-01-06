@@ -25,7 +25,7 @@ namespace FTRuntime
 
 #if UNITY_EDITOR
         [ShowInInspector, DisplayAsString]
-        string _frames => Frames is null ? "null" : string.Join(", ", Frames);
+        private string _frames => Frames is null ? "null" : string.Join(", ", Frames);
 #endif
     }
 }

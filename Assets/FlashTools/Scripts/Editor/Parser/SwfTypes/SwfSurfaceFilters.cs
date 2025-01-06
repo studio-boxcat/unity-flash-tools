@@ -138,12 +138,12 @@ namespace FTSwfTools {
 		//
 		// ---------------------------------------------------------------------
 
-		static Filter ReadFilter(SwfStreamReader reader) {
+		private static Filter ReadFilter(SwfStreamReader reader) {
 			var type_id = reader.ReadByte();
 			return CreateFilterFromTypeId(type_id, reader);
 		}
 
-		static Filter CreateFilterFromTypeId(byte type_id, SwfStreamReader reader)
+		private static Filter CreateFilterFromTypeId(byte type_id, SwfStreamReader reader)
 		{
 			return type_id switch
 			{
@@ -159,7 +159,7 @@ namespace FTSwfTools {
 			};
 		}
 
-		static Filter ReadConcreteFilter(DropShadowFilter filter, SwfStreamReader reader) {
+		private static Filter ReadConcreteFilter(DropShadowFilter filter, SwfStreamReader reader) {
 			filter.DropShadowColor = SwfColor.Read(reader, true);
 			filter.BlurX           = reader.ReadFixedPoint_16_16();
 			filter.BlurY           = reader.ReadFixedPoint_16_16();
@@ -173,7 +173,7 @@ namespace FTSwfTools {
 			return filter;
 		}
 
-		static Filter ReadConcreteFilter(BlurFilter filter, SwfStreamReader reader) {
+		private static Filter ReadConcreteFilter(BlurFilter filter, SwfStreamReader reader) {
 			filter.BlurX           = reader.ReadFixedPoint_16_16();
 			filter.BlurY           = reader.ReadFixedPoint_16_16();
 			filter.Passes          = reader.ReadUnsignedBits(5);
@@ -181,7 +181,7 @@ namespace FTSwfTools {
 			return filter;
 		}
 
-		static Filter ReadConcreteFilter(GlowFilter filter, SwfStreamReader reader) {
+		private static Filter ReadConcreteFilter(GlowFilter filter, SwfStreamReader reader) {
 			filter.GlowColor       = SwfColor.Read(reader, true);
 			filter.BlurX           = reader.ReadFixedPoint_16_16();
 			filter.BlurY           = reader.ReadFixedPoint_16_16();
@@ -193,7 +193,7 @@ namespace FTSwfTools {
 			return filter;
 		}
 
-		static Filter ReadConcreteFilter(BevelFilter filter, SwfStreamReader reader) {
+		private static Filter ReadConcreteFilter(BevelFilter filter, SwfStreamReader reader) {
 			filter.ShadowColor     = SwfColor.Read(reader, true);
 			filter.HighlightColor  = SwfColor.Read(reader, true);
 			filter.BlurX           = reader.ReadFixedPoint_16_16();
@@ -209,7 +209,7 @@ namespace FTSwfTools {
 			return filter;
 		}
 
-		static Filter ReadConcreteFilter(GradientGlowFilter filter, SwfStreamReader reader) {
+		private static Filter ReadConcreteFilter(GradientGlowFilter filter, SwfStreamReader reader) {
 			var num_colors         = reader.ReadByte();
 			filter.GradientColors  = new SwfColor[num_colors];
 			for ( var i = 0; i < num_colors; ++i ) {
@@ -232,7 +232,7 @@ namespace FTSwfTools {
 			return filter;
 		}
 
-		static Filter ReadConcreteFilter(ConvolutionFilter filter, SwfStreamReader reader) {
+		private static Filter ReadConcreteFilter(ConvolutionFilter filter, SwfStreamReader reader) {
 			filter.MatrixX         = reader.ReadByte();
 			filter.MatrixY         = reader.ReadByte();
 			filter.Divisor         = reader.ReadFloat32();
@@ -248,7 +248,7 @@ namespace FTSwfTools {
 			return filter;
 		}
 
-		static Filter ReadConcreteFilter(ColorMatrixFilter filter, SwfStreamReader reader) {
+		private static Filter ReadConcreteFilter(ColorMatrixFilter filter, SwfStreamReader reader) {
 			filter.Matrix          = new float[20];
 			for ( var i = 0; i < filter.Matrix.Length; ++i ) {
 				filter.Matrix[i] = reader.ReadFloat32();
@@ -256,7 +256,7 @@ namespace FTSwfTools {
 			return filter;
 		}
 
-		static Filter ReadConcreteFilter(GradientBevelFilter filter, SwfStreamReader reader) {
+		private static Filter ReadConcreteFilter(GradientBevelFilter filter, SwfStreamReader reader) {
 			var num_colors         = reader.ReadByte();
 			filter.GradientColors  = new SwfColor[num_colors];
 			for ( var i = 0; i < num_colors; ++i ) {

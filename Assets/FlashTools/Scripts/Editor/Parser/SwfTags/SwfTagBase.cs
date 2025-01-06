@@ -134,8 +134,8 @@ namespace FTSwfTools {
 		Unknown
 	}
 
-	class SwfTagBase {
-		struct SwfTagData {
+	internal class SwfTagBase {
+		private struct SwfTagData {
 			public int    TagId;
 			public byte[] TagData;
 		}
@@ -151,7 +151,7 @@ namespace FTSwfTools {
 				TagData = tag_data});
 		}
 
-		static SwfTagBase Create(SwfTagData tag_data)
+		private static SwfTagBase Create(SwfTagData tag_data)
 		{
 			var reader = new SwfStreamReader(tag_data.TagData);
 			return (SwfTagType) tag_data.TagId switch

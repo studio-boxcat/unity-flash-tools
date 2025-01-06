@@ -8,13 +8,13 @@ using UnityEngine.Assertions;
 
 namespace FTEditor.Importer
 {
-    class SwfBatcher
+    internal class SwfBatcher
     {
-        MaterialKey _curMaterial = _invalidMaterial; // intentionally set to invalid value.
-        readonly List<SwfObject> _curObjects = new();
-        readonly List<SubMeshData> _subMeshes = new();
+        private MaterialKey _curMaterial = _invalidMaterial; // intentionally set to invalid value.
+        private readonly List<SwfObject> _curObjects = new();
+        private readonly List<SubMeshData> _subMeshes = new();
 
-        static readonly MaterialKey _invalidMaterial = new((SwfInstanceData.Types) byte.MaxValue, default, default);
+        private static readonly MaterialKey _invalidMaterial = new((SwfInstanceData.Types) byte.MaxValue, default, default);
 
 
         public void Feed(SwfInstanceData inst, MeshId[] bitmapToMesh)
@@ -45,7 +45,7 @@ namespace FTEditor.Importer
         }
 
         // Bitmap space -> view space.
-        static SwfMatrix GetVertexMatrix(SwfMatrix m)
+        private static SwfMatrix GetVertexMatrix(SwfMatrix m)
         {
             const float scale = 1f / ImportConfig.PixelsPerUnit / ImportConfig.CustomScaleFactor;
             return SwfMatrix.Scale(scale, -scale) * m;
@@ -117,7 +117,7 @@ namespace FTEditor.Importer
             }
         }
 
-        void SettleIntoNewBatch()
+        private void SettleIntoNewBatch()
         {
             Assert.IsTrue(_curObjects.Count is not 0,
                 "No poses to settle into new batch");
@@ -130,7 +130,7 @@ namespace FTEditor.Importer
             _curObjects.Clear();
         }
 
-        readonly struct SubMeshData
+        private readonly struct SubMeshData
         {
             public readonly SwfObject[] Objects;
             public readonly MaterialKey Material;

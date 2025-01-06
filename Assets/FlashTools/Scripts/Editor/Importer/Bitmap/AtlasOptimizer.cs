@@ -6,7 +6,7 @@ using UnityEditor;
 
 namespace FTEditor.Importer
 {
-    static class AtlasOptimizer
+    internal static class AtlasOptimizer
     {
         public static bool Optimize(int initialMaxSize, int shapePadding, string spriteFolder, string outputSheetPath, out int newMaxSize)
         {

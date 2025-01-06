@@ -2,17 +2,17 @@
 using UnityEngine;
 
 namespace FTSwfTools {
-	interface IBitmapData
+	internal interface IBitmapData
 	{
 		Vector2Int Size { get; }
 		byte[] ToARGB32();
 	}
 
-	interface IDefineBitsLosslessTag : IBitmapData {
+	internal interface IDefineBitsLosslessTag : IBitmapData {
 		public DefineId CharacterId { get; }
 	}
 
-	class DefineBitsLosslessTag : SwfTagBase, IDefineBitsLosslessTag {
+	internal class DefineBitsLosslessTag : SwfTagBase, IDefineBitsLosslessTag {
 		public DefineId CharacterId { get; private set; }
 		public byte   BitmapFormat;
 		public ushort BitmapWidth;

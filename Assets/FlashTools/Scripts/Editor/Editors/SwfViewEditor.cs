@@ -10,11 +10,11 @@ using Object = UnityEngine.Object;
 
 namespace FTEditor.Editors {
 	[CustomEditor(typeof(SwfView)), CanEditMultipleObjects]
-	class SwfViewEditor : Editor {
-		List<SwfView>                            _clips    = new();
-		Dictionary<SwfView, SwfClipPreview> _previews = new();
+	internal class SwfViewEditor : Editor {
+		private List<SwfView>                            _clips    = new();
+		private Dictionary<SwfView, SwfClipPreview> _previews = new();
 
-		void AllClipsForeachWithUndo(System.Action<SwfView> act) {
+		private void AllClipsForeachWithUndo(System.Action<SwfView> act) {
 			Undo.RecordObjects(_clips.ToArray(), "Inspector");
 			foreach ( var clip in _clips ) {
 				act(clip);
@@ -22,7 +22,7 @@ namespace FTEditor.Editors {
 			}
 		}
 
-		string GetClipsFrameCountForView() {
+		private string GetClipsFrameCountForView() {
 			return _clips.Aggregate(string.Empty, (acc, clip) => {
 				var frame_count     = clip.frameCount;
 				var frame_count_str = frame_count.ToString();
@@ -32,7 +32,7 @@ namespace FTEditor.Editors {
 			});
 		}
 
-		string GetClipsCurrentFrameForView() {
+		private string GetClipsCurrentFrameForView() {
 			return _clips.Aggregate(string.Empty, (acc, clip) => {
 				var current_frame     = clip.currentFrame + 1;
 				var current_frame_str = current_frame.ToString();
@@ -42,7 +42,7 @@ namespace FTEditor.Editors {
 			});
 		}
 
-		SwfSequenceId[] GetAllSequences() {
+		private SwfSequenceId[] GetAllSequences() {
 			var seqs = _clips
 				.Where (p => p.clip)
 				.Select(p => p.clip.Sequences.Select(x => x.Id).ToArray())
@@ -57,7 +57,7 @@ namespace FTEditor.Editors {
 			return seqs[0].Where(p => intersection.Contains(p)).ToArray();
 		}
 
-		void DrawSequence() {
+		private void DrawSequence() {
 			var seqs = GetAllSequences();
 			if (seqs.Length is 0) return;
 
@@ -74,7 +74,7 @@ namespace FTEditor.Editors {
 			});
 		}
 
-		void DrawCurrentFrame()
+		private void DrawCurrentFrame()
 		{
 			if (_clips.Count is 0) return;
 			var minFrameCount = _clips.Min(clip => clip.frameCount);
@@ -87,7 +87,7 @@ namespace FTEditor.Editors {
 			DrawClipControls();
 		}
 
-		void DrawClipControls() {
+		private void DrawClipControls() {
 			EditorGUILayout.Space();
 			SwfEditorUtils.DoCenterHorizontalGUI(() => {
 				if ( GUILayout.Button(new GUIContent("<<", "to begin frame")) ) {
@@ -108,7 +108,7 @@ namespace FTEditor.Editors {
 			});
 		}
 
-		void SetupPreviews() {
+		private void SetupPreviews() {
 			ShutdownPreviews();
 			_previews = targets
 				.OfType<SwfView>()
@@ -120,7 +120,7 @@ namespace FTEditor.Editors {
 				});
 		}
 
-		void ShutdownPreviews() {
+		private void ShutdownPreviews() {
 			foreach ( var p in _previews ) {
 		        p.Value.Shutdown();
 			}
@@ -133,12 +133,12 @@ namespace FTEditor.Editors {
 		//
 		// ---------------------------------------------------------------------
 
-		void OnEnable() {
+		private void OnEnable() {
 			_clips = targets.OfType<SwfView>().ToList();
 			SetupPreviews();
 		}
 
-		void OnDisable() {
+		private void OnDisable() {
 			ShutdownPreviews();
 			_clips.Clear();
 		}

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace FTEditor.Importer
 {
-    static class BitmapExporter
+    internal static class BitmapExporter
     {
         public static string GetSpriteName(BitmapId bitmapId) => $"{bitmapId.ToName()}.png";
 

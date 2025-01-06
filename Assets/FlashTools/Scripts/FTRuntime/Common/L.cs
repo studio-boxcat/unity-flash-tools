@@ -5,7 +5,7 @@ using Object = UnityEngine.Object;
 
 namespace FTRuntime
 {
-    static class L
+    internal static class L
     {
         [Conditional("DEBUG")]
         public static void I(string message, Object context = null) => Debug.Log($"[FlashTools] {message}", context);

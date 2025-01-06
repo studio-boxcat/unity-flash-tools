@@ -2,7 +2,7 @@
 using FTRuntime;
 
 namespace FTSwfTools {
-	class PlaceObject3Tag : SwfTagBase {
+	internal class PlaceObject3Tag : SwfTagBase {
 		public bool              HasClipActions;
 		public bool              HasClipDepth;
 		public bool              HasName;

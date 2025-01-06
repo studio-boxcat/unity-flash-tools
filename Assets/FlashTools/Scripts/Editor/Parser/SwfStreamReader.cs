@@ -5,12 +5,13 @@ using System.IO.Compression;
 
 namespace FTSwfTools {
 	public class SwfStreamReader {
-		struct BitContext {
+		private struct BitContext {
 			public byte CachedByte;
 			public byte BitIndex;
 		}
-		BitContext   _bitContext;
-		BinaryReader _binaryReader;
+
+		private BitContext   _bitContext;
+		private BinaryReader _binaryReader;
 
 		// ---------------------------------------------------------------------
 		//

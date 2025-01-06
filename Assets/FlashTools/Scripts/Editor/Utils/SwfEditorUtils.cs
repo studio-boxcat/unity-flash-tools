@@ -6,7 +6,7 @@ using FTRuntime;
 using Object = UnityEngine.Object;
 
 namespace FTEditor {
-	static class SwfEditorUtils {
+	internal static class SwfEditorUtils {
 
 		// ---------------------------------------------------------------------
 		//

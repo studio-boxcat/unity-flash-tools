@@ -8,16 +8,16 @@ using FTRuntime;
 
 namespace FTEditor.Editors {
 	[CustomEditor(typeof(SwfPhasor)), CanEditMultipleObjects]
-	class SwfPhasorEditor : Editor {
-		List<SwfPhasor> _phasors = new();
+	internal class SwfPhasorEditor : Editor {
+		private List<SwfPhasor> _phasors = new();
 
-		void AllControllersForeach(System.Action<SwfPhasor> act) {
+		private void AllControllersForeach(System.Action<SwfPhasor> act) {
 			foreach ( var phasor in _phasors ) {
 				act(phasor);
 			}
 		}
 
-		void DrawClipControls() {
+		private void DrawClipControls() {
 			SwfEditorUtils.DoRightHorizontalGUI(() => {
 				if ( GUILayout.Button("Stop") ) {
 					AllControllersForeach(phasor => phasor.Stop(phasor.isStopped));
@@ -41,7 +41,7 @@ namespace FTEditor.Editors {
 		//
 		// ---------------------------------------------------------------------
 
-		void OnEnable() {
+		private void OnEnable() {
 			_phasors = targets.OfType<SwfPhasor>().ToList();
 		}
 

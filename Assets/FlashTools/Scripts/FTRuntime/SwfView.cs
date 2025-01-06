@@ -11,9 +11,9 @@ namespace FTRuntime
     public class SwfView : MonoBehaviour
     {
         [SerializeField, Required, ChildGameObjectsOnly]
-        MeshFilter _meshFilter;
+        private MeshFilter _meshFilter;
         [SerializeField, Required, ChildGameObjectsOnly]
-        MeshRenderer _meshRenderer;
+        private MeshRenderer _meshRenderer;
 
         // ---------------------------------------------------------------------
         //
@@ -23,7 +23,7 @@ namespace FTRuntime
 
         [Header("Animation")]
         [SerializeField]
-        Color _tint = Color.white;
+        private Color _tint = Color.white;
         public Color tint
         {
             get => _tint;
@@ -34,21 +34,26 @@ namespace FTRuntime
             }
         }
 
-        [NonSerialized] SwfClip _clip;
+        [NonSerialized]
+        private SwfClip _clip;
         public SwfClip clip => _clip;
-        [NonSerialized] SwfSequenceId _sequence;
+        [NonSerialized]
+        private SwfSequenceId _sequence;
         public SwfSequenceId sequence => _sequence;
-        [NonSerialized] ushort _currentFrame;
+        [NonSerialized]
+        private ushort _currentFrame;
         public ushort currentFrame => _currentFrame;
 
         public byte frameRate { get; private set; }
         public ushort frameCount { get; private set; }
 
-        [NonSerialized] SwfSequence _curSequence;
-        [NonSerialized, CanBeNull] Mesh _mesh;
+        [NonSerialized]
+        private SwfSequence _curSequence;
+        [NonSerialized, CanBeNull]
+        private Mesh _mesh;
 
 
-        void OnDestroy()
+        private void OnDestroy()
         {
             if (_mesh is not null)
             {
@@ -134,9 +139,9 @@ namespace FTRuntime
         // ---------------------------------------------------------------------
 
         [NonSerialized]
-        SwfFrameId _lastFrameId = SwfFrameId.Invalid;
+        private SwfFrameId _lastFrameId = SwfFrameId.Invalid;
 
-        void UpdateMesh(SwfFrameId frame)
+        private void UpdateMesh(SwfFrameId frame)
         {
             Assert.AreNotEqual(SwfFrameId.Invalid, frame, "Frame is not set.");
 
@@ -163,18 +168,18 @@ namespace FTRuntime
         }
 
         [NonSerialized]
-        MaterialGroupIndex _lastMaterialGroup = MaterialGroupIndex.Invalid;
+        private MaterialGroupIndex _lastMaterialGroup = MaterialGroupIndex.Invalid;
 
-        void UpdateMaterial(MaterialGroupIndex materialGroup)
+        private void UpdateMaterial(MaterialGroupIndex materialGroup)
         {
             if (materialGroup == _lastMaterialGroup) return;
             _lastMaterialGroup = materialGroup;
             _meshRenderer.sharedMaterials = MaterialStore.Get(materialGroup);
         }
 
-        MaterialPropertyBlock _mpb;
+        private MaterialPropertyBlock _mpb;
 
-        MaterialPropertyBlock GetPropBlock()
+        private MaterialPropertyBlock GetPropBlock()
         {
             if (_mpb == null)
             {
@@ -185,14 +190,14 @@ namespace FTRuntime
             return _mpb;
         }
 
-        void UpdatePropTexture(Texture2D texture)
+        private void UpdatePropTexture(Texture2D texture)
         {
             var mpb = GetPropBlock();
             MaterialConfigurator.SetTexture(mpb, texture);
             _meshRenderer.SetPropertyBlock(mpb);
         }
 
-        void UpdatePropTint(Color color)
+        private void UpdatePropTint(Color color)
         {
             var mpb = GetPropBlock();
             MaterialConfigurator.SetTint(mpb, color);

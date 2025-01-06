@@ -1,3 +1,3 @@
 ﻿namespace FTSwfTools {
-	class FileAttributesTag : SwfTagBase { }
+	internal class FileAttributesTag : SwfTagBase { }
 }

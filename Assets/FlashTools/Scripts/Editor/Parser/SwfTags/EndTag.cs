@@ -1,3 +1,3 @@
 ﻿namespace FTSwfTools {
-	class EndTag : SwfTagBase { }
+	internal class EndTag : SwfTagBase { }
 }

@@ -5,13 +5,13 @@ using UnityEngine;
 using UnityEngine.Assertions;
 
 namespace FTEditor.Importer {
-	readonly struct SwfColorTransData
+	internal readonly struct SwfColorTransData
 	{
 		public readonly int Depth;
 		public readonly SwfVec4Int Mul;
 		public readonly SwfVec4Int Add;
 
-		SwfColorTransData(int depth, SwfVec4Int mul, SwfVec4Int add)
+		private SwfColorTransData(int depth, SwfVec4Int mul, SwfVec4Int add)
 		{
 			Depth = depth;
 			Mul = mul;
@@ -23,7 +23,7 @@ namespace FTEditor.Importer {
 		public Color CalculateMul() => CalculateColor(Mul, Depth);
 		public Color CalculateAdd() => CalculateColor(Add, Depth);
 
-		static Color CalculateColor(SwfVec4Int v, int depth)
+		private static Color CalculateColor(SwfVec4Int v, int depth)
 		{
 			Assert.IsTrue(depth is >= 0 and < 4, "Depth must be in range [0, 3]");
 			var div = 1u << (8 * depth);
@@ -47,7 +47,7 @@ namespace FTEditor.Importer {
 		}
 	}
 
-	readonly struct SwfInstanceData {
+	internal readonly struct SwfInstanceData {
 		public enum Types : byte {
 			Simple,
 			Masked,
@@ -96,7 +96,7 @@ namespace FTEditor.Importer {
 			&& ColorTrans.Equals(other.ColorTrans);
 	}
 
-	readonly struct SwfFrameData {
+	internal readonly struct SwfFrameData {
 		public readonly string            Anchor;
 		public readonly SwfInstanceData[] Instances;
 
@@ -107,7 +107,7 @@ namespace FTEditor.Importer {
 		}
 	}
 
-	class SwfSymbolData {
+	internal class SwfSymbolData {
 		public readonly string         Name;
 		public readonly SwfFrameData[] Frames;
 

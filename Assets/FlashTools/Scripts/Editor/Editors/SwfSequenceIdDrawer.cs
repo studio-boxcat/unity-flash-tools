@@ -12,7 +12,7 @@ using UnityEngine;
 namespace FTEditor.Editors
 {
     [UsedImplicitly]
-    class SwfSequenceIdDrawer : OdinValueDrawer<SwfSequenceId>
+    internal class SwfSequenceIdDrawer : OdinValueDrawer<SwfSequenceId>
     {
         protected override void DrawPropertyLayout(GUIContent label)
         {
@@ -22,10 +22,10 @@ namespace FTEditor.Editors
             ValueEntry.SmartValue = _sequenceIds[EditorGUILayout.Popup(label, selectedIndex, _sequenceNames)];
         }
 
-        static SwfSequenceId[] _sequenceIds;
-        static string[] _sequenceNames;
+        private static SwfSequenceId[] _sequenceIds;
+        private static string[] _sequenceNames;
 
-        static void Init()
+        private static void Init()
         {
             if (_sequenceIds is not null)
                 return;

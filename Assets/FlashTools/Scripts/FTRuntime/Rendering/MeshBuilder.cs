@@ -9,7 +9,7 @@ namespace FTRuntime
 {
     public static class MeshBuilder
     {
-        static VertexAttributeDescriptor[] _vertexLayout;
+        private static VertexAttributeDescriptor[] _vertexLayout;
 
         public static Mesh CreateEmpty(bool dynamic = true)
         {
@@ -89,9 +89,9 @@ namespace FTRuntime
             }
         }
 
-        static SubMeshDescriptor[] _subMeshDescCache;
+        private static SubMeshDescriptor[] _subMeshDescCache;
 
-        static SubMeshDescriptor[] GetSubMeshDesc(int count)
+        private static SubMeshDescriptor[] GetSubMeshDesc(int count)
         {
             if (_subMeshDescCache is null || _subMeshDescCache.Length < count)
             {
@@ -101,10 +101,10 @@ namespace FTRuntime
             return _subMeshDescCache;
         }
 
-        static class AlphaBuffer
+        private static class AlphaBuffer
         {
-            static int _ptr;
-            static NativeArray<uint> _buffer;
+            private static int _ptr;
+            private static NativeArray<uint> _buffer;
 
             public static unsafe void Append(byte alpha, int count)
             {

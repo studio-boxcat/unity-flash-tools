@@ -13,7 +13,7 @@ using UnityEngine.Rendering;
 
 namespace FTEditor.Importer
 {
-    static class AtlasBuilder
+    internal static class AtlasBuilder
     {
         public static Texture2D PackAtlas(
             string outputPath, string spriteFolder, int maxSize, int shapePadding)
@@ -126,14 +126,14 @@ namespace FTEditor.Importer
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        struct VertexData
+        private struct VertexData
         {
             // XXX: Mesh.CombineMeshes() requires position to be Vector3.
             public Vector3 Position;
             public ushort U; // Float16
             public ushort V; // Float16
 
-            VertexData(Vector3 position, Vector2 uv)
+            private VertexData(Vector3 position, Vector2 uv)
             {
                 Position = position;
                 U = f16(uv.x);

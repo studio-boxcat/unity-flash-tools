@@ -5,8 +5,8 @@ namespace FTRuntime
 {
     public static class MaterialConfigurator
     {
-        static int _tintShaderPropBacking;
-        static int _tintShaderProp
+        private static int _tintShaderPropBacking;
+        private static int _tintShaderProp
         {
             get
             {
@@ -17,8 +17,8 @@ namespace FTRuntime
             }
         }
 
-        static int _mainTexShaderPropBacking;
-        static int _mainTexShaderProp
+        private static int _mainTexShaderPropBacking;
+        private static int _mainTexShaderProp
         {
             get
             {

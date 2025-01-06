@@ -7,7 +7,7 @@ using FTEditor.Importer;
 using FTRuntime;
 
 namespace FTSwfTools {
-	readonly struct SwfFileData
+	internal readonly struct SwfFileData
 	{
 		public readonly byte FrameRate;
 		public readonly SwfTagBase[] Tags;
@@ -19,8 +19,8 @@ namespace FTSwfTools {
 		}
 	}
 
-	static class SwfParser {
-		const string _targetSymbol = "_Stage_";
+	internal static class SwfParser {
+		private const string _targetSymbol = "_Stage_";
 
         public static SwfFrameData[] Load(string swf_path, out byte frameRate, out SwfLibrary library)
         {
@@ -32,7 +32,7 @@ namespace FTSwfTools {
             return frames;
         }
 
-        static SwfFileData Parse(string swf_path)
+        private static SwfFileData Parse(string swf_path)
 		{
 			using var stream = DecompressSwfData(File.ReadAllBytes(swf_path));
 			var header = DecodeSwf(new SwfStreamReader(stream), out var tags);
@@ -79,7 +79,7 @@ namespace FTSwfTools {
 		//
 		// ---------------------------------------------------------------------
 
-		static SwfSymbolData[] LoadSymbols(SwfTagBase[] tags, out SwfLibrary library)
+		private static SwfSymbolData[] LoadSymbols(SwfTagBase[] tags, out SwfLibrary library)
 		{
 			var l = new SwfLibrary();
 			var symbol = LoadSymbol(_targetSymbol, tags, l);
@@ -93,7 +93,7 @@ namespace FTSwfTools {
 			return symbols.ToArray();
 		}
 
-		static SwfSymbolData LoadSymbol(string symbol_name, SwfTagBase[] tags, SwfLibrary library)
+		private static SwfSymbolData LoadSymbol(string symbol_name, SwfTagBase[] tags, SwfLibrary library)
 		{
 			var disp_lst = new SwfDisplayList();
 			var executer = new SwfContextExecuter(library, 0);
@@ -103,7 +103,7 @@ namespace FTSwfTools {
 			return new SwfSymbolData(symbol_name, symbol_frames.ToArray());
 		}
 
-		static SwfFrameData LoadSymbolFrameData(
+		private static SwfFrameData LoadSymbolFrameData(
 			SwfLibrary library, SwfDisplayList display_list)
 		{
 			var instances = new List<SwfInstanceData>();
@@ -122,7 +122,7 @@ namespace FTSwfTools {
 			return new SwfFrameData(anchor, instances.ToArray());
 		}
 
-		static void AddDisplayListToFrame(
+		private static void AddDisplayListToFrame(
 			SwfLibrary            library,
 			SwfDisplayList        display_list,
 			SwfMatrix             parent_matrix,
@@ -225,14 +225,14 @@ namespace FTSwfTools {
 			self_masks.Clear();
 		}
 
-		static Depth ResolveClipDepth(Depth parent_mask, Depth inst_mask, int masked)
+		private static Depth ResolveClipDepth(Depth parent_mask, Depth inst_mask, int masked)
 		{
 			if (parent_mask > 0) return parent_mask;
 			if (inst_mask > 0) return inst_mask;
 			return (Depth)masked;
 		}
 
-		static SwfInstanceData.Types ResolveInstType(Depth parent_mask, Depth inst_mask, int masked)
+		private static SwfInstanceData.Types ResolveInstType(Depth parent_mask, Depth inst_mask, int masked)
 		{
 			if (parent_mask > 0 || inst_mask > 0) return SwfInstanceData.Types.MaskIn;
 			return masked is not 0 ? SwfInstanceData.Types.Masked : SwfInstanceData.Types.Simple;

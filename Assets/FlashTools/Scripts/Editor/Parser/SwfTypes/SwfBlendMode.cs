@@ -3,7 +3,7 @@ using UnityEngine.Rendering;
 
 namespace FTSwfTools
 {
-    enum SwfBlendMode : byte
+    internal enum SwfBlendMode : byte
     {
         Normal,
         Layer,
@@ -21,7 +21,7 @@ namespace FTSwfTools
         Hardlight
     }
 
-    static partial class ExtensionMethods
+    internal static partial class ExtensionMethods
     {
         public static SwfBlendMode ReadBlendMode(this SwfStreamReader reader)
         {

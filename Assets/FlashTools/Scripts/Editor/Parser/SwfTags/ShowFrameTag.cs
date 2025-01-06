@@ -1,3 +1,3 @@
 ﻿namespace FTSwfTools {
-	class ShowFrameTag : SwfTagBase { }
+	internal class ShowFrameTag : SwfTagBase { }
 }

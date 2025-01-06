@@ -2,12 +2,12 @@
 using FTEditor;
 
 namespace FTSwfTools {
-	class DefineSpriteTag : SwfTagBase {
+	internal class DefineSpriteTag : SwfTagBase {
 		public readonly DefineId       SpriteId;
 		public readonly ushort         FrameCount;
 		public readonly SwfTagBase[]   ControlTags;
 
-		DefineSpriteTag(DefineId spriteId, ushort frameCount, SwfTagBase[] controlTags)
+		private DefineSpriteTag(DefineId spriteId, ushort frameCount, SwfTagBase[] controlTags)
 		{
 			SpriteId = spriteId;
 			FrameCount = frameCount;

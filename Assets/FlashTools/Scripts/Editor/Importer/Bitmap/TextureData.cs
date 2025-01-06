@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace FTEditor.Importer
 {
-    readonly struct TextureData
+    internal readonly struct TextureData
     {
         public readonly int Width;
         public readonly int Height;

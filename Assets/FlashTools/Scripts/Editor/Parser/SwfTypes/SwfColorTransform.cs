@@ -1,7 +1,7 @@
 ﻿using FTEditor;
 
 namespace FTSwfTools {
-	struct SwfColorTransform
+	internal struct SwfColorTransform
 	{
 		public Color? Mul;
 		public Color? Add;

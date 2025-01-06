@@ -9,29 +9,29 @@ namespace FTSwfTools {
 	// SwfLibrary
 	//
 
-	abstract class SwfLibraryDefine {
+	internal abstract class SwfLibraryDefine {
 		public string ExportName;
 	}
 
-	class SwfLibraryShapeDefine : SwfLibraryDefine
+	internal class SwfLibraryShapeDefine : SwfLibraryDefine
 	{
 		public readonly (BitmapId, SwfMatrix)[] Bitmaps;
 		public SwfLibraryShapeDefine((BitmapId, SwfMatrix)[] bitmaps) => Bitmaps = bitmaps;
 	}
 
-	class SwfLibraryBitmapDefine : SwfLibraryDefine {
+	internal class SwfLibraryBitmapDefine : SwfLibraryDefine {
 		public readonly IBitmapData Data;
 		public SwfLibraryBitmapDefine(IBitmapData data) => Data = data;
 	}
 
-	class SwfLibrarySpriteDefine : SwfLibraryDefine {
+	internal class SwfLibrarySpriteDefine : SwfLibraryDefine {
 		public readonly SwfTagBase[] ControlTags;
 
 		public SwfLibrarySpriteDefine(SwfTagBase[] controlTags) => ControlTags = controlTags;
 	}
 
-	class SwfLibrary {
-		readonly SortedDictionary<DefineId, SwfLibraryDefine> _defines = new();
+	internal class SwfLibrary {
+		private readonly SortedDictionary<DefineId, SwfLibraryDefine> _defines = new();
 
 		public SwfLibraryDefine this[DefineId define_id] => _defines[define_id];
 
@@ -56,7 +56,7 @@ namespace FTSwfTools {
 	// SwfDisplayList
 	//
 
-	abstract class SwfDisplayInstance {
+	internal abstract class SwfDisplayInstance {
 		public DefineId          Id;
 		public Depth             Depth;
 		public Depth             ClipDepth;
@@ -66,14 +66,14 @@ namespace FTSwfTools {
 		public SwfColorTransform ColorTransform;
 	}
 
-	class SwfDisplayShapeInstance : SwfDisplayInstance {
+	internal class SwfDisplayShapeInstance : SwfDisplayInstance {
 	}
 
-	class SwfDisplayBitmapInstance : SwfDisplayInstance {
+	internal class SwfDisplayBitmapInstance : SwfDisplayInstance {
 		public BitmapId Bitmap => (BitmapId) Id;
 	}
 
-	class SwfDisplaySpriteInstance : SwfDisplayInstance {
+	internal class SwfDisplaySpriteInstance : SwfDisplayInstance {
 		public int            CurrentTag  = 0;
 		public SwfDisplayList DisplayList = new();
 
@@ -83,7 +83,7 @@ namespace FTSwfTools {
 		}
 	}
 
-	class SwfDisplayList {
+	internal class SwfDisplayList {
 		public readonly SortedDictionary<Depth, SwfDisplayInstance> Instances = new();
 		public readonly List<string>     FrameLabels  = new();
 		public readonly List<string>     FrameAnchors = new();

@@ -1,11 +1,11 @@
 ﻿using FTEditor;
 
 namespace FTSwfTools {
-	class RemoveObjectTagBase : SwfTagBase {
+	internal class RemoveObjectTagBase : SwfTagBase {
 		public Depth Depth;
 	}
 
-	class RemoveObjectTag : RemoveObjectTagBase {
+	internal class RemoveObjectTag : RemoveObjectTagBase {
 		public ushort CharacterId;
 
 		public static RemoveObjectTag Create(SwfStreamReader reader) {
@@ -15,7 +15,7 @@ namespace FTSwfTools {
 		}
 	}
 
-	class RemoveObject2Tag : RemoveObjectTagBase {
+	internal class RemoveObject2Tag : RemoveObjectTagBase {
 		public static RemoveObject2Tag Create(SwfStreamReader reader) {
 			return new RemoveObject2Tag{
 				Depth = (Depth) reader.ReadUInt16()};

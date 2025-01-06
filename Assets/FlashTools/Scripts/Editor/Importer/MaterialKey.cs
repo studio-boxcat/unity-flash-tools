@@ -3,7 +3,7 @@ using FTSwfTools;
 
 namespace FTEditor.Importer
 {
-    readonly struct MaterialKey
+    internal readonly struct MaterialKey
     {
         public readonly SwfInstanceData.Types Type;
         public readonly SwfBlendMode BlendMode;
