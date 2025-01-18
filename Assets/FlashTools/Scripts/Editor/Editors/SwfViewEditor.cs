@@ -10,7 +10,7 @@ using Object = UnityEngine.Object;
 
 namespace FTEditor.Editors {
 	[CustomEditor(typeof(SwfView)), CanEditMultipleObjects]
-	internal class SwfViewEditor : Editor {
+	internal class SwfViewEditor : UnityEditor.Editor {
 		private List<SwfView>                            _clips    = new();
 		private Dictionary<SwfView, SwfClipPreview> _previews = new();
 

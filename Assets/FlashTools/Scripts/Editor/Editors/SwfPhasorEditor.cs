@@ -8,7 +8,7 @@ using FTRuntime;
 
 namespace FTEditor.Editors {
 	[CustomEditor(typeof(SwfPhasor)), CanEditMultipleObjects]
-	internal class SwfPhasorEditor : Editor {
+	internal class SwfPhasorEditor : UnityEditor.Editor {
 		private List<SwfPhasor> _phasors = new();
 
 		private void AllControllersForeach(System.Action<SwfPhasor> act) {
