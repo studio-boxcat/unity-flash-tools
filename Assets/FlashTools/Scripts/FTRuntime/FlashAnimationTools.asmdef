@@ -1,5 +1,0 @@
-{
-  "name": "FlashAnimationTools",
-  "allowUnsafeCode": true,
-  "references": ["Boxcat.Bundler"]
-}

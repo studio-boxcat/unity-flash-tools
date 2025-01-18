@@ -8,6 +8,7 @@ using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
+using L = FTRuntime.L;
 using Object = UnityEngine.Object;
 
 namespace FTEditor.Importer
