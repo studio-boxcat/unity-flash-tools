@@ -20,7 +20,7 @@ namespace FTEditor.Editors {
 		private void DrawClipControls() {
 			SwfEditorUtils.DoRightHorizontalGUI(() => {
 				if ( GUILayout.Button("Stop") ) {
-					AllControllersForeach(phasor => phasor.Stop(phasor.isStopped));
+					AllControllersForeach(phasor => phasor.Pause());
 				}
 				if ( GUILayout.Button("Play") ) {
 					AllControllersForeach(phasor => {

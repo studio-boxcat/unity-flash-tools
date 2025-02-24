@@ -110,6 +110,7 @@ namespace FTRuntime
             SetFrame((ushort) newFrame);
         }
 
+        // Returns true if frame is not out of range.
         public bool UpdateFrame_Clamp(int frameDelta)
         {
             // Calculate new frame.
