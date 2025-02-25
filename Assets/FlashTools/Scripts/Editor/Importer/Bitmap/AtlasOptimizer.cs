@@ -2,13 +2,14 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using FTRuntime;
+using TexturePackerImporter;
 using UnityEditor;
 
 namespace FTEditor.Importer
 {
     internal static class AtlasOptimizer
     {
-        public static bool Optimize(int initialMaxSize, int shapePadding, string spriteFolder, string outputSheetPath, out int newMaxSize)
+        public static SheetInfo Optimize(int initialMaxSize, int shapePadding, string spriteFolder, string outputSheetPath, out int newMaxSize)
         {
             var timestamp = System.DateTime.Now.ToString("yyyyMMddHHmmss");
             var guid = System.Guid.NewGuid().ToString().Replace("-", "");
@@ -69,7 +70,7 @@ namespace FTEditor.Importer
             {
                 L.I("Atlas size is already optimized.");
                 newMaxSize = initialMaxSize;
-                return false;
+                return null;
             }
 
             L.I($"Atlas size has been optimized: {initialMaxSize} → {maxSize}");
@@ -79,15 +80,9 @@ namespace FTEditor.Importer
             File.Copy(finalSheetPath, outputSheetPath, true);
 
             // Replace the png name in the data file.
-            var data = File.ReadAllText(finalDataPath);
-            data = data.Replace(Path.GetFileName(finalSheetPath), Path.GetFileName(outputSheetPath));
-            var outputDataPath = outputSheetPath.Replace(".png", ".tpsheet");
-            File.WriteAllText(outputDataPath, data);
-
             AssetDatabase.ImportAsset(outputSheetPath);
-            AssetDatabase.ImportAsset(outputDataPath);
             newMaxSize = maxSize;
-            return true;
+            return SheetLoader.Load(finalDataPath);
 
             static (string, string) FormatPath(string format, int size)
             {

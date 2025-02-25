@@ -47,7 +47,7 @@ namespace FTEditor.Importer
         private string ResolveOutDir() => ResolveOutDir(this);
 
 
-        [Button(ButtonSizes.Medium), PropertySpace(8, 0)]
+        [ButtonGroup("Atlas"), Button("Build", ButtonSizes.Medium), EnableIf("Atlas")]
         private void BuildAtlas()
         {
             L.I($"Building atlas for {SwfFile.name}...");
@@ -88,40 +88,52 @@ namespace FTEditor.Importer
 
             // Pack atlas
             t = new TimeLogger("Build");
-            Atlas = AtlasBuilder.PackAtlas(atlasPath, spriteDir, AtlasMaxSize, AtlasShapePadding);
-            if (Atlas == null)
+            var sheetInfo = AtlasBuilder.PackAtlas(atlasPath, spriteDir, AtlasMaxSize, AtlasShapePadding);
+            if (sheetInfo is null)
             {
                 L.W("Atlas packing failed. Trying to pack with larger size...");
                 const int newMaxSize = 2048;
-                var newAtlas = AtlasBuilder.PackAtlas(atlasPath, spriteDir, newMaxSize, AtlasShapePadding);
-                if (newAtlas is not null)
-                {
-                    Atlas = newAtlas;
+                sheetInfo = AtlasBuilder.PackAtlas(atlasPath, spriteDir, newMaxSize, AtlasShapePadding);
+                if (sheetInfo is not null)
                     AtlasMaxSize = newMaxSize;
-                }
             }
             t.Dispose();
 
+            // Import atlas
+            AssetDatabase.ImportAsset(atlasPath);
+            Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPath);
+
             // Migrate sprite to mesh
-            t = new TimeLogger("MigrateSpriteToMesh");
+            t = new TimeLogger("BuildSpriteMesh");
             Utils.GetOrCreateAsset(ref Mesh, Atlas, "02.asset");
-            AtlasBuilder.MigrateSpriteToMesh(atlasPath, Mesh, out BitmapToMesh);
+            AtlasBuilder.BuildSpriteMesh(sheetInfo, Mesh, out BitmapToMesh);
             t.Dispose();
 
             L.I($"Atlas has been successfully built: {atlasPath}", Atlas);
         }
 
-        [Button(ButtonSizes.Medium), EnableIf("Atlas")]
+        [ButtonGroup("Atlas"), Button("Repack", ButtonSizes.Medium), EnableIf("Atlas")]
+        private void RepackAtlas()
+        {
+            var (atlasPath, spriteDir) = ResolveAtlasDirs();
+            var sheetInfo = AtlasBuilder.PackAtlas(atlasPath, spriteDir, AtlasMaxSize, AtlasShapePadding);
+            AssetDatabase.ImportAsset(atlasPath);
+            Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPath);
+            Utils.GetOrCreateAsset(ref Mesh, Atlas, "02.asset");
+            AtlasBuilder.BuildSpriteMesh(sheetInfo, Mesh, out BitmapToMesh);
+        }
+
+        [ButtonGroup("Atlas"), Button("Optimize", ButtonSizes.Medium), EnableIf("Atlas")]
         private void OptimizeAtlasSize()
         {
             var (atlasPath, spriteDir) = ResolveAtlasDirs();
             var result = AtlasOptimizer.Optimize(AtlasMaxSize, AtlasShapePadding, spriteDir, atlasPath, out var newMaxSize);
-            if (result is false) return;
+            if (result is null) return;
 
             Atlas = AssetDatabase.LoadAssetAtPath<Texture2D>(atlasPath);
             AtlasMaxSize = newMaxSize;
             Utils.GetOrCreateAsset(ref Mesh, Atlas, "02.asset");
-            AtlasBuilder.MigrateSpriteToMesh(atlasPath, Mesh, out BitmapToMesh);
+            AtlasBuilder.BuildSpriteMesh(result, Mesh, out BitmapToMesh);
         }
 
         private (string AtlasPath, string SpriteDir) ResolveAtlasDirs()

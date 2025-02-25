@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-using FTEditor;
 using FTRuntime;
 using FTSwfTools.SwfTags;
 
