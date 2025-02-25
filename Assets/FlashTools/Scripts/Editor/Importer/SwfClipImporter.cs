@@ -37,9 +37,9 @@ namespace FTEditor.Importer
         [BoxGroup("Intermediates")]
         [SerializeField, Required, AssetsOnly, ListDrawerSettings(IsReadOnly = true)]
         public Mesh Mesh;
-        [BoxGroup("Intermediates"), ListDrawerSettings(IsReadOnly = true)]
+        [BoxGroup("Intermediates"), ListDrawerSettings(IsReadOnly = true, DefaultExpandedState = false)]
         public BitmapRedirect[] BitmapRedirects; // From -> To
-        [BoxGroup("Intermediates"), ListDrawerSettings(IsReadOnly = true, ShowIndexLabels = true)]
+        [BoxGroup("Intermediates"), ListDrawerSettings(IsReadOnly = true, DefaultExpandedState = false, ShowIndexLabels = true)]
         public MeshId[] BitmapToMesh; // BitmapId -> MeshId
 
 
