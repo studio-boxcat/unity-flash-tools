@@ -10,22 +10,32 @@ namespace FTEditor.Importer
         public static BitmapRedirect[] Analyze(Dictionary<BitmapId, TextureData> textures, SwfInstanceData[] instances)
         {
             var duplicates = new List<BitmapRedirect>();
-            FindDuplicateColorTextures(textures, duplicates);
+            FindDuplicateColorTextures(textures, instances, duplicates);
             FindDuplicateMaskTextures(textures, instances, duplicates);
             BitmapRedirector.FlattenChain(duplicates);
             return duplicates.ToArray();
         }
 
-        private static void FindDuplicateColorTextures(Dictionary<BitmapId, TextureData> textures, List<BitmapRedirect> yield)
+        private static void FindDuplicateColorTextures(Dictionary<BitmapId, TextureData> textures, SwfInstanceData[] instances, List<BitmapRedirect> yield)
         {
-            var textureList = textures.ToList();
-            for (var i = 0; i < textureList.Count; i++)
-            for (var j = i + 1; j < textureList.Count; j++)
+            var bitmaps = instances
+                .Where(x => !x.Type.IsMask())
+                .Select(x => x.Bitmap)
+                .Distinct()
+                .ToArray();
+
+            for (var i = 0; i < bitmaps.Length; i++)
+            for (var j = i + 1; j < bitmaps.Length; j++)
             {
-                var a = textureList[i];
-                var b = textureList[j];
-                if (Utils.ColorEquals(a.Value.Data, b.Value.Data))
-                    yield.Add(new BitmapRedirect(a.Key, b.Key));
+                var ba = bitmaps[i];
+                var bb = bitmaps[j];
+                var ta = textures[ba];
+                var tb = textures[bb];
+                if (Utils.ColorEquals(ta.Data, tb.Data))
+                {
+                    L.I($"Found duplicate color textures: {ba.ToName()} -> {bb.ToName()}");
+                    yield.Add(new BitmapRedirect(ba, bb));
+                }
             }
         }
 
@@ -34,12 +44,13 @@ namespace FTEditor.Importer
             Dictionary<BitmapId, TextureData> textures, SwfInstanceData[] instances, List<BitmapRedirect> yield)
         {
             var colorBitmaps = instances
-                .Where(x => x.Type is SwfInstanceData.Types.Simple or SwfInstanceData.Types.Masked).Select(x => x.Bitmap)
+                .Where(x => !x.Type.IsMask())
+                .Select(x => x.Bitmap)
                 .ToHashSet();
             var maskBitmaps = instances
-                .Where(x => x.Type is SwfInstanceData.Types.MaskIn or SwfInstanceData.Types.MaskOut)
+                .Where(x => x.Type.IsMask())
                 .Select(x => x.Bitmap)
-                .Where(x => colorBitmaps.Contains(x) is false)
+                .Where(x => colorBitmaps.Contains(x) is false) // if the mask is used as color for at least once, consider it as color.
                 .ToHashSet();
             L.I("Render bitmaps: " + string.Join(", ", colorBitmaps.Select(x => x.ToName())));
             L.I("Mask bitmaps: " + string.Join(", ", maskBitmaps.Select(x => x.ToName())));
@@ -56,11 +67,11 @@ namespace FTEditor.Importer
             {
                 var maskOnlyTexture = textures[maskBitmap];
                 var maskOnlyAlpha = maskOnlyTexture.Data.Select(x => x.a).ToArray();
-                var found = colorBitmapAlphaDict.FirstOrDefault(x => AlphaEquals(x.Value, maskOnlyAlpha));
-                if (found.Key is not 0)
+                var found = colorBitmapAlphaDict.FirstOrDefault(x => AlphaEquals(x.Value, maskOnlyAlpha)).Key;
+                if (found is not 0)
                 {
-                    L.I($"Found duplicate mask texture: {maskBitmap.ToName()} -> {found.Key.ToName()}");
-                    yield.Add(new BitmapRedirect(maskBitmap, found.Key));
+                    L.I($"Found duplicate mask texture: {maskBitmap.ToName()} -> {found.ToName()}");
+                    yield.Add(new BitmapRedirect(maskBitmap, found));
                 }
             }
             return;

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using FTRuntime;
 using Sirenix.OdinInspector;
 
 namespace FTEditor.Importer
@@ -61,6 +62,7 @@ namespace FTEditor.Importer
                         if (b1 != b2) continue;
                         pairs[i] = new BitmapRedirect(a, c);
                         replaced = true;
+                        L.I($"Flattened chain: {a} -> {b1} -> {c}");
                         break;
                     }
                 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using FTEditor.Importer;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -50,5 +51,7 @@ namespace FTEditor
             asset = new T();
             AssetDatabase.CreateAsset(asset, path);
         }
+
+        public static bool IsMask(this SwfInstanceData.Types type) => type is SwfInstanceData.Types.MaskIn or SwfInstanceData.Types.MaskOut;
     }
 }
