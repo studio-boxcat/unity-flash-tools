@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using FTSwfTools;
 using Sirenix.OdinInspector;
 
 namespace FTEditor.Importer
@@ -24,6 +23,8 @@ namespace FTEditor.Importer
             a = From;
             b = To;
         }
+
+        public override string ToString() => $"[{From}, {To}]";
     }
 
     internal static class BitmapRedirector

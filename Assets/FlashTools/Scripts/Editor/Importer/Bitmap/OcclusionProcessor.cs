@@ -4,7 +4,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using FTRuntime;
-using FTSwfTools;
 using JetBrains.Annotations;
 using UnityEngine;
 

@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using FTRuntime;
-using FTSwfTools;
 using UnityEngine;
 
 namespace FTEditor.Importer
