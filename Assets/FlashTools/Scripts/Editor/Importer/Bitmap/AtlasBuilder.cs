@@ -111,22 +111,16 @@ namespace FTEditor.Importer
 
             // append vertices
             var vert = geo.Vertices;
-            var origin = md.rect.min; //  + md.pivot * md.rect.size; // origin
-            for (var i = 0; i < vert.Length; ++i)
+            var origin = md.rect.min;
+            var offset = md.rect.size * md.pivot;
+            foreach (var v in vert)
             {
-                var v = vert[i];
-
-                // calculate UV
                 var uv = origin + v;
                 uv.x /= sheetInfo.width;
                 uv.y /= sheetInfo.height;
                 // Sometimes the UVs are out of range.
                 Assert.IsTrue((uv.x is >= -0.00001f and <= 1.00001f) && (uv.y is >= -0.00001f and <= 1.00001f), $"Invalid UV: {uv}");
-
-                // calculate position
-                var pos = v * ImportConfig.PixelsPerUnit; // Scale to Unity units
-
-                outVerts.Add(new VertexData(pos, uv));
+                outVerts.Add(new VertexData(v - offset, uv));
             }
 
 
