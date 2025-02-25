@@ -2,7 +2,7 @@ using System;
 using Boxcat.Core;
 using UnityEngine.Assertions;
 
-namespace FTRuntime
+namespace FT
 {
     public class SwfRandomSequenceLooper
     {

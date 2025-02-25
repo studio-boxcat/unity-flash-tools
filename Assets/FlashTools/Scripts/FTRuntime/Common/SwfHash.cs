@@ -1,8 +1,7 @@
-using System.Linq;
 using JetBrains.Annotations;
 using UnityEngine.Assertions;
 
-namespace FTRuntime
+namespace FT
 {
     public static class SwfHash
     {

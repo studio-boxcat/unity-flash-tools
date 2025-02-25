@@ -3,7 +3,7 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace FTRuntime {
+namespace FT {
 	[ExecuteAlways, DisallowMultipleComponent]
 	[RequireComponent(typeof(SwfView))]
 	public class SwfPhasor : MonoBehaviour {

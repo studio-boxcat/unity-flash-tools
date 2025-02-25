@@ -1,11 +1,9 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using FTRuntime;
-using FTSwfTools;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal static class SwfClipBaker
     {

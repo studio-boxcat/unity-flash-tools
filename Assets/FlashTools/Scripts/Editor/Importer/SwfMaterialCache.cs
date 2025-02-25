@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using FTSwfTools;
 using UnityEngine;
 using UnityEditor;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
 	internal static class SwfMaterialCache {
 		private static readonly Dictionary<string, Shader> _shaderCache = new();

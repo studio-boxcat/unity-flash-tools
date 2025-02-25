@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using FTRuntime;
 
-namespace FTSwfTools {
+namespace FT {
 	public struct SwfSurfaceFilters {
 		public abstract class Filter {
 			public enum Types {

@@ -1,6 +1,6 @@
-﻿using FTSwfTools.SwfTags;
+﻿using FT.SwfTags;
 
-namespace FTSwfTools {
+namespace FT {
 	public enum SwfTagType {
 		// -----------------------------
 		// Display list

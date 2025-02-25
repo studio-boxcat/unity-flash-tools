@@ -1,66 +1,21 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
-using FTRuntime;
-using JetBrains.Annotations;
-using TexturePackerImporter;
+using TexturePacker;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 using UnityEngine.Rendering;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal static class AtlasBuilder
     {
         public static SheetInfo PackAtlas(string outputPath, string spriteFolder, int maxSize, int shapePadding)
         {
             var dataPath = $"Temp/{Guid.NewGuid().ToString().Replace("-", "")}.tpsheet";
-            var result = ExecutePack(outputPath, dataPath, spriteFolder, maxSize, shapePadding);
+            var result = TexturePackerCLI.Pack(outputPath, dataPath, spriteFolder, maxSize, shapePadding);
             return result ? SheetLoader.Load(dataPath) : null;
-        }
-
-        [MustUseReturnValue]
-        public static bool ExecutePack(string sheetPath, string dataPath, string spriteFolder, int maxSize, int shapePadding)
-        {
-            // https://www.codeandweb.com/texturepacker/documentation/texture-settings
-            const string texturePacker = "/Applications/TexturePacker.app/Contents/MacOS/TexturePacker";
-
-            var arguments =
-                $"--format unity-texture2d --sheet {sheetPath} --data {dataPath} " +
-                "--alpha-handling ReduceBorderArtifacts " +
-                $"--max-size {maxSize} " +
-                "--size-constraints AnySize " +
-                "--algorithm Polygon " +
-                "--trim-mode Polygon " +
-                "--trim-margin 0 " +
-                "--tracer-tolerance 200 " +
-                "--extrude 0 " +
-                $"--shape-padding {shapePadding} " +
-                "--pack-mode Best " +
-                "--enable-rotation " +
-                spriteFolder;
-
-            L.I($"Running TexturePacker: {texturePacker} {arguments}");
-
-            var procInfo = new ProcessStartInfo(texturePacker, arguments)
-            {
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
-            };
-            var proc = Process.Start(procInfo);
-            proc!.WaitForExit();
-
-            if (proc.ExitCode != 0)
-            {
-                var err = proc.StandardError.ReadToEnd();
-                L.E($"TexturePacker failed with exit code {proc.ExitCode}\n{err}");
-                return false;
-            }
-
-            return true;
         }
 
         public static void BuildSpriteMesh(SheetInfo sheetInfo, Mesh mesh, out MeshId[] bitmapToMesh)

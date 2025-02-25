@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class DefineBinaryDataTag : SwfTagBase {
 		public ushort Tag;
 		public byte[] Data;

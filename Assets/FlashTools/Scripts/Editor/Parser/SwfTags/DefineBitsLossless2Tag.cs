@@ -1,7 +1,6 @@
-﻿using FTEditor;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace FTSwfTools {
+namespace FT {
 	internal class DefineBitsLossless2Tag : SwfTagBase, IDefineBitsLosslessTag {
 		public DefineId CharacterId { get; private set; }
 		public byte   BitmapFormat;

@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.IO;
-using FTEditor.Importer;
+using FT.Importer;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace FTEditor
+namespace FT
 {
     internal static class Utils
     {

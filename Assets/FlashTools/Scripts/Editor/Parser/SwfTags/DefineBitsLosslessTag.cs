@@ -1,7 +1,6 @@
-﻿using FTEditor;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace FTSwfTools {
+namespace FT {
 	internal interface IBitmapData
 	{
 		Vector2Int Size { get; }

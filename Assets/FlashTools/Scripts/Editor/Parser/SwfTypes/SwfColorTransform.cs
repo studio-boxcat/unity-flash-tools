@@ -1,6 +1,4 @@
-﻿using FTEditor;
-
-namespace FTSwfTools {
+﻿namespace FT {
 	internal struct SwfColorTransform
 	{
 		public Color? Mul;

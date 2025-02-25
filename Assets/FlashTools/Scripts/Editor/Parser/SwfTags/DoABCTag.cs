@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class DoABCTag : SwfTagBase {
 		public bool   ExecuteImmediately;
 		public string Name;

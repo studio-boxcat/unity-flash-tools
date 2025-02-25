@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace FTRuntime
+namespace FT
 {
     public static class MaterialConfigurator
     {

@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	public struct SwfColor {
 		public byte R;
 		public byte G;

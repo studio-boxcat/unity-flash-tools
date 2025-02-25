@@ -2,10 +2,9 @@
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
-using FTRuntime;
 using Object = UnityEngine.Object;
 
-namespace FTEditor {
+namespace FT {
 	internal static class SwfEditorUtils {
 
 		// ---------------------------------------------------------------------

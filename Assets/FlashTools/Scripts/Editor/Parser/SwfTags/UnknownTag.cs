@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class UnknownTag : SwfTagBase {
 		private readonly int _tagId;
 		public UnknownTag(int tagId) => _tagId = tagId;

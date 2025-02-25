@@ -2,7 +2,7 @@ using System;
 using Sirenix.OdinInspector;
 using UnityEngine.Scripting;
 
-namespace FTRuntime
+namespace FT
 {
     [Serializable, Preserve]
     public struct SwfFrame

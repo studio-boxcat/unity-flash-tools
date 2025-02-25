@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class MetadataTag : SwfTagBase {
 		public string Metadata;
 

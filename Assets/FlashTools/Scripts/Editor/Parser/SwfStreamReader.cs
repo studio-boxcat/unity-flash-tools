@@ -3,7 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.IO.Compression;
 
-namespace FTSwfTools {
+namespace FT {
 	public class SwfStreamReader {
 		private struct BitContext {
 			public byte CachedByte;

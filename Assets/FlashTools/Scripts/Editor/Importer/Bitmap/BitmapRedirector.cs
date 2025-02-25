@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
-using FTRuntime;
 using Sirenix.OdinInspector;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     [Serializable, InlineProperty]
     internal struct BitmapRedirect

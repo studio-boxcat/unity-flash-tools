@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.IO;
-using FTSwfTools;
 using UnityEngine;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal static class BitmapExporter
     {

@@ -1,7 +1,6 @@
-﻿using FTRuntime;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace FTSwfTools
+namespace FT
 {
     internal static class SwfStreamReaderExtensions
     {

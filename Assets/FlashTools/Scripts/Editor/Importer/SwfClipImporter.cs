@@ -2,16 +2,13 @@ using System.Collections.Generic;
 using System.Linq;
 using Boxcat.Bundler;
 using Boxcat.Bundler.Editor;
-using FTRuntime;
-using FTSwfTools;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Serialization;
-using L = FTRuntime.L;
 using Object = UnityEngine.Object;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal class SwfClipImporter : ScriptableObject, ISelfValidator, IBundleTarget
     {

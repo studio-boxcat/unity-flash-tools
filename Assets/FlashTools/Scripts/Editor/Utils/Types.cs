@@ -1,4 +1,4 @@
-namespace FTEditor
+namespace FT
 {
     internal enum DefineId : ushort { }
 

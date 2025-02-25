@@ -4,9 +4,7 @@ using UnityEditor;
 using System.Linq;
 using System.Collections.Generic;
 
-using FTRuntime;
-
-namespace FTEditor.Editors {
+namespace FT.Editors {
 	[CustomEditor(typeof(SwfPhasor)), CanEditMultipleObjects]
 	internal class SwfPhasorEditor : UnityEditor.Editor {
 		private List<SwfPhasor> _phasors = new();

@@ -1,11 +1,10 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
-using FTRuntime;
-using TexturePackerImporter;
+using TexturePacker;
 using UnityEditor;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal static class AtlasOptimizer
     {
@@ -39,7 +38,7 @@ namespace FTEditor.Importer
                 {
                     var (size, _) = tests[j];
                     var (sheetPath, dataPath) = FormatPath(sheetFormat, size);
-                    var result = AtlasBuilder.ExecutePack(sheetPath, dataPath, spriteFolder, size, shapePadding);
+                    var result = TexturePackerCLI.Pack(sheetPath, dataPath, spriteFolder, size, shapePadding);
                     tests[j] = (size, result);
                 });
 

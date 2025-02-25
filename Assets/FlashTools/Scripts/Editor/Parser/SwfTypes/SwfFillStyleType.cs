@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal enum SwfFillStyleType : byte {
 		SolidColor,
 		LinearGradient,

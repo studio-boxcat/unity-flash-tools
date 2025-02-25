@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace FTSwfTools {
+namespace FT {
 	internal class DefineSceneAndFrameLabelDataTag : SwfTagBase {
 		public struct SceneOffsetData {
 			public uint   Offset;

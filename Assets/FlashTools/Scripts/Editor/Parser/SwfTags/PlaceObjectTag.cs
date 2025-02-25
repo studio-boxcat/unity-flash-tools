@@ -1,7 +1,4 @@
-﻿using FTEditor;
-using FTRuntime;
-
-namespace FTSwfTools {
+﻿namespace FT {
 	internal class PlaceObjectTag : SwfTagBase {
 		public DefineId          CharacterId;
 		public Depth             Depth;

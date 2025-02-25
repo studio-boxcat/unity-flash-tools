@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class SetBackgroundColorTag : SwfTagBase {
 		public SwfColor BackgroundColor;
 

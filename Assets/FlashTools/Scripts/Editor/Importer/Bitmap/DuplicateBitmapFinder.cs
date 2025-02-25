@@ -1,9 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
-using FTRuntime;
 using UnityEngine;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal static class DuplicateBitmapFinder
     {

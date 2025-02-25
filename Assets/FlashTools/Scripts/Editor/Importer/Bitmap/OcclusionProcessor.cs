@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using FTRuntime;
 using JetBrains.Annotations;
 using UnityEngine;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal static class OcclusionProcessor
     {

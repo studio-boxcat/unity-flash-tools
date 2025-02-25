@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class FrameLabelTag : SwfTagBase {
 		public string Name;
 		public byte   AnchorFlag;

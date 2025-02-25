@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class EnableTelemetryTag : SwfTagBase {
 		public byte[] SHA256PasswordHash;
 

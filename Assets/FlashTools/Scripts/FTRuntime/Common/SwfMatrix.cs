@@ -4,7 +4,7 @@ using UnityEngine;
 
 // ReSharper disable CompareOfFloatsByEqualityOperator
 
-namespace FTRuntime
+namespace FT
 {
     [Serializable]
     public struct SwfMatrix

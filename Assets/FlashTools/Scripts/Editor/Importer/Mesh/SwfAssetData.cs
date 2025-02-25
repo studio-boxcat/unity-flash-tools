@@ -1,10 +1,8 @@
-﻿using FTRuntime;
-using FTSwfTools;
-using JetBrains.Annotations;
+﻿using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace FTEditor.Importer {
+namespace FT.Importer {
 	internal readonly struct SwfColorTransData
 	{
 		public readonly int Depth;

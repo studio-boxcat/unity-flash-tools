@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Rendering;
 
-namespace FTSwfTools
+namespace FT
 {
     internal enum SwfBlendMode : byte
     {

@@ -4,11 +4,9 @@ using UnityEditor;
 
 using System.Linq;
 using System.Collections.Generic;
-
-using FTRuntime;
 using Object = UnityEngine.Object;
 
-namespace FTEditor.Editors {
+namespace FT.Editors {
 	[CustomEditor(typeof(SwfView)), CanEditMultipleObjects]
 	internal class SwfViewEditor : UnityEditor.Editor {
 		private List<SwfView>                            _clips    = new();

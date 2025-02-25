@@ -1,8 +1,7 @@
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
-using FTSwfTools;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     [StructLayout(LayoutKind.Explicit)]
     internal readonly struct MaterialKey

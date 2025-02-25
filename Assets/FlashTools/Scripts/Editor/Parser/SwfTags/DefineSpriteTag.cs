@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
-using FTEditor;
 
-namespace FTSwfTools {
+namespace FT {
 	internal class DefineSpriteTag : SwfTagBase {
 		public readonly DefineId       SpriteId;
 		public readonly ushort         FrameCount;

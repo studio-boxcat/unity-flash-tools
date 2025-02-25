@@ -1,9 +1,8 @@
 ﻿using System.Linq;
 using System.Collections.Generic;
-using FTRuntime;
-using FTSwfTools.SwfTags;
+using FT.SwfTags;
 
-namespace FTSwfTools {
+namespace FT {
 	internal class SwfContextExecuter {
 		public readonly SwfLibrary   Library;
 		public int                   CurrentTag;

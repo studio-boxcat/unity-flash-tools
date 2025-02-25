@@ -1,8 +1,6 @@
 ﻿using System.Collections.Generic;
-using FTEditor;
-using FTRuntime;
 
-namespace FTSwfTools {
+namespace FT {
 	internal readonly struct SwfShapesWithStyle {
 		public enum ShapeStyleType {
 			Shape,

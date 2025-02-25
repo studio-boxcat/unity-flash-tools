@@ -1,10 +1,8 @@
 ﻿using UnityEngine;
 using UnityEditor;
-using FTRuntime;
 using UnityEngine.Rendering;
-using MeshBuilder = FTRuntime.MeshBuilder;
 
-namespace FTEditor.Editors {
+namespace FT.Editors {
 	internal class SwfClipPreview : ObjectPreview {
 		private int                   _sequence     = 0;
 		private PreviewRenderUtility  _previewUtils = null;

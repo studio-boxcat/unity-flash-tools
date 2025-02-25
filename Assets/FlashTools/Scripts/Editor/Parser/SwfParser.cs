@@ -2,11 +2,9 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.IO;
-using FTEditor;
-using FTEditor.Importer;
-using FTRuntime;
+using FT.Importer;
 
-namespace FTSwfTools {
+namespace FT {
 	internal readonly struct SwfFileData
 	{
 		public readonly byte FrameRate;

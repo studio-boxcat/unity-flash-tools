@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 
-namespace FTRuntime
+namespace FT
 {
     [Conditional("UNITY_EDITOR")]
     [AttributeUsage(AttributeTargets.Class)]

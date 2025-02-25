@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using FTRuntime;
 using UnityEngine;
 using UnityEngine.Assertions;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal class SwfBatcher
     {

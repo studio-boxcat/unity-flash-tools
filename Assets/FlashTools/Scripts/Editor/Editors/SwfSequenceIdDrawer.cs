@@ -2,14 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using FTRuntime;
 using JetBrains.Annotations;
 using Sirenix.OdinInspector.Editor;
 using Sirenix.Utilities;
 using UnityEditor;
 using UnityEngine;
 
-namespace FTEditor.Editors
+namespace FT.Editors
 {
     [UsedImplicitly]
     internal class SwfSequenceIdDrawer : OdinValueDrawer<SwfSequenceId>

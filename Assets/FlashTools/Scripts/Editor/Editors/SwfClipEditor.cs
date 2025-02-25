@@ -1,11 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FTRuntime;
 using Sirenix.OdinInspector.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace FTEditor.Editors
+namespace FT.Editors
 {
     [CustomEditor(typeof(SwfClip)), CanEditMultipleObjects]
     internal class SwfClipAssetEditor : OdinEditor

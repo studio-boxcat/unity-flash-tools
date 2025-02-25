@@ -3,7 +3,7 @@ using System.Diagnostics;
 using Debug = UnityEngine.Debug;
 using Object = UnityEngine.Object;
 
-namespace FTRuntime
+namespace FT
 {
     internal static class L
     {

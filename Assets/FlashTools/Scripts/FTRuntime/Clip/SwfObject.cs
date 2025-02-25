@@ -1,7 +1,7 @@
 using System;
 using Sirenix.OdinInspector;
 
-namespace FTRuntime
+namespace FT
 {
     [Serializable]
     public struct SwfObject

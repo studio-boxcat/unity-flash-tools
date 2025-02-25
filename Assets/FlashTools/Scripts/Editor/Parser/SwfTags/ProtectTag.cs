@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class ProtectTag : SwfTagBase {
 		public string MD5Password;
 

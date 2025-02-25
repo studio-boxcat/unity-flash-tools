@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using FTEditor;
-using FTRuntime;
 
-namespace FTSwfTools {
+namespace FT {
 
 	//
 	// SwfLibrary

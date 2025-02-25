@@ -4,7 +4,7 @@ using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Scripting;
 
-namespace FTRuntime
+namespace FT
 {
     // strong type
     public enum SwfFrameId : ushort

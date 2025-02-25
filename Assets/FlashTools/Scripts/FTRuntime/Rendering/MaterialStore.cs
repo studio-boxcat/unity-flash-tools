@@ -2,7 +2,7 @@ using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
-namespace FTRuntime
+namespace FT
 {
     // strong type
     public enum MaterialGroupIndex : byte

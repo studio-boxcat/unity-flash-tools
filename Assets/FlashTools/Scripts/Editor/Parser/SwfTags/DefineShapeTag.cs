@@ -1,7 +1,6 @@
-﻿using FTEditor;
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace FTSwfTools {
+namespace FT {
 	internal class DefineShapeTagBase : SwfTagBase {
 		public DefineId           ShapeId;
 		public Rect               ShapeBounds;

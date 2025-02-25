@@ -1,4 +1,4 @@
-﻿namespace FTSwfTools {
+﻿namespace FT {
 	internal class UnsupportedTag : SwfTagBase {
 		private readonly SwfTagType _tagType;
 

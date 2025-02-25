@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace FTSwfTools {
+namespace FT {
 	public struct SwfLongHeader {
 		public SwfShortHeader ShortHeader;
 		public Rect           FrameSize;

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal readonly struct TextureData
     {

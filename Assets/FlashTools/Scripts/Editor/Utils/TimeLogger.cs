@@ -1,7 +1,6 @@
 using System.Diagnostics;
-using FTRuntime;
 
-namespace FTEditor
+namespace FT
 {
     internal readonly struct TimeLogger
     {

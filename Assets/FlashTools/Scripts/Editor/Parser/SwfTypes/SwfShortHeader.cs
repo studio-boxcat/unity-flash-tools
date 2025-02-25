@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace FTSwfTools {
+namespace FT {
 	public struct SwfShortHeader {
 		public string Format;
 		public byte   Version;

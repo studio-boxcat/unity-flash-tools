@@ -1,7 +1,4 @@
-﻿using FTEditor;
-using FTRuntime;
-
-namespace FTSwfTools {
+﻿namespace FT {
 	internal class PlaceObject2Tag : SwfTagBase {
 		public bool              HasClipActions;
 		public bool              HasClipDepth;

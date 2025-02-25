@@ -1,4 +1,4 @@
-namespace FTEditor.Importer
+namespace FT.Importer
 {
     internal static class ImportConfig
     {
