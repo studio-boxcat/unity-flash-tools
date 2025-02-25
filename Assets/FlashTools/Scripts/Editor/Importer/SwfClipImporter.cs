@@ -47,7 +47,7 @@ namespace FTEditor.Importer
         private string ResolveOutDir() => ResolveOutDir(this);
 
 
-        [ButtonGroup("Atlas"), Button("Build", ButtonSizes.Medium), EnableIf("Atlas")]
+        [ButtonGroup("Atlas"), Button("Build", ButtonSizes.Medium)]
         private void BuildAtlas()
         {
             L.I($"Building atlas for {SwfFile.name}...");
@@ -186,13 +186,15 @@ namespace FTEditor.Importer
             }
 
             // atlas
+            if (Atlas)
             {
                 var ti = (TextureImporter) AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(Atlas));
                 if (ti.textureType != TextureImporterType.Default)
                     result.AddError("Atlas must be a default texture type");
-                if (AtlasMaxSize == 2048)
-                    result.AddError("Atlas has never been optimized.");
             }
+
+            if (AtlasMaxSize == 2048)
+                result.AddError("Atlas has never been optimized.");
 
             // bundle name
             if (BundlerUtils.VerifyBundleKey(BundleName) is false)
