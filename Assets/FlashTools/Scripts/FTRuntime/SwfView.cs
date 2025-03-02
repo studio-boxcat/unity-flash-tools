@@ -15,13 +15,6 @@ namespace FT
         [SerializeField, Required, ChildGameObjectsOnly]
         private MeshRenderer _meshRenderer;
 
-        // ---------------------------------------------------------------------
-        //
-        // Serialized fields
-        //
-        // ---------------------------------------------------------------------
-
-        [Header("Animation")]
         [SerializeField]
         private Color _tint = Color.white;
         public Color tint

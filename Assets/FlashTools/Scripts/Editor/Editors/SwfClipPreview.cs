@@ -13,21 +13,6 @@ namespace FT.Editors {
 		//
 		// ---------------------------------------------------------------------
 
-		public void SetSequence(SwfSequenceId sequenceId) {
-			_sequence = -1;
-
-			var clip = target as SwfClip;
-			var sequences = clip.Sequences;
-			for (var i = 0; i < sequences.Length; i++)
-			{
-				if (sequences[i].Id == sequenceId)
-					_sequence = i;
-			}
-
-			if (_sequence == -1)
-				_sequence = 0;
-		}
-
 		public void Shutdown() {
 			_previewUtils.Cleanup();
 			Cleanup();
@@ -67,8 +52,7 @@ namespace FT.Editors {
 			}
 
 			var sequence = clip.Sequences[_sequence];
-			// TODO: reverse hash
-			// GUILayout.Label(sequence.Id, EditorStyles.whiteLabel);
+			GUILayout.Label(SwfSequenceIdUtils.ToName(sequence.Id), EditorStyles.whiteLabel);
 
 			if ( clip.Sequences.Length > 1 ) {
 				if ( GUILayout.Button(">", EditorStyles.miniButton) ) {
