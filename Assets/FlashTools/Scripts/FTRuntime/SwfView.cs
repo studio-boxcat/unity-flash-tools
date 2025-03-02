@@ -27,7 +27,7 @@ namespace FT
             }
         }
 
-        [NonSerialized]
+        [NonSerialized, ShowInInspector, ReadOnly]
         private SwfClip _clip;
         public SwfClip clip => _clip;
         [NonSerialized]
@@ -199,6 +199,29 @@ namespace FT
         }
 
 #if UNITY_EDITOR
+        [ShowInInspector, LabelText("Sequence")]
+        private SwfSequenceId _editorSequence
+        {
+            get => _sequence;
+            set
+            {
+                if (_sequence == value) return;
+                SetSequence(value);
+            }
+        }
+
+        [ShowInInspector, LabelText("Frame"), PropertyRange(0, maxGetter: nameof(_editorFrame_MaxValue))]
+        private ushort _editorFrame
+        {
+            get => _currentFrame;
+            set
+            {
+                if (_currentFrame == value) return;
+                SetFrame(value);
+            }
+        }
+
+        private ushort _editorFrame_MaxValue => (ushort) (frameCount - 1);
         public void Editor_OnClipChanges()
         {
             if (_clip == null)

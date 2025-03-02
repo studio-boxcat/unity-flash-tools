@@ -38,8 +38,10 @@ namespace FT
 
         public static SwfSequenceId EnumPopup(string label, SwfSequenceId value)
         {
-            var selectedIndex = Array.IndexOf(_sequenceIds, value);
-            return _sequenceIds[EditorGUILayout.Popup(label, selectedIndex, _sequenceNames)];
+            var curIndex = Array.IndexOf(_sequenceIds, value);
+            if (curIndex is -1) return default;
+            var newIndex = EditorGUILayout.Popup(label, curIndex, _sequenceNames);
+            return _sequenceIds[newIndex];
         }
     }
 }
