@@ -52,7 +52,7 @@ namespace FT.Editors {
 			}
 
 			var sequence = clip.Sequences[_sequence];
-			GUILayout.Label(SwfSequenceIdUtils.ToName(sequence.Id), EditorStyles.whiteLabel);
+			GUILayout.Label(SwfSequenceIdUtils.Editor_ToName(sequence.Id), EditorStyles.whiteLabel);
 
 			if ( clip.Sequences.Length > 1 ) {
 				if ( GUILayout.Button(">", EditorStyles.miniButton) ) {

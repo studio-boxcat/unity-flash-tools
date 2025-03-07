@@ -30,7 +30,7 @@ namespace FT
             _sequenceNames = names.ToArray();
         }
 
-        public static string ToName(SwfSequenceId sequenceId)
+        public static string Editor_ToName(this SwfSequenceId sequenceId)
         {
             var index = Array.IndexOf(_sequenceIds, sequenceId);
             return index >= 0 ? _sequenceNames[index] : "Unknown";
