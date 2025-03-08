@@ -109,7 +109,7 @@ namespace FT.Importer
             L.I($"Atlas has been successfully built: {atlasPath}", Atlas);
         }
 
-        [ButtonGroup("Atlas"), Button("Repack", ButtonSizes.Medium), EnableIf("Atlas")]
+        [ButtonGroup("Atlas"), Button("Repack", ButtonSizes.Medium)]
         private void RepackAtlas()
         {
             var (atlasPath, spriteDir) = ResolveAtlasDirs();
