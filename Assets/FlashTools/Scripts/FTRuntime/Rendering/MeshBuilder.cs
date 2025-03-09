@@ -1,3 +1,4 @@
+using Boxcat.Core;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
@@ -13,7 +14,8 @@ namespace FT
 
         public static Mesh CreateEmpty(bool dynamic = true)
         {
-            var mesh = new Mesh { name = "", hideFlags = HideFlags.DontUnloadUnusedAsset, indexFormat = IndexFormat.UInt16 };
+            var mesh = new Mesh { name = "", indexFormat = IndexFormat.UInt16 };
+            mesh.EditorDontSaveFlag();
             if (dynamic) mesh.MarkDynamic();
             SetVertexLayout(mesh, 0);
             return mesh;
