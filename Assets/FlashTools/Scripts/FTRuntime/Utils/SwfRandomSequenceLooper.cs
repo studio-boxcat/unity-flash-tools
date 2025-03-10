@@ -6,27 +6,27 @@ namespace FT
 {
     public class SwfRandomSequenceLooper
     {
-        private readonly SwfPhasor _swfPhasor;
+        private readonly SwfPhasor _phasor;
 
         private SwfSequenceId[] _sequences;
         private byte[] _weights;
         private bool _subscribed;
 
-        private Action<SwfPhasor, bool> _handleOnPauseBacking;
-        private Action<SwfPhasor, bool> _handleOnPause => _handleOnPauseBacking ??= HandleOnPause;
+        private Action<SwfPhasor> _handleOnFinishBacking;
+        private Action<SwfPhasor> _handleOnFinish => _handleOnFinishBacking ??= HandleOnFinish;
 
 
-        public SwfRandomSequenceLooper(SwfPhasor swfPhasor)
+        public SwfRandomSequenceLooper(SwfPhasor phasor)
         {
-            _swfPhasor = swfPhasor;
-            Assert.IsFalse(_swfPhasor.isPlaying);
+            _phasor = phasor;
+            Assert.IsFalse(_phasor.isPlaying);
         }
 
         public void DisposeWithoutStop()
         {
             if (_subscribed)
             {
-                _swfPhasor.OnPause -= _handleOnPause;
+                _phasor.OnFinish -= _handleOnFinish;
                 _subscribed = false;
             }
         }
@@ -39,34 +39,21 @@ namespace FT
 
         public void Play()
         {
-            if (_subscribed)
+            var sequenceId = _sequences[Sampler.FromWeights(_weights)];
+            _phasor.Play(sequenceId, resetFrameTimer: true);
+
+            if (_subscribed is false)
             {
-                _swfPhasor.OnPause -= _handleOnPause;
-                _subscribed = false;
+                _phasor.OnFinish += _handleOnFinish;
+                _subscribed = true;
             }
-
-            Internal_Play();
         }
 
-        private void Internal_Play()
-        {
-            Assert.IsFalse(_subscribed);
-
-            var sequenceIndex = Sampler.FromWeights(_weights);
-            _swfPhasor.Play(_sequences[sequenceIndex]);
-            _swfPhasor.OnPause += _handleOnPause;
-            _subscribed = true;
-        }
-
-        private void HandleOnPause(SwfPhasor phasor, bool playEnded)
+        private void HandleOnFinish(SwfPhasor phasor)
         {
             Assert.IsTrue(_subscribed);
-
-            _swfPhasor.OnPause -= _handleOnPause;
-            _subscribed = false;
-
-            if (playEnded)
-                Internal_Play();
+            var sequenceId = _sequences[Sampler.FromWeights(_weights)];
+            _phasor.Play(sequenceId, resetFrameTimer: false); // keep frame timer
         }
     }
 }

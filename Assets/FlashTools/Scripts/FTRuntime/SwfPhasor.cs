@@ -11,61 +11,37 @@ namespace FT {
 		[SerializeField, Required, ChildGameObjectsOnly]
 		private SwfView _view;
 		public SwfView View => _view;
-		[SerializeField] private bool _autoPlay = true;
-		public bool autoPlay { set => _autoPlay = value; }
-		[SerializeField] private LoopModes _loopMode = LoopModes.Loop;
+		[SerializeField]
+		private LoopModes _loopMode = LoopModes.Loop;
 		public LoopModes loopMode => _loopMode;
 
 
 		private bool    _isPlaying = false;
 		public bool isPlaying => _isPlaying;
+
 		private bool    _isVisible = false;
 		private float   _frameTimer = 0.0f;
 
 		public enum LoopModes : byte { Once, Loop }
 
-		public event Action<SwfPhasor, bool> OnPause;
+		public event Action<SwfPhasor> OnFinish; // successfully reached the end of the sequence.
 
 
-		public void Play(SwfSequenceId sequence) {
+		public void Play(SwfSequenceId sequence, bool resetFrameTimer) {
 			_isPlaying = true;
-			_frameTimer = 0.0f;
-			_view.SetSequence(sequence, 0);
-		}
-
-		public void Play(bool rewind) {
-			_isPlaying = true;
-			_frameTimer = 0.0f;
-			if ( rewind ) _view.ToBeginFrame();
+			if (resetFrameTimer) _frameTimer = 0.0f;
+			_view.SetSequence(sequence, frame: 0);
 		}
 
 		public void Pause() {
-			var was_playing = _isPlaying;
 			_isPlaying = false;
-			_frameTimer = 0.0f;
-			if (was_playing)
-				OnPause?.Invoke(this, false);
 		}
 
-		private void ApplyPlayEnded() {
+		private void Finish() {
 			Assert.IsTrue(_isPlaying, "SwfClipController. Incorrect state.");
-			var was_playing = _isPlaying;
 			_isPlaying = false;
-			if (was_playing)
-				OnPause?.Invoke(this, true);
+			OnFinish?.Invoke(this);
 		}
-
-		private void OnEnable() {
-#if UNITY_EDITOR
-			if (!Application.isPlaying)
-				return;
-#endif
-
-			if ( _autoPlay )
-				Play(false);
-		}
-
-		private void OnDisable() => Pause();
 
 		private void LateUpdate()
 		{
@@ -95,7 +71,7 @@ namespace FT {
 			else
 			{
 				if (!_view.UpdateFrame_Clamp(frame_passed))
-					ApplyPlayEnded(); // Pause if it reaches the end.
+					Finish(); // Pause if it reaches the end.
 			}
 		}
 
