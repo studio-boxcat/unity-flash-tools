@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using Boxcat.Bundler;
-using Boxcat.Bundler.Editor;
 using Sirenix.OdinInspector;
 using UnityEditor;
 using UnityEngine;
@@ -10,7 +8,7 @@ using Object = UnityEngine.Object;
 
 namespace FT.Importer
 {
-    internal class SwfClipImporter : ScriptableObject, ISelfValidator, IBundleTarget
+    internal class SwfClipImporter : ScriptableObject, ISelfValidator
     {
         [SerializeField, Required, AssetsOnly]
         public Object SwfFile;
@@ -21,9 +19,6 @@ namespace FT.Importer
         [BoxGroup("Bundle")]
         [SerializeField, Required, AssetsOnly]
         public SwfClip Clip;
-        [BoxGroup("Bundle")]
-        [SerializeField, Required]
-        public string BundleName; // lower case only.
 
         [BoxGroup("Pack Options"), SerializeField]
         public int AtlasMaxSize = 2048;
@@ -151,7 +146,7 @@ namespace FT.Importer
             SwfClipBaker.Bake(data, Mesh, BitmapToMesh, out var frames, out var sequences);
 
             // configure
-            Utils.GetOrCreateAsset(ref Clip, Atlas, BundleName + ".asset");
+            Utils.GetOrCreateAsset(ref Clip, Atlas, SwfFile.name + ".asset");
             var asset = Clip;
             asset.FrameRate = frameRate;
             asset.Atlas = Atlas;
@@ -168,9 +163,6 @@ namespace FT.Importer
             // update scene
             SwfEditorUtils.UpdateSceneSwfClips(asset);
         }
-
-        [Button(ButtonSizes.Medium), EnableIf("Clip")]
-        private void Bundle() => AssetBundleBuilder.BundleAsSingleAssetBundle(this);
 
         void ISelfValidator.Validate(SelfValidationResult result)
         {
@@ -192,10 +184,6 @@ namespace FT.Importer
 
             if (AtlasMaxSize == 2048)
                 result.AddError("Atlas has never been optimized.");
-
-            // bundle name
-            if (BundlerUtils.VerifyBundleKey(BundleName) is false)
-                result.AddError("Invalid bundle name: " + BundleName);
         }
 
         private static SwfFrameData[] ParseSwfFile(Object swfFile, out byte frameRate, out SwfLibrary library)
@@ -217,9 +205,5 @@ namespace FT.Importer
                 }
             }
         }
-
-        AssetBundleKey IBundleTarget.BundleKey => BundlerUtils.ParseBundleName(BundleName);
-        IEnumerable<(Object Asset, AssetIndex AssetIndex)> IBundleTarget.GetAssets()
-            => new (Object, AssetIndex)[] { (Clip, SwfClip.AssetIndex) };
     }
 }
