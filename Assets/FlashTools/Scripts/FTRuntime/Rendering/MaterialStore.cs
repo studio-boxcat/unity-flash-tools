@@ -1,6 +1,7 @@
 using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 
 namespace FT
 {
@@ -14,7 +15,7 @@ namespace FT
     {
         [NonSerialized]
         private static MaterialStore _instance;
-        public static MaterialStore Instance => _instance ??= Resources.Load<MaterialStore>("SwfMaterialStore");
+        public static MaterialStore Instance => _instance ??= Addressables.LoadAsset<MaterialStore>("SwfMaterialStore");
 
         public static Material[] Get(MaterialGroupIndex index) => Instance[index];
 
