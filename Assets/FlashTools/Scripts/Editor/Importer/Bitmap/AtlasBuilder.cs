@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using TexturePacker;
+using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Assertions;
@@ -93,26 +94,8 @@ namespace FT.Importer
             public VertexData(Vector3 position, Vector2 uv)
             {
                 Position = position;
-                U = f16(uv.x);
-                V = f16(uv.y);
-                return;
-
-                static unsafe ushort f16(float x)
-                {
-                    const int infinity_32 = 255 << 23;
-                    const uint msk = 0x7FFFF000u;
-
-                    uint ux = asuint(x);
-                    uint uux = ux & msk;
-                    uint h = asuint(min(asfloat(uux) * 1.92592994e-34f, 260042752.0f)) + 0x1000 >> 13; // Clamp to signed infinity if overflowed
-                    h = select(h, select(0x7c00u, 0x7e00u, (int) uux > infinity_32), (int) uux >= infinity_32); // NaN->qNaN and Inf->Inf
-                    return (ushort) (h | (ux & ~msk) >> 16);
-
-                    static float min(float x, float y) => float.IsNaN(y) || x < y ? x : y;
-                    static uint asuint(float x) => *(uint*) &x;
-                    static uint select(uint falseValue, uint trueValue, bool test) => test ? trueValue : falseValue;
-                    static float asfloat(uint x) => *(float*) &x;
-                }
+                U = new half(uv.x).value;
+                V = new half(uv.y).value;
             }
         }
     }
