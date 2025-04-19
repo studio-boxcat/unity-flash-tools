@@ -10,9 +10,9 @@ namespace FT
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public class SwfView : MonoBehaviour
     {
-        [SerializeField, Required, ChildGameObjectsOnly]
+        [SerializeField, Required, ChildGameObjectsOnly, HideIf("_meshFilter")]
         private MeshFilter _meshFilter;
-        [SerializeField, Required, ChildGameObjectsOnly]
+        [SerializeField, Required, ChildGameObjectsOnly, HideIf("_meshRenderer")]
         private MeshRenderer _meshRenderer;
 
         [SerializeField]
@@ -199,6 +199,12 @@ namespace FT
         }
 
 #if UNITY_EDITOR
+        private void Reset()
+        {
+            _meshFilter = GetComponent<MeshFilter>();
+            _meshRenderer = GetComponent<MeshRenderer>();
+        }
+
         [ShowInInspector, LabelText("Sequence")]
         private SwfSequenceId _editorSequence
         {
