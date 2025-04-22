@@ -1,4 +1,5 @@
 using System;
+using Boxcat.Core;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -48,11 +49,12 @@ namespace FT
                 return (MaterialGroupIndex) gi;
             }
 
-            Array.Resize(ref _groups, _groups.Length + 1);
-            _groups[gi] = new MaterialGroup { Materials = materials };
+            _groups = _groups.CloneAdd(new MaterialGroup { Materials = materials });
             UnityEditor.EditorUtility.SetDirty(this);
             return (MaterialGroupIndex) gi;
         }
+
+        [PlayModeGate] private static void ClearCache() => _instance = null;
 #endif
     }
 }
