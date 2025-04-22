@@ -15,7 +15,7 @@ namespace FT
     {
         [NonSerialized]
         private static MaterialStore _instance;
-        public static MaterialStore Instance => _instance ??= Addressables.LoadAsset<MaterialStore>("SwfMaterialStore");
+        public static MaterialStore Instance => _instance ??= Addressables.LoadAsset<MaterialStore>(Addresses.SwfMaterialStore);
 
         public static Material[] Get(MaterialGroupIndex index) => Instance[index];
 
