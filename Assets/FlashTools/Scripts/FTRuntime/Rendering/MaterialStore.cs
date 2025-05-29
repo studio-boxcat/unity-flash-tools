@@ -1,8 +1,8 @@
 using System;
 using Boxcat.Core;
+using Bundles;
 using Sirenix.OdinInspector;
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 
 namespace FT
 {
