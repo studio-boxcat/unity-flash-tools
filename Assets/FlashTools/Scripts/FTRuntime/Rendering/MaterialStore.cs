@@ -16,7 +16,7 @@ namespace FT
     {
         [NonSerialized]
         private static MaterialStore _instance;
-        public static MaterialStore Instance => _instance ??= B.LoadSync<MaterialStore>(Addresses.SwfMaterialStore);
+        public static MaterialStore Instance => _instance ??= B.LoadSync<MaterialStore>(Address.SwfMaterialStore);
 
         public static Material[] Get(MaterialGroupIndex index) => Instance[index];
 
