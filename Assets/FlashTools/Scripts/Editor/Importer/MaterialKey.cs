@@ -1,19 +1,16 @@
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 
 namespace FT.Importer
 {
-    [StructLayout(LayoutKind.Explicit)]
-    internal readonly struct MaterialKey
+    [StructLayout(LayoutKind.Explicit)] // total size 4 bytes
+    internal readonly struct MaterialKey : IEquatable<MaterialKey>
     {
-        [FieldOffset(0)]
-        public readonly SwfInstanceData.Types Type; // 1 byte
-        [FieldOffset(1)]
-        public readonly SwfBlendMode BlendMode; // 1 byte
-        [FieldOffset(2)]
-        public readonly Depth ClipDepth; // 2 bytes
-        [FieldOffset(0)]
-        public readonly int Hash;
+        [FieldOffset(0)] public readonly SwfInstanceData.Types Type; // 1 byte
+        [FieldOffset(1)] public readonly SwfBlendMode BlendMode; // 1 byte
+        [FieldOffset(2)] public readonly Depth ClipDepth; // 2 bytes
+        [FieldOffset(0)] public readonly int Hash;
 
         public MaterialKey(SwfInstanceData.Types type, SwfBlendMode blendMode, Depth clipDepth) : this()
         {
@@ -29,8 +26,8 @@ namespace FT.Importer
             clipDepth = ClipDepth;
         }
 
-        public bool Equals(MaterialKey other)
-            => Type == other.Type && BlendMode == other.BlendMode && ClipDepth == other.ClipDepth;
+        public bool Equals(MaterialKey other) => Hash == other.Hash;
+        public override bool Equals(object obj) => obj is MaterialKey other && Equals(other);
         public override int GetHashCode() => Hash;
 
         public static bool operator ==(MaterialKey a, MaterialKey b) => a.Equals(b);
