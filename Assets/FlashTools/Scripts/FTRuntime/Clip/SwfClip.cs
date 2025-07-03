@@ -20,7 +20,7 @@ namespace FT
         public byte FrameRate = 8; // FramePerSecond
         [SerializeField, Required, AssetsOnly]
         public Texture2D Atlas;
-        [ListDrawerSettings(IsReadOnly = true)]
+        [ListDrawerSettings(IsReadOnly = true), DontValidate] // just too many objects.
         public SwfFrame[] Frames;
         [ListDrawerSettings(IsReadOnly = true)]
         public SwfSequence[] Sequences;
