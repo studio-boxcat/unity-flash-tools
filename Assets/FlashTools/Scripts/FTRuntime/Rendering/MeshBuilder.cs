@@ -14,7 +14,7 @@ namespace FT
         public static Mesh CreateEmpty(bool dynamic = true)
         {
             var mesh = new Mesh { name = "", indexFormat = IndexFormat.UInt16 };
-            mesh.EditorDontSaveFlag();
+            mesh.SetDontSave();
             if (dynamic) mesh.MarkDynamic();
             SetVertexLayout(mesh, 0);
             return mesh;
